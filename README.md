@@ -16,7 +16,7 @@ Flake8 is a linter which enforces strict style guidlines, so make sure to keep i
 To start developing: `docker-compose up -d --build`
 
 
-To shut down: `docker-compose down --volumes`
+To shut down: `docker-compose down --volumes` (to take everything down) or `docker-compose stop` (to just stop the image from running)
 
 To get a visual representation of the API layer once it's running, navigate to localhost:1337
 
