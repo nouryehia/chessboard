@@ -1,0 +1,11 @@
+version: '3'
+services:
+  rook:
+    container_name: rook
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '1337:5000'
+    volumes:
+      - '.:/usr/src'

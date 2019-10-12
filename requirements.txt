@@ -1,0 +1,6 @@
+Flask
+flask-api
+flask_cors
+flask_sqlalchemy
+gunicorn
+flake8
