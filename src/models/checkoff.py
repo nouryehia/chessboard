@@ -17,6 +17,6 @@ class Checkoff(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    suite_id = db.Column(db.Integer, nullable=False)
+    suite_id = db.Column(db.Integer(11), nullable=False)
     points = db.Column(db.Integer, db.ForeignKey(CheckoffSuite.id),
                        nullable=False, default=1)
