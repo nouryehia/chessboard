@@ -3,8 +3,7 @@ from app import db
 
 class Checkoff(db.Model):
     """
-    Represents a checkoff in the DB with relevant fields
-    of what user can be checked off for.\n
+    Represents a checkoff in the DB with relevant description and points.\n
     Fields:
     id --> Checkoff ID. Unique, primary key\n
     description --> Description of checkoff\n

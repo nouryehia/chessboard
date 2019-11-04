@@ -3,7 +3,7 @@ from app import db
 
 class CheckoffSuite(db.Model):
     """
-    Represents the state of Checkoff in the Assignment lifecycle.\n
+    Represents the readiness state of Checkoff in the Assignment lifecycle.\n
     Independent of the state of individual submissions\n
     Fields:
     id --> CheckoffSuite ID. Unique, primary key\n
@@ -18,6 +18,16 @@ class CheckoffSuite(db.Model):
     __tablename__ = 'CheckoffSuite'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.Integer(11), nullable=False)
+
+
+@OneToOne(mappedBy = "checkoffSuite", cascade = {CascadeType.ALL},optional = false)
+    public Assignment assignment;
+
+    @Column(nullable = false)
+    public Status status;
+
+    @OneToMany(mappedBy = "suite", cascade = CascadeType.ALL) // suite variable from CriteriaGroup. checkoff <-->> suite(s)
+    public List<Checkoff> checkoffs; // CheckoffGroup
 
     def __init__(self, **kwargs):
         super(CheckoffSuite, self).__init__(**kwargs)
