@@ -1,6 +1,7 @@
 from app import db
 from enum import Enum
 from typing import List
+from ticket_tag import Types
 # from datetime import datetime
 
 
@@ -67,7 +68,7 @@ class Ticket(db.Model):
 
     def update(self, title: str, description: str, room: str,
                workstation: str, isPrivate: bool, help_type: HelpType,
-               tagStrings: List[tags]) -> None:
+               tagStrings: List[Types]) -> None:
         """
         This method updates the current ticket. By taking in the updates from
         front end, this will update the corresponding tickit in the database.
