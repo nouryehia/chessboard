@@ -1,5 +1,6 @@
 from app import db
 from enum import Enum
+from typing import List
 # from datetime import datetime
 
 
@@ -63,3 +64,24 @@ class Ticket(db.Model):
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullabble=True)
     help_type = db.Column(db.Integer(11), nullable=False)
+
+    def update(self, title: str, description: str, room: str,
+               workstation: str, isPrivate: bool, help_type: HelpType,
+               tagStrings: List[tags]) -> None:
+        """
+        This method updates the current ticket. By taking in the updates from
+        front end, this will update the corresponding tickit in the database.
+        Inputs:
+        title --> The title of the ticket.\n
+        description --> The description of the ticket.\n
+        room --> The room that the student is in.\n
+        workstation --> The workstation of the student.\n
+        ipPrivate --> Whether the student want this ticket to be private.\n
+        help_type --> The type of help the student demends.\n
+        """
+        self.title = title
+        self.description = description
+        self.room = room
+        self.workstation = workstation
+        self.isPrivate = isPrivate
+        self.help_type = help_type
