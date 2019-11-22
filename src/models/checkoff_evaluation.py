@@ -34,7 +34,7 @@ class CheckoffEvaluation(db.Model):
     checkoff_time = db.Column(db.DateTime, nullable=False)
     invalided_time = db.Column(db.DateTime, nullable=True)
     checkoff = db.Column(db.Integer, db.ForeignKey(Checkoff.id),
-                            nullable=False)
+                         nullable=False)
     grader = db.Column(db.Integer, db.ForeignKey(Username.id),
                        nullable=False)
     invalidator = db.Column(db.Integer, db.ForeignKey(Username.id),
@@ -46,40 +46,45 @@ class CheckoffEvaluation(db.Model):
     def is_invalidated(self) -> bool:
         return self.invalidator is not None
 
-    def invalidate(self, Username invalidator) -> None:
-        if self.is_invalidated() is False:
+    def invalidate(self, invalidator: Username) -> None:
+        if not self.is_invalidated():
             self.invalided_time = datetime.now()
             self.invalidator = invalidator
             db.session.commit()
 
     # Static query methods
-    @staticmethod
-    def create_eval(self, Checkoff assignment, Username grader,
-                    Username student) -> CheckoffEvaluation:
+    @classmethod
+    def create_eval(cls, assignment: Checkoff, grader: Username,
+                    student: Username) -> CheckoffEvaluation:
         return new CheckoffEvaluation(assignment, grader, student)
 
-    @staticmethod
-    def find_checkoff(self, long checkoff_id, long student_id) -> CheckoffEvaluation:
+    @classmethod
+    def find_checkoff(cls, checkoff_id: int,
+                      student_id: int) -> CheckoffEvaluation:
         return CheckoffEvaluation.query.filterby(checkoff=checkoff_id,
                                                  student=student_id,
                                                  invalidator=None).first()
+
+    @classmethod
+    def find_newest_checkoff(cls, checkoff_id: int,
+                             student_id: int) -> CheckoffEvaluation:
+        return CheckoffEvaluation.query.filter_by(checkoff=checkoff_id,
+                                                  student=student_id,
+                                                  invalidator=None).order_by(desc(checkoff_time)).first()
     
-    @staticmethod
-    def find_newest_checkoff(self, long checkoff_id,
-                             long student_id) -> CheckoffEvaluation:
-        return CheckoffEvaluation.query.filterby(checkoff=checkoff_id,
-                                                 student=student_id,
-                                                 invalidator=None).order_by(desc(checkoff_time)).first()
-    
-    @staticmethod
-    def find_invalided(sefl, long checkoff_id, long student_id) -> CheckoffEvaluation:
+    @classmethod
+    def find_invalided(cls, checkoff_id: int,
+                       student_id: int) -> CheckoffEvaluation:
         return CheckoffEvalution.query.filterby(checkoff=checkoff_id, student=student_id, invalidator=not None).order_by(desc(invalided_time)).first()
 
-    @staticmethod
-    def find_newest_checkoff_for_invalidation(self, long checkoff_id, long student_id) -> CheckoffEvaluation:
+    @classmethod
+    def find_newest_checkoff_for_invalidation(cls, checkoff_id: int,
+                                              student_id: int) -> CheckoffEvaluation:
+
+
         return CheckoffEvaluation.query.filterby(checkoff=checkoff_id, student=student_id).order_by(desc(checkoff_time)).first()
 
-    def __eq__ (self, other):
+    def __eq__(self, other):
 
     '''
     public int compareTo(CheckoffEvaluation other){
@@ -94,11 +99,12 @@ class CheckoffEvaluation(db.Model):
     '''
 
     @staticmethod
-    def find_all_for_assignment(self, long assignment_id) -> CheckoffEvaluation[]:
+    def find_all_for_assignment(self, assignment_id: int) -> CheckoffEvaluation[]:
         return CheckoffEvaluation.query.filterby(checkoff.suite.assignment.id=assignment_id).order_by(desc(checkoff_time)).fetch()
 
     @staticmethod
-    def find_all_for_assignment_for_section(self, long assignment_id, long section_id) -> CheckoffEvaluation[]:
+    def find_all_for_assignment_for_section(self, assignment_id: int, 
+                                            section_id: int) -> CheckoffEvaluation[]:
         Section section = Section.findById(section_id)
 
         CheckoffEvaluations evaluations[]
@@ -109,11 +115,13 @@ class CheckoffEvaluation(db.Model):
         return evaluations
 
     @staticmethod
-    def find_all_for_assignment_for_section(self, long assignment_id, long section_id) -> CheckoffEvalution[]:
+    def find_all_for_assignment_for_section(self, assignment_id: int,
+                                            section_id: int) -> CheckoffEvalution[]:
         return CheckoffEvaluation.query.filterby(checkoff.suite.assignment.id = assignment_id, grader=grader_id).fetch()
 
     @staticmethod
-    def find_all_for_assignment_for_grader(self, long assignment_id, long section_id, long grader_id):
+    def find_all_for_assignment_for_grader(self, assignment_id: int,
+                                           section_id: int, long grader_id):
         Section section = Section.findById(sectionId)
 
         CheckoffEvaluations evaluations[]
@@ -124,9 +132,11 @@ class CheckoffEvaluation(db.Model):
         return evaluations
 
     @staticmethod
-    def find_all_for_assignment_for_student(self, long assignment_id, long student_id) -> CheckoffEvaluation[]:
+    def find_all_for_assignment_for_student(self, assignment_id: int,
+                                            student_id: int) -> CheckoffEvaluation[]:
         return CheckoffEvaluation.query.filterby(checkoff.suite.assignment.id=assignment_id, student=student_id).fetch()
 
     @staticmethod
-    def find_all_for_assignment_for_student_for_grader(self, long assignment_id, long student_id) -> CheckoffEvaluation[]:
+    def find_all_for_assignment_for_student_for_grader(self, assignment_id: int, 
+                                                       student_id: int) -> CheckoffEvaluation[]:
         return CheckoffEvaluation.query.filterby(checkoff.suite.assignment.id=assignment_id, student=student_id, grader=grader_id).fetch()

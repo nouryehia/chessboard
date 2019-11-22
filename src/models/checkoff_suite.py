@@ -19,18 +19,12 @@ class CheckoffSuite(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.Integer(11), nullable=False)
 
-
-@OneToOne(mappedBy = "checkoffSuite", cascade = {CascadeType.ALL},optional = false)
-    public Assignment assignment;
-
-    @Column(nullable = false)
-    public Status status;
-
-    @OneToMany(mappedBy = "suite", cascade = CascadeType.ALL) // suite variable from CriteriaGroup. checkoff <-->> suite(s)
-    public List<Checkoff> checkoffs; // CheckoffGroup
-
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 assignment: Assignment,
+                 checkoffs: Checkoff[], **kwargs):
         super(CheckoffSuite, self).__init__(**kwargs)
+        self.assignment = assignment
+        self.checkoffs = checkoffs
 
     def is_hidden(self) -> bool:
         return status == Status.HIDDEN
@@ -72,11 +66,11 @@ class CheckoffSuite(db.Model):
     def get_newest_checkoff_evaluation_for_student(self,
                                                    long studentId) -> long:
         for checkoff in checkoffs:
-            checkoffEvaluation = CheckoffEvaluation.findNewestCheckoff(checkoff.id, studentId)
-            if checkoffEvaluation is not None:
-                if lastCheckoffEvalution is None:
-                    lastCheckoffEvaluation = checkoffEvaluation
-                else if lastCheckoffEvalution.checkoffTime ==
-                        checkoffEvaluation.checkoffTime) < 0:
-                    lastCheckoffEvaluation = checkoffEvaluation
-        return lastCheckoffEvaluation
+            checkoff_evaluation = CheckoffEvaluation.findNewestCheckoff(checkoff.id, studentId)
+            if checkoff_evaluation is not None:
+                if last_checkoff_evaluation is None:
+                    last_checkoff_evaluation = checkoff_evaluation
+                else if last_checkoff_evaluation.checkoff_time ==
+                        checkoff_evaluation.checkoff_time) < 0:
+                    last_checkoff_evaluation = checkoff_evaluation
+        return last_checkoff_evaluation
