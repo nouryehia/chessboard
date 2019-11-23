@@ -1,4 +1,5 @@
 from app import db
+from checkoff_suite import CheckoffSuite
 
 
 class Checkoff(db.Model):

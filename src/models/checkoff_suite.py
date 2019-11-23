@@ -70,7 +70,7 @@ class CheckoffSuite(db.Model):
             if checkoff_evaluation is not None:
                 if last_checkoff_evaluation is None:
                     last_checkoff_evaluation = checkoff_evaluation
-                else if last_checkoff_evaluation.checkoff_time ==
+                else if (last_checkoff_evaluation.checkoff_time ==
                         checkoff_evaluation.checkoff_time) < 0:
                     last_checkoff_evaluation = checkoff_evaluation
         return last_checkoff_evaluation
