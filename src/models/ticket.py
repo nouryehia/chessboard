@@ -1,20 +1,20 @@
 from app import db
 from enum import Enum
-from typing import List
-from datetime import datetime
+from typing import List, Optional
+from datetime import datetime, timedelta
 from operator import attrgetter
 from user import User
 from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
 from course import Course # Pretending
 from ticket_feedback import TicketFeedback # Pretending
 from ticket_event import TicketEvent # Pretending
+from queue import Queue
 
 
 """
 Note for implementation:
 For all the queries methods in Ticket.java when it related to queue\
 I will implement it in the queue.py instead of here.\n
-
 """
 
 # Only 3 tags allowed per ticket
@@ -103,8 +103,8 @@ class Ticket(db.Model):
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer(20), primary_key=True, nullable=False)
-    created_at = db.Column(db.DateTime, nullabble=True)
-    closed_at = db.Column(db.DateTime, nullabble=True)
+    created_at = db.Column(db.DateTime, nullable=True)
+    closed_at = db.Column(db.DateTime, nullable=True)
     room = db.Column(db.String(255), nullable=False)
     workstaton = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer(11), nullable=False,
@@ -113,12 +113,12 @@ class Ticket(db.Model):
     description = db.Column(db.Text, nullable=False)
     grader_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
                           nullable=True)
-    queue_id = db.Column(db.Integer(20, db.ForeignKey('queue.id'),
-                         nullable=False))
+    queue_id = db.Column(db.Integer(20), db.ForeignKey('queue.id'),
+                         nullable=False)
     student_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
-    accepted_at = db.Column(db.DateTime, nullabble=True)
+    accepted_at = db.Column(db.DateTime, nullable=True)
     help_type = db.Column(db.Integer(11), nullable=False)
     tag_one = db.Column(db.Integer(20), db.ForeignKey('ticket_tag.id'),
                         nullable=False)
@@ -198,7 +198,13 @@ class Ticket(db.Model):
         Return:\n
         An array of size 1 to 3 with ticket tags in it.\n
         """
-        return self.room == HALLWAY
+        ticket_tag = []
+        ticket_tag.append(self.tag_one)
+        if (self.tag_two is not None):
+            ticket_tag.append(self.tag_two)
+        if (self.tag_three is not None):
+            ticket_tag.append(self.tag_three)
+        return ticket_tag
 
     def get_help_time_in_second(self) -> float:
         """
@@ -240,7 +246,7 @@ class Ticket(db.Model):
         if (self.get_latest_feedback() is None):
             return False
 
-    def get_latest_feedback(self) -> TicketFeedback:
+    def get_latest_feedback(self) -> Optional[TicketFeedback]:
         """
         Get the latest feedback of this ticket.\n
         Return:\n
@@ -264,7 +270,7 @@ class Ticket(db.Model):
         """
         Determine if the ticket can be viewed by a given user.\n
         Inputs:\n
-        The User object of the user who is trying to view the ticket.\n
+        user --> The User object of the user who is trying to view the ticket.\n
         Return:\n
         The bool for whether a user can view.\n
         """
@@ -286,7 +292,7 @@ class Ticket(db.Model):
         """
         Determine if the ticket can be edited by a given user.\n
         Inputs:\n
-        The User object of the user who is trying to edit the ticket.\n
+        user --> The User object of the user who is trying to edit the ticket.\n
         Return:\n
         The bool for whether a user can edit.\n
         """
@@ -385,3 +391,146 @@ class Ticket(db.Model):
 
         # Update ticket tags
         self.update_ticket_tags(tag_list)
+
+
+# Note:
+# So far not implementing the methods used by controllers, including
+# findOldestForQueue
+# findNewestForQueue
+# findOldestForQueueForGrader
+# findNewestForQueueForGrader
+# findNewestForStudent
+# For NewsFeedPost including:
+# findResolvedTicketsForQueueForGraderAfter
+# findLastResolvedTicketForQueueForGrader
+# For TicketFeedback:
+# findNewestFeedback should be in TicketFeedback
+
+def find_all_tickets(queue: Queue) -> List[Ticket]:
+    """
+    Get a list of all the tickets for a queue with decending order
+    by the time it was created.\n
+    Input:\n 
+    queue --> The queue to search for.\n
+    Return:\n
+    The list of the ticket of this queue.\n
+    """
+    return Ticket.query.\
+        filter_by(queue_id=queue.id).order_by(Ticket.created_at).desc.all()
+
+
+def find_all_tickets_by_student(queue: Queue, student: User) -> List[Ticket]:
+    """
+    Get a list of all the tickets for a queue created by a student
+    with decending order by the time it was created.\n
+    Input:\n 
+    queue --> The queue to search for.\n
+    student --> The student to be looked for.\n
+    Return:\n
+    The list of the ticket of this queue.\n
+    """
+    return Ticket.query.\
+        filter_by(queue_id=queue.id, student_id=student.id).\
+        order_by(Ticket.created_at).desc.all()
+
+
+def find_all_tickets_for_grader(queue: Queue, grader: User) -> List[Ticket]:
+    """
+    Get a list of all the tickets for a queue handled by a grader
+    with decending order by the time it was created.\n
+    Input:\n 
+    queue --> The queue to search for.\n
+    grader --> The grader to be looked for.\n
+    Return:\n
+    The list of the ticket of this queue.\n
+    """
+    return Ticket.query.\
+        filter_by(queue_id=queue.id, grader_id=grader.id).\
+        order_by(Ticket.created_at).desc.all()
+
+
+def find_tickets_in_range(queue: Queue, start: datetime,
+                          end: datetime, grader: User = None) -> List[Ticket]:
+    """
+    Find all the ticktes of the queue in range of two datetimes.\n
+    Input:\n
+    queue_id --> The id of the queue to look at.\n
+    grader --> An optional User object, use it if want to find for a grader.\n
+    start --> The begining of the range.\n
+    end --> The end of the range.\n
+    Return:\n
+    A list of tickets in this range.\n
+    """
+    if (grader is None):
+        ticket_list = Ticket.query.filter_by(queue=queue.id,
+                                             status=Status.RESOLVED).all()
+    else:
+        ticket_list = Ticket.query.filter_by(queue_id=queue.id,
+                                             grader_id=grader.id,
+                                             status=Status.RESOLVED).all()
+    return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
+
+
+def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
+    """
+    Find the last ticket accepted by the grader.\n 
+    There should only be one ticket that is accpeted by the grader.\n
+    Inputs:\n
+    grader --> The User object of the grader to look up.\n
+    Return:\n
+    The ticket that was accepted by the grader.\n
+    """
+    return Ticket.query.filter_by(status=Status.ACCEPTED,
+                                  grader_id=grader.id).first()
+
+
+def find_resolved_tickets(queue: Queue, recent_hour=False,
+                          day=False) -> List[Ticket]:
+    """
+    Get the tickets for the queue that were reolsved.\n
+    Inputs:\n
+    queue_id --> the id of the queue to look at.\n
+    recent --> If you want for the recent hour (higher priority).\n
+    day --> If you want for only today.\n
+    Return:\n
+    A list of tickets resolved for this queue given a certain range (or not).\n
+    """
+    ticket_list = Ticket.query.filter_by(queue_id=queue.id,
+                                         status=Status.RESOLVED).all()
+    if (recent_hour):
+        now = datetime.now()
+        lasthour = datetime.now() - timedelta(hours=1)
+        return find_tickets_in_range(queue, lasthour, now)
+    elif (day):
+        return list(filter(lambda x: x.closed_at == datetime.today(), 
+                           ticket_list))
+    else:
+        return ticket_list
+
+
+# Ticket stats calultaions
+def average_resolved_time(resolved_tickets: List[Ticket]) -> int:
+    """
+    Given a list of tickest, get the average time in second for resolve time.\n
+    Inputs:\n
+    resolved_tickets --> a list of tickests that has been resolved.\n
+    Return:\n
+    The number of the average time in seconds.\n
+    """
+    sum_time = 0
+    for ticket in resolved_tickets:
+        sum_time += ticket.get_help_time_in_second()
+    return (int)(sum_time / len(resolved_tickets))
+
+
+# Do we need it?
+def defer_accpeted_ticket_for_grader(grader: User) -> None:
+    """
+    Set all the accepted ticket for a grader to pending incase multiple
+    tickets is accepted by one grader.\n
+    Inputs:\n
+    grader --> The grader to be multified.\n
+    """
+    ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
+    for ticket in ticket_list:
+        ticket.mark_pending()

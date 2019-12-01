@@ -1,5 +1,8 @@
 from app import db
 from enum import Enum
+from user import User
+from ticket import Ticket, HelpType, TicketTag
+from typing import List
 
 
 """
@@ -54,3 +57,9 @@ class Queue(db.Model):
                                              You may not be helped before \
                                              tutor hours end.')
     ticketCooldown = db.Column(db.Integer(11), nullable=False, default=10)
+
+    def add_or_update_ticket(self, student: User, title: str,
+                             description: str, room: str, workstation: str,
+                             is_private: bool, help_type: HelpType,
+                             tag_list: List[TicketTag]) -> Ticket:
+        pass
