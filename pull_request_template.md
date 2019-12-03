@@ -1,6 +1,6 @@
 # PR <NUMBER HERE>: <REASON HERE>
 
-Tag the issue here! Use the #
+Related Issues: Tag the issue here! Use the #
 
 Author <@ yourself here>
 
