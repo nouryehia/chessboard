@@ -120,12 +120,9 @@ class Ticket(db.Model):
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True)
     help_type = db.Column(db.Integer(11), nullable=False)
-    tag_one = db.Column(db.Integer(20), db.ForeignKey('ticket_tag.id'),
-                        nullable=False)
-    tag_two = db.Column(db.Integer(20), db.ForeignKey('ticket_tag.id'),
-                        nullable=True)
-    tag_three = db.Column(db.Integer(20), db.ForeignKey('ticket_tag.id'),
-                          nullable=True)
+    tag_one = db.Column(db.Integer(11), nullable=False)
+    tag_two = db.Column(db.Integer(11), nullable=True)
+    tag_three = db.Column(db.Integer(20), nullable=True)
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
@@ -365,7 +362,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     def student_update(self, title: str, description: str, room: str,
-                       workstation: str, isPrivate: bool, help_type: HelpType,
+                       workstation: str, is_private: bool, help_type: HelpType,
                        tag_list: List[TicketTag]) -> None:
         """
         This method updates the current ticket. By taking in the updates from
@@ -417,6 +414,22 @@ def find_all_tickets(queue: Queue) -> List[Ticket]:
     """
     return Ticket.query.\
         filter_by(queue_id=queue.id).order_by(Ticket.created_at).desc.all()
+
+
+def find_pending_ticket_by_student(queue: Queue, 
+                                   student: User) -> Optional[Ticket]:
+    """
+    Get a ticket for a queue created by a student
+    that is still pending.\n
+    Input:\n 
+    queue --> The queue to search for.\n
+    student --> The student to be looked for.\n
+    Return:\n
+    The pending ticket that is created by student.\n
+    """
+    return Ticket.query.\
+        filter_by(queue_id=queue.id, student_id=student.id,
+                  status=Status.PENDING).first()
 
 
 def find_all_tickets_by_student(queue: Queue, student: User) -> List[Ticket]:

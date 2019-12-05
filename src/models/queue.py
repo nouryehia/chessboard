@@ -1,7 +1,9 @@
 from app import db
 from enum import Enum
 from user import User
-from ticket import Ticket, HelpType, TicketTag
+from ticket import Ticket, HelpType, TicketTag,\
+                   find_pending_ticket_by_student,\
+                   student_update
 from typing import List
 
 
@@ -44,22 +46,29 @@ class Queue(db.Model):
     __tablename__ = 'Queue'
     id = db.Column(db.Integer(20), primary_key=True, nullable=False)
     status = db.Column(db.Integer(11), nullable=False)
-    highCapacityEnabled = db.Column(db.Boolean, nullable=False, default=True)
-    highCapacityThreshold = db.Column(db.Integer(20), nullable=False,
-                                      default=25)
-    highCapacityMessage = db.Column(db.Text, nullable=False,
-                                    default='The queue is currently at high \
-                                            capacity. The tutors will be \
-                                            limiting their time to 5 minutes \
-                                            per student.')
-    highCapacityWarning = db.Column(db.Text, nullable=False,
-                                    default='The queue is currently very busy. \
-                                             You may not be helped before \
-                                             tutor hours end.')
-    ticketCooldown = db.Column(db.Integer(11), nullable=False, default=10)
+    high_capacity_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    high_capacity_threshold = db.Column(db.Integer(20), nullable=False,
+                                        default=25)
+    high_capacity_message = db.Column(db.Text, nullable=False,
+                                      default='The queue is currently at high \
+                                               capacity. The tutors will be \
+                                               limiting their time to 5\
+                                               minutes per student.')
+    high_capacity_warning = db.Column(db.Text, nullable=False,
+                                      default='The queue is currently very busy. \
+                                              You may not be helped before \
+                                              tutor hours end.')
+    ticket_cooldown = db.Column(db.Integer(11), nullable=False, default=10)
 
     def add_or_update_ticket(self, student: User, title: str,
                              description: str, room: str, workstation: str,
                              is_private: bool, help_type: HelpType,
                              tag_list: List[TicketTag]) -> Ticket:
-        pass
+        old_ticket = find_pending_ticket_by_student(queue=self, 
+                                                    student=student)
+        if (old_ticket is not None):
+            old_ticket.student_update(title=title, description=description,
+                                      room=room, workstation=workstation, 
+                                      is_private=is_private, 
+                                      help_type=help_type,
+                                      tag_list=tag_list)
