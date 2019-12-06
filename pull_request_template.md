@@ -16,3 +16,6 @@ Added Behavior:
 
 Changed Behavior:
   Could be optional. Just describe it
+
+## STOP! Before continuing, answer the following question:
+  Does flake8 yell at your code at all? (y/n) [highlight one]
