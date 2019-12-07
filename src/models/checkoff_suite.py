@@ -111,7 +111,7 @@ class CheckoffSuite(db.Model):
 
     def get_score_for_student(self, student_id: int) -> int:
         """
-        Get the student's checkoff score in this suite\n
+        Returns the student's checkoff score in this suite\n
         Params:\n
         student_id --> student to find checkoff for\n
         Return:\n
@@ -125,7 +125,14 @@ class CheckoffSuite(db.Model):
         return total
 
     def get_newest_checkoff_evaluation_for_student(self,
-                                                   student_id: int) -> int:
+                                                   student_id: int) -> None:
+        """
+        Returns newest checkoff that was evaluated for the student\n
+        Params:\n
+        student_id --> student to find checkoff for\n
+        Return:\n
+        Last checkoff that was evaluated for the student
+        """
         last_checkoff_evaluation = None
         for checkoff in self.checkoffs:
             checkoff_evaluation = CheckoffEvaluation \
