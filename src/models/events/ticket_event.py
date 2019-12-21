@@ -4,7 +4,7 @@ from datetime import datetime
 from user import User
 from ticket import Ticket
 from typing import List
-from course improt Course # pretending
+from course import Course # pretending
 
 
 class EventType(Enum):
@@ -36,7 +36,7 @@ class TicketEvent(db.model):
     event_type --> The type of this event.\n
     ticket_id --> The ticket associated with this event, forien key.\n
     message --> The message associated with this event, nullable.\n
-    is_anonymous --> Whether this update is anonymous.\n
+    is_private --> Whether this update is anonymous.\n
     user_id --> The user that created this event.\n
     timestamp --> The timestamp of this event.\n
     """
@@ -46,7 +46,7 @@ class TicketEvent(db.model):
     ticket_id = db.Column(db.Integer(20), db.ForeignKey('ticket.id'),
                           nullable=False)
     message = db.Column(db.String(255), nullable=True)
-    is_anonymous = db.Column(db.Boolean, nullable=False)
+    is_private = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
                         nullable=False)
     timestamp = db.Column(db.Datetime, nullable=False, default=datetime.now())
@@ -119,7 +119,7 @@ class TicketEvent(db.model):
         bool value of whether this can be viewed by this user.\n
         """
         # Need methods from enrolledcourse and user.
-    
+
     # Not implemnting (since not used):
     # findAllForTutor
 
@@ -134,7 +134,7 @@ def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
     A list of event related to this ticket.\n
     """
     return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-        sort_by(TicketEvent.timestamp).desc.all()
+        .sort_by(TicketEvent.timestamp).desc.all()
 
 
 def find_all_events_for_tickets(tickets: List[Ticket]) -> List[TicketEvent]:
@@ -145,7 +145,7 @@ def find_all_events_for_tickets(tickets: List[Ticket]) -> List[TicketEvent]:
     Return:\n
     A list of event related to the tickets passed in.\n
     """
-    result_list = []
+    ticket_id_list = []
     for ticket in tickets:
-        result_list += find_all_events_for_ticket(ticket)
-    return result_list
+        ticket_id_list.append(ticket.id)
+    return TicketEvent.query().filter_by(Ticket.ticket_id.in_(ticket_id_list))

@@ -380,7 +380,7 @@ class Ticket(db.Model):
         self.description = description
         self.room = room
         self.workstation = workstation
-        self.isPrivate = isPrivate
+        self.is_private = is_private
         self.help_type = help_type
 
         # Commit the updates for basica info
@@ -403,47 +403,43 @@ class Ticket(db.Model):
 # For TicketFeedback:
 # findNewestFeedback should be in TicketFeedback
 
-def find_all_tickets(queue: Queue) -> List[Ticket]:
+def find_all_tickets(queue: Queue,
+                     status: List[Status] = None) -> List[Ticket]:
     """
     Get a list of all the tickets for a queue with decending order
     by the time it was created.\n
     Input:\n 
     queue --> The queue to search for.\n
+    status --> Optional params for finding tickets with specific list status.\n
     Return:\n
     The list of the ticket of this queue.\n
     """
-    return Ticket.query.\
-        filter_by(queue_id=queue.id).order_by(Ticket.created_at).desc.all()
+    if status:
+        return Ticket.query.\
+            filter_by(queue_id=queue.id).\
+            order_by(Ticket.created_at).desc.all()
+    else:
+        return Ticket.query.\
+            filter_by(queue_id=queue.id).filter_by(status.in_(status)).\
+            order_by(Ticket.created_at).desc.all()
 
 
-def find_pending_ticket_by_student(queue: Queue, 
-                                   student: User) -> Optional[Ticket]:
-    """
-    Get a ticket for a queue created by a student
-    that is still pending.\n
-    Input:\n 
-    queue --> The queue to search for.\n
-    student --> The student to be looked for.\n
-    Return:\n
-    The pending ticket that is created by student.\n
-    """
-    return Ticket.query.\
-        filter_by(queue_id=queue.id, student_id=student.id,
-                  status=Status.PENDING).first()
-
-
-def find_all_tickets_by_student(queue: Queue, student: User) -> List[Ticket]:
+def find_all_tickets_by_student(queue: Queue,
+                                student: User,
+                                status: List[Status]) -> List[Ticket]:
     """
     Get a list of all the tickets for a queue created by a student
     with decending order by the time it was created.\n
-    Input:\n 
+    Input:\n
     queue --> The queue to search for.\n
     student --> The student to be looked for.\n
+    status --> The list of status to filter.\n
     Return:\n
     The list of the ticket of this queue.\n
     """
     return Ticket.query.\
         filter_by(queue_id=queue.id, student_id=student.id).\
+        filter_by(status.in_(status)).\
         order_by(Ticket.created_at).desc.all()
 
 
@@ -497,12 +493,12 @@ def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
                                   grader_id=grader.id).first()
 
 
-def find_resolved_tickets(queue: Queue, recent_hour=False,
-                          day=False) -> List[Ticket]:
+def find_resolved_tickets_in(queue: Queue, recent_hour=False,
+                             day=False) -> List[Ticket]:
     """
     Get the tickets for the queue that were reolsved.\n
     Inputs:\n
-    queue_id --> the id of the queue to look at.\n
+    queue --> the id of the queue to look at.\n
     recent --> If you want for the recent hour (higher priority).\n
     day --> If you want for only today.\n
     Return:\n
@@ -515,10 +511,43 @@ def find_resolved_tickets(queue: Queue, recent_hour=False,
         lasthour = datetime.now() - timedelta(hours=1)
         return find_tickets_in_range(queue, lasthour, now)
     elif (day):
-        return list(filter(lambda x: x.closed_at == datetime.today(), 
+        return list(filter(lambda x: x.closed_at == datetime.today(),
                            ticket_list))
     else:
         return ticket_list
+
+
+def find_ticket_history_with_offset(queue: Queue, offset: int = 0,
+                                    limit: int = 10,
+                                    student: User = None,
+                                    grader: User = None) -> List[Ticket]:
+    """
+    Find a list of tickets with certain offsets and limits with the order of
+    ticket_id.\n
+    Inputs:\n
+    queue --> The queue to look up.\n
+    offset --> The offset to start looking up.\n
+    limit --> The limit of to display.\n
+    Return:\n
+    A list of tickets.
+    """
+    if (student is not None):
+        return Ticket.query().filter_by(queue_id=queue.id).\
+            filter_by(Ticket.status.in_(Status.RESOLVED,
+                                        Status.CANCELED)).\
+            filter_by(student_id=student.id).\
+            sort_by(id).offset(offset).limit(limit).all()
+    elif (grader is not None):
+        return Ticket.query().filter_by(queue_id=queue.id).\
+            filter_by(Ticket.status.in_(Status.RESOLVED,
+                                        Status.CANCELED)).\
+            filter_by(grader_id=grader.id).\
+            sort_by(id).offset(offset).limit(limit).all()
+    else:
+        Ticket.query().filter_by(queue_id=queue.id).\
+            filter_by(Ticket.status.in_(Status.RESOLVED,
+                                        Status.CANCELED)).\
+            sort_by(id).offset(offset).limit(limit).all()
 
 
 # Ticket stats calultaions
