@@ -180,8 +180,8 @@ class Queue(db.Model):
         """
         unresolved_tickets = t.find_all_tickets(self, [t.Status.PENDING])
 
-        for _ in unresolved_tickets:
-            _.mark_canceled()
+        for ticket in unresolved_tickets:
+            ticket.mark_canceled()
 
     def __repr__(self) -> str:
         """
@@ -190,7 +190,10 @@ class Queue(db.Model):
         The string representation of the course it belongs to.\n
         """
         course = Course.query().filter_by(course_id=self.course_id)
-        return course.__repr__()
+        if (course is not None):
+            return repr(course)
+        else:
+            return None
 
     # Get tickets / tickets related sttaus
     def get_pending_tickets(self) -> List[t.Ticket]:
