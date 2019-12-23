@@ -1,11 +1,7 @@
 from app import db
 from enum import Enum
 from user import User
-from ticket import Ticket, HelpType, TicketTag,\
-                   find_pending_ticket_by_student,\
-                   find_all_tickets, find_ticket_history_with_offset,\
-                   find_all_tickets_by_student
-import ticket
+import ticket as t
 from models.events.ticket_event import TicketEvent, EventType
 from typing import List
 from datetime import datetime
@@ -68,7 +64,8 @@ class Queue(db.Model):
     def add_ticket(self, student: User, title: str,
                    description: str, room: str,
                    workstation: str, is_private: bool,
-                   help_type: HelpType, tag_list: List[TicketTag]) -> Ticket:
+                   help_type: t.HelpType,
+                   tag_list: List[t.TicketTag]) -> t.Ticket:
         """
         Add a ticket.\n
         Inputs:\n
@@ -85,20 +82,21 @@ class Queue(db.Model):
         tag_one = tag_list[0]
         tag_two = tag_list[1] if len(tag_list) > 1 else None
         tag_three = tag_list[2] if len(tag_list) > 2 else None
-        new_ticket = Ticket(created_at=datetime.now(), closed_at=None,
-                            room=room, workstation=workstation,
-                            title=title, description=description,
-                            grader_id=None, queue_id=self.id,
-                            student_id=student.id, is_private=is_private,
-                            accepted_at=None, help_type=help_type,
-                            tag_one=tag_one, tag_two=tag_two,
-                            tag_three=tag_three)
+        new_ticket = t.Ticket(created_at=datetime.now(), closed_at=None,
+                              room=room, workstation=workstation,
+                              title=title, description=description,
+                              grader_id=None, queue_id=self.id,
+                              student_id=student.id, is_private=is_private,
+                              accepted_at=None, help_type=help_type,
+                              tag_one=tag_one, tag_two=tag_two,
+                              tag_three=tag_three)
         return new_ticket
 
     def update_ticket(self, student: User, title: str,
                       description: str, room: str,
-                      workstation: str, is_private: bool, help_type: HelpType,
-                      tag_list: List[TicketTag]) -> Ticket:
+                      workstation: str, is_private: bool,
+                      help_type: t.HelpType,
+                      tag_list: List[t.TicketTag]) -> t.Ticket:
         """
         Update a ticket if exist or add.\n
         Inputs:\n
@@ -112,8 +110,8 @@ class Queue(db.Model):
         Return:\n
         The updated ticket.\n
         """
-        old_ticket = find_pending_ticket_by_student(queue=self,
-                                                    student=student)
+        old_ticket = t.find_pending_ticket_by_student(queue=self,
+                                                      student=student)
         if (old_ticket is not None):
             old_ticket.student_update(title=title, description=description,
                                       room=room, workstation=workstation,
@@ -180,7 +178,7 @@ class Queue(db.Model):
         """
         Clear all the tickets in the queue.
         """
-        unresolved_tickets = find_all_tickets(self, [ticket.Status.PENDING])
+        unresolved_tickets = t.find_all_tickets(self, [t.Status.PENDING])
 
         for _ in unresolved_tickets:
             _.mark_canceled()
@@ -195,46 +193,46 @@ class Queue(db.Model):
         return course.__repr__()
 
     # Get tickets / tickets related sttaus
-    def get_pending_tickets(self) -> List[Ticket]:
+    def get_pending_tickets(self) -> List[t.Ticket]:
         """
         Get all the penidng tickets of the queue.\n
         Results:\n
         A list of tickets that is pending in this queue.\n
         """
-        return find_all_tickets(self, status=[ticket.Status.PENDING])
+        return t.find_all_tickets(self, status=[t.Status.PENDING])
 
-    def get_accepted_tickets(self) -> List[Ticket]:
+    def get_accepted_tickets(self) -> List[t.Ticket]:
         """
         Get all the accepted tickets of the queue.\n
         Results:\n
         A list of tickets that is accepted in this queue.\n
         """
-        return find_all_tickets(self, status=[ticket.Status.ACCEPTED])
+        return t.find_all_tickets(self, status=[t.Status.ACCEPTED])
 
-    def get_unresolved_tickets(self) -> List[Ticket]:
+    def get_unresolved_tickets(self) -> List[t.Ticket]:
         """
         Get all the unresolved tickets of the queue.\n
         Results:\n
         A list of tickets that is either pending or accepeted.\n
         """
-        return find_all_tickets(self, status=[ticket.Status.PENDING,
-                                              ticket.Status.ACCEPTED])
+        return t.find_all_tickets(self, status=[t.Status.PENDING,
+                                                t.Status.ACCEPTED])
 
-    def get_resolved_tickets(self) -> List[Ticket]:
+    def get_resolved_tickets(self) -> List[t.Ticket]:
         """
         Get all the resolved tickets of the queue.\n
         Results:\n
         A list of tickets that is resolved.\n
         """
-        return find_all_tickets(self, status=[ticket.Status.RESOLVED])
+        return t.find_all_tickets(self, status=[t.Status.RESOLVED])
 
-    def get_canceled_tickets(self) -> List[Ticket]:
+    def get_canceled_tickets(self) -> List[t.Ticket]:
         """
         Get all the canceled tickets of the queue.\n
         Results:\n
         A list of tickets that is canceled.\n
         """
-        return find_all_tickets(self, status=[ticket.Status.CANCELED])
+        return t.find_all_tickets(self, status=[t.Status.CANCELED])
 
     def is_at_high_capacity(self) -> bool:
         """
@@ -247,7 +245,7 @@ class Queue(db.Model):
             len(self.get_unresolved_tickets(self)) > threshold
 
     def get_closed_ticktes_history(self, page_num: int = 0,
-                                   num_per_page: int = 10) -> List[Ticket]:
+                                   num_per_page: int = 10) -> List[t.Ticket]:
         """
         Get the closed tickte history of page.\n
         Inputs:\n
@@ -256,12 +254,14 @@ class Queue(db.Model):
         Returns:\n
         List of closed tickets history.\n
         """
-        return find_ticket_history_with_offset(queue=self,
-                                               offset=page_num * num_per_page,
-                                               limit=num_per_page)
+        offset = page_num * num_per_page
+        return t.find_ticket_history_with_offset(queue=self,
+                                                 offset=offset,
+                                                 limit=num_per_page)
 
     def get_closed_ticket_history_for(self, student: User, page_num: int = 0,
-                                      num_per_page: int = 10) -> List[Ticket]:
+                                      num_per_page: int = 10) \
+            -> List[t.Ticket]:
         """
         Get the closed tickte history of page for a student.\n
         Inputs:\n
@@ -271,12 +271,13 @@ class Queue(db.Model):
         Returns:\n
         List of closed tickets history for a student.\n
         """
-        return find_ticket_history_with_offset(queue=self,
-                                               offset=page_num * num_per_page,
-                                               limit=num_per_page,
-                                               student=student)
+        offset = page_num * num_per_page
+        return t.find_ticket_history_with_offset(queue=self,
+                                                 offset=offset,
+                                                 limit=num_per_page,
+                                                 student=student)
 
-    def get_pending_ticket_for(self, student: User) -> Ticket:
+    def get_pending_ticket_for(self, student: User) -> t.Ticket:
         """
         Get a pending ticket for a certain student on this queue.
         (There should only be one pending ticket).
@@ -285,10 +286,10 @@ class Queue(db.Model):
         Returns:\n
         The pending ticket of the student on this queue.\n
         """
-        return find_all_tickets_by_student(queue=self, student=student,
-                                           status=[ticket.Status.PENDING])[0]
+        return t.find_all_tickets_by_student(queue=self, student=student,
+                                             status=[t.Status.PENDING])[0]
 
-    def get_accepted_ticket_for(self, student: User) -> Ticket:
+    def get_accepted_ticket_for(self, student: User) -> t.Ticket:
         """
         Get an accepted ticket for a certain student on this queue.
         (There should only be one pending ticket).
@@ -297,10 +298,10 @@ class Queue(db.Model):
         Returns:\n
         The pending ticket of the student on this queue.\n
         """
-        return find_all_tickets_by_student(queue=self, student=student,
-                                           status=[ticket.Status.ACCEPTED])[0]
+        return t.find_all_tickets_by_student(queue=self, student=student,
+                                             status=[t.Status.ACCEPTED])[0]
 
-    def get_unresolved_ticket_for(self, student: User) -> Ticket:
+    def get_unresolved_ticket_for(self, student: User) -> t.Ticket:
         """
         Get an accepted ticket for a certain student on this queue.
         (There should only be one pending ticket).
@@ -309,9 +310,9 @@ class Queue(db.Model):
         Returns:\n
         The pending ticket of the student on this queue.\n
         """
-        return find_all_tickets_by_student(queue=self, student=student,
-                                           status=[ticket.Status.ACCEPTED,
-                                                   ticket.Status.PENDING])[0]
+        return t.find_all_tickets_by_student(queue=self, student=student,
+                                             status=[t.Status.ACCEPTED,
+                                                     t.Status.PENDING])[0]
 
     # Not implementing getLastResolvedTicketFor since it was only used
     # In tickets stats which is already handled.

@@ -267,7 +267,8 @@ class Ticket(db.Model):
         """
         Determine if the ticket can be viewed by a given user.\n
         Inputs:\n
-        user --> The User object of the user who is trying to view the ticket.\n
+        user --> The User object of the user who is trying to view the 
+        ticket.\n
         Return:\n
         The bool for whether a user can view.\n
         """
@@ -289,7 +290,8 @@ class Ticket(db.Model):
         """
         Determine if the ticket can be edited by a given user.\n
         Inputs:\n
-        user --> The User object of the user who is trying to edit the ticket.\n
+        user --> The User object of the user who is trying to edit the
+        ticket.\n
         Return:\n
         The bool for whether a user can edit.\n
         """
