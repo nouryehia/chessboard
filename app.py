@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = FlaskAPI(__name__)
 CORS(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql:///autograder'
 db = SQLAlchemy(app)
 db.init_app(app)
 

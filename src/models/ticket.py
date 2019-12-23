@@ -3,11 +3,11 @@ from enum import Enum
 from typing import List, Optional
 from datetime import datetime, timedelta
 from operator import attrgetter
-from user import User
-from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
-from course import Course # Pretending
-from ticket_feedback import TicketFeedback # Pretending
-from ticket_event import TicketEvent # Pretending
+#from user import User
+#from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
+#from course import Course # Pretending
+#from ticket_feedback import TicketFeedback # Pretending
+#from ticket_event import TicketEvent # Pretending
 from queue import Queue
 
 
@@ -102,27 +102,27 @@ class Ticket(db.Model):
     tag_three --> The ticket tag for this ticket. Nullable.\n
     """
     __tablename__ = 'Ticket'
-    id = db.Column(db.Integer(20), primary_key=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     created_at = db.Column(db.DateTime, nullable=True)
     closed_at = db.Column(db.DateTime, nullable=True)
     room = db.Column(db.String(255), nullable=False)
     workstaton = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.Integer(11), nullable=False,
+    status = db.Column(db.Integer, nullable=False,
                        default=Status.PENDING)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    grader_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
+    grader_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                           nullable=True)
-    queue_id = db.Column(db.Integer(20), db.ForeignKey('queue.id'),
+    queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'),
                          nullable=False)
-    student_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True)
-    help_type = db.Column(db.Integer(11), nullable=False)
-    tag_one = db.Column(db.Integer(11), nullable=False)
-    tag_two = db.Column(db.Integer(11), nullable=True)
-    tag_three = db.Column(db.Integer(20), nullable=True)
+    help_type = db.Column(db.Integer, nullable=False)
+    tag_one = db.Column(db.Integer, nullable=False)
+    tag_two = db.Column(db.Integer, nullable=True)
+    tag_three = db.Column(db.Integer, nullable=True)
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:

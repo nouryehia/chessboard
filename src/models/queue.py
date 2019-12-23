@@ -45,10 +45,10 @@ class Queue(db.Model):
                        submisions.\n
     """
     __tablename__ = 'Queue'
-    id = db.Column(db.Integer(20), primary_key=True, nullable=False)
-    status = db.Column(db.Integer(11), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    status = db.Column(db.Integer, nullable=False)
     high_capacity_enabled = db.Column(db.Boolean, nullable=False, default=True)
-    high_capacity_threshold = db.Column(db.Integer(20), nullable=False,
+    high_capacity_threshold = db.Column(db.Integer, nullable=False,
                                         default=25)
     high_capacity_message = db.Column(db.Text, nullable=False,
                                       default='The queue is currently at high \
@@ -59,7 +59,7 @@ class Queue(db.Model):
                                       default='The queue is currently very busy. \
                                               You may not be helped before \
                                               tutor hours end.')
-    ticket_cooldown = db.Column(db.Integer(11), nullable=False, default=10)
+    ticket_cooldown = db.Column(db.Integer, nullable=False, default=10)
 
     def add_ticket(self, student: User, title: str,
                    description: str, room: str,

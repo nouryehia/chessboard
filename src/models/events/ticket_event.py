@@ -40,14 +40,14 @@ class TicketEvent(db.model):
     user_id --> The user that created this event.\n
     timestamp --> The timestamp of this event.\n
     """
-    id = db.Column(db.Integer(20), primary_key=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     # need to change a name in db, since type is a presereved word in python
-    event_type = db.Column(db.Integer(11), nullable=False)
-    ticket_id = db.Column(db.Integer(20), db.ForeignKey('ticket.id'),
+    event_type = db.Column(db.Integer, nullable=False)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'),
                           nullable=False)
     message = db.Column(db.String(255), nullable=True)
     is_private = db.Column(db.Boolean, nullable=False)
-    user_id = db.Column(db.Integer(20), db.ForeignKey('user.id'),
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                         nullable=False)
     timestamp = db.Column(db.Datetime, nullable=False, default=datetime.now())
 
