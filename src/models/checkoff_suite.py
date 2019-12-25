@@ -7,6 +7,10 @@ from enum import Enum
 
 
 class Status(Enum):
+    """
+    Enum that describes the different statuses a checkoff can be at\n
+    it its lifecycle\n
+    """
     HIDDEN = 0          # Created but not available to students/graders
     AVAILABLE = 1       # Available to students for submission
     FINALIZED = 2       # Grades submitted, moved to archived state
@@ -28,6 +32,10 @@ class CheckoffSuite(db.Model):
     def __init__(self,
                  assignment: Assignment,
                  checkoffs: List[Checkoff], **kwargs):
+        """
+        Constructor that adds extra non-database fields for a checkoff\n
+        suite\n
+        """
         super(CheckoffSuite, self).__init__(**kwargs)
         self.assignment = assignment
         self.checkoffs = checkoffs
