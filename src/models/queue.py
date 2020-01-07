@@ -4,16 +4,15 @@ from user import User
 import ticket as t
 from models.events.ticket_event import TicketEvent, EventType
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from course import Course # pretending
 
 
 """
 Define Constant
 """
-MILLIS_MINUTE_CONVERT = 60 * 1000
-DEFAULT_WAIT_TIME = 12 * 60 * 1000  # 12min
-MIN_WAIT_TIME = 5 * 60 * 1000  # 5min
+DEFAULT_WAIT_TIME = timedelta(minutes=12)  # 12min
+MIN_WAIT_TIME = timedelta(minutes=5)  # 5min
 
 
 class Status(Enum):
@@ -321,3 +320,26 @@ class Queue(db.Model):
     # In tickets stats which is already handled.
 
     # Impelementing Queue Stats
+    def average_help_time(self, day: bool = True, hour: bool = False, 
+                          start: datetime = None) -> timedelta:
+        """
+        Get the average help time within a time period for tickes in
+        the queue.\n
+        Inputs:\n
+        day --> To look for a day, default would be true.\n
+        hour --> To look for the recent hour, default would be false.\n
+        start --> The start time to look for. The default would be None.
+                  If start is provided, it has priority among hour and day.\n
+        Returns:\n
+        A timedelta object representing the averge help time for the tickes
+        given that period.\n
+        """
+        if (start is not None):
+            day = False
+            hour = False
+        tickets = t.find_resolved_tickets_in(self, day=day,
+                                             hour=hour, start=start)
+        if (len(tickets) < 5):
+            return MIN_WAIT_TIME
+        average_resolved_time = t.average_resolved_time(tickets)
+        return timedelta(seconds=average_resolved_time)

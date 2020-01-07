@@ -518,14 +518,16 @@ def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
                                   grader_id=grader.id).first()
 
 
-def find_resolved_tickets_in(queue: Queue, recent_hour=False,
-                             day=False) -> List[Ticket]:
+def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
+                             day: bool = False,
+                             start: datetime = None) -> List[Ticket]:
     """
     Get the tickets for the queue that were reolsved.\n
     Inputs:\n
     queue --> the id of the queue to look at.\n
     recent --> If you want for the recent hour (higher priority).\n
     day --> If you want for only today.\n
+    start --> If you want a specific start time, default is None.\n
     Return:\n
     A list of tickets resolved for this queue given a certain range (or not).\n
     """
@@ -539,6 +541,9 @@ def find_resolved_tickets_in(queue: Queue, recent_hour=False,
         return list(filter(lambda x: x.closed_at == datetime.today(),
                            ticket_list))
     else:
+        if (start is not None):
+            ticket_list = list(filter(lambda x: start <= x.closed_at,
+                                      ticket_list))
         return ticket_list
 
 
