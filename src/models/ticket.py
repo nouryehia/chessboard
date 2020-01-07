@@ -3,11 +3,11 @@ from enum import Enum
 from typing import List, Optional
 from datetime import datetime, timedelta
 from operator import attrgetter
-#from user import User
-#from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
-#from course import Course # Pretending
-#from ticket_feedback import TicketFeedback # Pretending
-#from ticket_event import TicketEvent # Pretending
+from user import User
+from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
+from course import Course # Pretending
+from ticket_feedback import TicketFeedback # Pretending
+from ticket_event import TicketEvent # Pretending
 from queue import Queue
 
 
@@ -84,7 +84,8 @@ class Ticket(db.Model):
     The ticket model of the database.
     Fields:
     id --> The id of the ticket, unique primary key.\n
-    created_at --> The time that this ticket is created.\n
+    created_at --> The time that this ticket is created,
+                   default is the current time.\n
     closed_at --> The time that this ticket is closed. Nullable\n
     room --> The room that this student is in.\n
     workstaton --> The workstation of the student.\n
@@ -103,8 +104,8 @@ class Ticket(db.Model):
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=True)
-    closed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=True, default=datetime.now)
+    closed_at = db.Column(db.DateTime, nullable=True, deafult=None)
     room = db.Column(db.String(255), nullable=False)
     workstaton = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer, nullable=False,
@@ -112,17 +113,39 @@ class Ticket(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
     grader_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-                          nullable=True)
+                          nullable=True, default=None)
     queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'),
                          nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
-    accepted_at = db.Column(db.DateTime, nullable=True)
+    accepted_at = db.Column(db.DateTime, nullable=True, default=None)
     help_type = db.Column(db.Integer, nullable=False)
     tag_one = db.Column(db.Integer, nullable=False)
-    tag_two = db.Column(db.Integer, nullable=True)
-    tag_three = db.Column(db.Integer, nullable=True)
+    tag_two = db.Column(db.Integer, nullable=True, default=None)
+    tag_three = db.Column(db.Integer, nullable=True, default=None)
+
+    def __init__(self, **kwargs):
+        """
+        The constructor of the ticket object.\n
+        Inputs:\n
+        created_at --> The time that ticket is created, default is None.\n
+        room --> The room that this ticket is in.\n
+        workstation --> the workstation that the ticket at.\n
+        title --> The title of this ticket.\n
+        description --> The description of this ticket.\n
+        queue_id --> The queue it for that queue.\n
+        student_id --> The student_id of the student who created the ticket.\n
+        is_private --> Wheather this ticket is private.\n
+        helpy_type --> The type of help student demands.\n
+        tag_one --> The first tag to the ticket.\n
+        tag_two --> The second tag (default is none) to the ticket.\n
+        tag_three --> The third tag (dfault is none) to the ticket.\n
+        """
+        super(Ticket, self).__init__(**kwargs)
+        db.session.add(self)
+        db.session.commit()
+        return self
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:

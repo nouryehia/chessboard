@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = FlaskAPI(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql:///autograder'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:woshishabi2333@localhost/autograder'
 db = SQLAlchemy(app)
 db.init_app(app)
 
@@ -15,4 +15,5 @@ def hello():
 
 
 if __name__ == '__main__':
+    db.create_all()
     app.run('0.0.0.0', 5000, debug=True)
