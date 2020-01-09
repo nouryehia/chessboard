@@ -292,7 +292,7 @@ class Queue(db.Model):
         return t.find_all_tickets_by_student(queue=self, student=student,
                                              status=[t.Status.PENDING])[0]
 
-    def get_accepted_ticket_for(self, student: User) -> Optioal[t.Ticket]:
+    def get_accepted_ticket_for(self, student: User) -> Optional[t.Ticket]:
         """
         Get an accepted ticket for a certain student on this queue.
         (There should only be one pending ticket).
