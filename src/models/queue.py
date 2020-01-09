@@ -3,9 +3,10 @@ from enum import Enum
 from user import User
 import ticket as t
 from models.events.ticket_event import TicketEvent, EventType
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 from course import Course # pretending
+import news_feed_post as nfp # pretending
 
 
 """
@@ -279,7 +280,7 @@ class Queue(db.Model):
                                                  limit=num_per_page,
                                                  student=student)
 
-    def get_pending_ticket_for(self, student: User) -> t.Ticket:
+    def get_pending_ticket_for(self, student: User) -> Optional[t.Ticket]:
         """
         Get a pending ticket for a certain student on this queue.
         (There should only be one pending ticket).
@@ -291,7 +292,7 @@ class Queue(db.Model):
         return t.find_all_tickets_by_student(queue=self, student=student,
                                              status=[t.Status.PENDING])[0]
 
-    def get_accepted_ticket_for(self, student: User) -> t.Ticket:
+    def get_accepted_ticket_for(self, student: User) -> Optioal[t.Ticket]:
         """
         Get an accepted ticket for a certain student on this queue.
         (There should only be one pending ticket).
@@ -303,9 +304,9 @@ class Queue(db.Model):
         return t.find_all_tickets_by_student(queue=self, student=student,
                                              status=[t.Status.ACCEPTED])[0]
 
-    def get_unresolved_ticket_for(self, student: User) -> t.Ticket:
+    def get_unresolved_ticket_for(self, student: User) -> Optional[t.Ticket]:
         """
-        Get an accepted ticket for a certain student on this queue.
+        Get an unresolved ticket for a certain student on this queue.
         (There should only be one pending ticket).
         Inputs:\n
         student -> The User object for the student.\n
@@ -316,11 +317,126 @@ class Queue(db.Model):
                                              status=[t.Status.ACCEPTED,
                                                      t.Status.PENDING])[0]
 
+    def get_resolved_ticket_for(self, student: User) -> List[t.Ticket]:
+        """
+        Get an resolved ticket for a certain student on this queue.
+        Inputs:\n
+        student -> The User object for the student.\n
+        Returns:\n
+        A list of tickets of the student on this queue that are resolved.\n
+        """
+        return t.find_all_tickets_by_student(queue=self, student=student,
+                                             status=[t.Status.RESOLVED])
+
+    def get_canceled_ticket_for(self, student: User) -> List[t.Ticket]:
+        """
+        Get an canceled ticket for a certain student on this queue.
+        Inputs:\n
+        student -> The User object for the student.\n
+        Returns:\n
+        A list of tickets of the student on this queue that are resolved.\n
+        """
+        return t.find_all_tickets_by_student(queue=self, student=student,
+                                             status=[t.Status.CANCELED])
+
     # Not implementing getLastResolvedTicketFor since it was only used
     # In tickets stats which is already handled.
 
+    # Student bool query methods
+    def has_pending_tickect_for(self, student: User) -> bool:
+        """
+        Check whether this student has a pending ticket in this queue.\n
+        Inputs:\n
+        student --> The student object to look for.\n
+        Returns:\n
+        A bool value indicate whether there is or there is not a pending
+        ticekct.\n
+        """
+        return self.get_pending_ticket_for(student) is not None
+    
+    def has_accepted_tickect_for(self, student: User) -> bool:
+        """
+        Check whether this student has an accepted ticket in this queue.\n
+        Inputs:\n
+        student --> The student object to look for.\n
+        Returns:\n
+        A bool value indicate whether there is or there is not a pending
+        ticekct.\n
+        """
+        return self.get_accepted_ticket_for(student) is not None
+
+    def has_unresolved_tickect_for(self, student: User) -> bool:
+        """
+        Check whether this student has an accepted ticket in this queue.\n
+        Inputs:\n
+        student --> The student object to look for.\n
+        Returns:\n
+        A bool value indicate whether there is or there is not a pending
+        ticekct.\n
+        """
+        return self.get_unresolved_ticket_for(student) is not None
+
+    # Grader Ticket Queuery Methods
+    def get_ticket_accepted_by(self, grader: User, all: bool = False) \
+            -> List[t.Ticket]:
+        """
+        Get tickes accepted by a grader with a choice of how many tickest to
+        look for.\n
+        Inputs:\n
+        grader --> The grader to search for.\n
+        all --> Indicate you whether all tickets are returned.\n
+        Returns:\n
+        A list of tickects that is accepted by the grader
+        (If only one is needed, the ticket will be the first one and
+        the only one in the list).\n
+        """
+        if (all):
+            return t.find_all_ticket_accpeted_by_grader(self, grader=grader)
+        else:
+            return [t.find_ticket_accpeted_by_grader(self, grader=grader)]
+
+    def get_ticket_resolved_by(self, grader: User) -> List[t.Ticket]:
+        """
+        Get all the tickes resolved by a grader.
+        Inputs:\n
+        grader --> The grader to search for.\n
+        Returns:\n
+        A list of tickest that is resolved by the grader.\n
+        """
+        tickets = t.find_all_tickets_for_grader(self, grader)
+        return list(filter(lambda x: x.status == t.Status.RESOLVED), tickets)
+
+    # Grader tickets bool query methods
+    def has_ticket_accepted_by(self, grader: User) -> bool:
+        return len(self.get_ticket_accepted_by(grader)) != 0
+
+    # News feed post functionalities
+    def get_news_feed_post(self, num: int = 20) -> List[nfp.NewsFeedPost]:
+        """
+        Get the news feed post on the queue.
+        Inputs:\n
+        num --> The number of news feed posts to look up for.
+        Returns:\n
+        A list of news feed post.
+        """
+        # nfp.find...
+        pass
+
+    def get_archived_news_feed_post(self, num: int = 20)\
+            -> List[nfp.NewsFeedPost]:
+        """
+        Get the archeived news feed posts for the queue.
+        Inputs:\n
+        Inputs:\n
+        num --> The number of news feed posts to look up for.
+        Returns:\n
+        A list of archived news feed post.
+        """
+        # nfp.find...
+        pass
+
     # Impelementing Queue Stats
-    def average_help_time(self, day: bool = True, hour: bool = False, 
+    def average_help_time(self, day: bool = True, hour: bool = False,
                           start: datetime = None) -> timedelta:
         """
         Get the average help time within a time period for tickes in
@@ -343,3 +459,36 @@ class Queue(db.Model):
             return MIN_WAIT_TIME
         average_resolved_time = t.average_resolved_time(tickets)
         return timedelta(seconds=average_resolved_time)
+
+    # getExpectedTimeUntilAvailableTutor need a query method probably in
+    # enrolled classs...
+
+    # TODO
+    # Finish up queue stats
+    # Login and Logout for the user (Grader)
+
+
+# None Memeber Queue Methods
+def find_current_queue_for_user(user: User) -> List[Queue]:
+    """
+    Find all the queues that this user is in currently.
+    Inputs:\n
+    user --> The User object to look for.
+    Returns:\n
+    A list of Queue that the user is in this quarter.
+    """
+    # TODO
+    # Use the methods from enrolled class by using User methods to find
+    # the enrolled classes of that user and fetch the queues of those classes.
+    pass
+
+
+def find_queue_for_course(course: Course) -> Optional[Queue]:
+    """
+    Find the queue corresponding for a course.
+    Inputs:\n
+    course --> the Course object to look for.
+    Returns:\n
+    The queue for that course, if a queue does not exist, None is return.\n
+    """
+    return Queue.query().filter(id=course.queue_id).first()

@@ -1,8 +1,8 @@
 import os
-import queue as q
+import src.models.queue as q
 from app import db
 
-test_q = Queue(status=Status.CLOSED)
+test_q = q.Queue(status=q.Status.CLOSED)
 db.session.add(test_q)
 db.session.commit()
-print(Queue.query.all())
+print(q.Queue.query.all())
