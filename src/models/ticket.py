@@ -32,6 +32,7 @@ class Status(Enum):
     ACCEPTED --> 1\n
     RESOLVED --> 2\n
     CANCELED --> 3\n
+    @author YixuanZhou
     """
     PENDING = 0
     ACCEPTED = 1
@@ -45,6 +46,7 @@ class HelpType (Enum):
         with the following options --> database value:\n
     Question --> 0\n
     Checkoff --> 1\n
+    @author YixuanZhou
     """
     QUESTION = 0
     CHECKOFF = 1
@@ -65,6 +67,7 @@ class TicketTag (Enum):
     INFINITE_LOOP --> 8\n
     WEIRD_BEHAVIOR --> 9\n
     WEIRD_DEBUG --> 10\n
+    @author YixuanZhou
     """
     GETTING_STARTED = 0
     SPECIFICATION = 1
@@ -101,6 +104,7 @@ class Ticket(db.Model):
                 a tag.\n
     tag_two --> The ticket tag for this ticket. Nullable.\n
     tag_three --> The ticket tag for this ticket. Nullable.\n
+    @author YixuanZhou
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -490,8 +494,9 @@ def find_tickets_in_range(queue: Queue, start: datetime,
     Input:\n
     queue_id --> The id of the queue to look at.\n
     grader --> An optional User object, use it if want to find for a grader.\n
-    start --> The begining of the range.\n
-    end --> The end of the range.\n
+    start --> The begining of the range,
+              it would be 1 hour before by default.\n
+    end --> The end of the range, it would be now by default.\n
     Return:\n
     A list of tickets in this range.\n
     """
@@ -502,6 +507,10 @@ def find_tickets_in_range(queue: Queue, start: datetime,
         ticket_list = Ticket.query.filter_by(queue_id=queue.id,
                                              grader_id=grader.id,
                                              status=Status.RESOLVED).all()
+    if (start is None):
+        start = datetime.now() - timedelta(hours=1)
+    if (end is None):
+        end = datetime.now()
     return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
 
 
@@ -520,14 +529,16 @@ def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
 
 def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
                              day: bool = False,
-                             start: datetime = None) -> List[Ticket]:
+                             start: datetime = None,
+                             end: datetime = None) -> List[Ticket]:
     """
     Get the tickets for the queue that were reolsved.\n
     Inputs:\n
     queue --> the id of the queue to look at.\n
-    recent --> If you want for the recent hour (higher priority).\n
-    day --> If you want for only today.\n
+    recent --> If you want for the recent hour (1st priority).\n
+    day --> If you want for only today (2nd priority).\n
     start --> If you want a specific start time, default is None.\n
+    end --> For a specifice end time, default is None.\n
     Return:\n
     A list of tickets resolved for this queue given a certain range (or not).\n
     """
@@ -536,14 +547,12 @@ def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
     if (recent_hour):
         now = datetime.now()
         lasthour = datetime.now() - timedelta(hours=1)
-        return find_tickets_in_range(queue, lasthour, now)
+        return find_tickets_in_range(queue=queue, start=lasthour, end=now)
     elif (day):
         return list(filter(lambda x: x.closed_at == datetime.today(),
                            ticket_list))
     else:
-        if (start is not None):
-            ticket_list = list(filter(lambda x: start <= x.closed_at,
-                                      ticket_list))
+        return find_tickets_in_range(queue=queue, start=start, end=end)
         return ticket_list
 
 

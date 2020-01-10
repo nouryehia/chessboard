@@ -4,3 +4,4 @@ __pycache__
 *.dSYM
 *.sw*
 venv/
+app.py

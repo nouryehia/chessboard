@@ -7,6 +7,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from course import Course # pretending
 import news_feed_post as nfp # pretending
+import enrolled_class as ec # pretending
 
 
 """
@@ -22,6 +23,7 @@ class Status(Enum):
     OPEN --> 0\n
     LOCKED --> 1\n
     CLOSED --> 2\n
+    @author YixuanZhou
     """
     OPEN = 0
     LOCKED = 1
@@ -43,6 +45,7 @@ class Queue(db.Model):
     defaultTagsEnabled --> If the tag of the queue is enabled. ??? \n
     ticketCooldown --> Int for the time to wait between two tickets
                        submisions.\n
+    @author YixuanZhou
     """
     __tablename__ = 'Queue'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -353,7 +356,7 @@ class Queue(db.Model):
         ticekct.\n
         """
         return self.get_pending_ticket_for(student) is not None
-    
+
     def has_accepted_tickect_for(self, student: User) -> bool:
         """
         Check whether this student has an accepted ticket in this queue.\n
@@ -419,7 +422,8 @@ class Queue(db.Model):
         Returns:\n
         A list of news feed post.
         """
-        # nfp.find...
+        # return nfp.find...
+        # Use the npf.find methods for the news_feed_post
         pass
 
     def get_archived_news_feed_post(self, num: int = 20)\
@@ -432,12 +436,14 @@ class Queue(db.Model):
         Returns:\n
         A list of archived news feed post.
         """
-        # nfp.find...
+        # return nfp.find...
+        # Use the npf.find methods for the news_feed_post
         pass
 
     # Impelementing Queue Stats
     def average_help_time(self, day: bool = True, hour: bool = False,
-                          start: datetime = None) -> timedelta:
+                          start: datetime = None,
+                          end: datetime = None) -> timedelta:
         """
         Get the average help time within a time period for tickes in
         the queue.\n
@@ -446,6 +452,8 @@ class Queue(db.Model):
         hour --> To look for the recent hour, default would be false.\n
         start --> The start time to look for. The default would be None.
                   If start is provided, it has priority among hour and day.\n
+        end --> The end time to look for. The default would be None.
+                end would only work if start is provied.\n
         Returns:\n
         A timedelta object representing the averge help time for the tickes
         given that period.\n
@@ -454,7 +462,7 @@ class Queue(db.Model):
             day = False
             hour = False
         tickets = t.find_resolved_tickets_in(self, day=day,
-                                             hour=hour, start=start)
+                                             hour=hour, start=start, end=end)
         if (len(tickets) < 5):
             return MIN_WAIT_TIME
         average_resolved_time = t.average_resolved_time(tickets)
@@ -462,6 +470,18 @@ class Queue(db.Model):
 
     # getExpectedTimeUntilAvailableTutor need a query method probably in
     # enrolled classs...
+    def get_expected_time_for_next_tutor(self) -> timedelta:
+        """
+        Get the expected wait time for the next tutor to be avaliable
+        Returns:\n
+        The timedelta object for the expected time for the next tutor to be
+        avaliale.
+        """
+        ave_resolve_time_hour = self.average_help_time(hour=True)
+        pending_num = self.get_pending_tickets()
+        active_tutor_num = ec.find_active_tutor_for(self) 
+        # Use enrolled course methods to find the num of active tutor.
+
 
     # TODO
     # Finish up queue stats
