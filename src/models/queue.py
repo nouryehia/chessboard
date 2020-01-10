@@ -477,11 +477,22 @@ class Queue(db.Model):
         The timedelta object for the expected time for the next tutor to be
         avaliale.
         """
-        ave_resolve_time_hour = self.average_help_time(hour=True)
-        pending_num = self.get_pending_tickets()
-        active_tutor_num = ec.find_active_tutor_for(self) 
+        ave_resolve_time = self.average_help_time(hour=True)
+        # pending_num = self.get_pending_tickets()
+        active_tutor_num = ec.find_active_tutor_for(self)  # need ec
         # Use enrolled course methods to find the num of active tutor.
+        accepted_tickets = self.get_accepted_tickets()
+        next_avaliable = timedelta(seconds=0)
+        if (active_tutor_num > len(accepted_tickets)):
+            return next_avaliable
+        now = datetime.now()
+        # Simplifing the algorithm for now (without using utils)
+        for ticket in accepted_tickets:
+            current_help_time = now - ticket.accepted_at
+            potential_time_need = ave_resolve_time - current_help_time
+            next_avaliable = max(next_avaliable, potential_time_need)
 
+        return next_avaliable
 
     # TODO
     # Finish up queue stats
