@@ -71,6 +71,14 @@ class User(db.Model):
 
     @staticmethod
     def check_password(email: str, passwd: str) -> bool:
+        '''
+        Function that checks if the given password is valid
+        for the user with the given email. If the email does not
+        map to a valid user, we return `False`.\n
+        Params: email - string. User to use.\n
+        passwd - string. Given password. At this point, it is still unhashed.\n
+        Returns: boolean value.
+        '''
         user = User.query.filter_by(email=email).first()
         if user:
             return pbkdf2_sha256.verify(user.password, passwd)
