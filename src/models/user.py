@@ -79,7 +79,7 @@ class User(db.Model):
     def get_courses_for_user(self) -> List[EnrolledCourse]:
         '''
         Database query for getting all EnrolledCourses for our user.\n
-        Params: None
+        Params: None\n
         Returns: A list of EnrolledCourses (can be empty)
         '''
         return EnrolledCourse.query.filter_by(user_id=self.id).all()
@@ -88,8 +88,25 @@ class User(db.Model):
     def create_random_password(user) -> None:
         '''
         Function used to generate a random password for a user.\n
-        Params: user - User
+        Params: user - User\n
         Returns: None
         '''
         user.password = gen_password()
         user.save()
+
+    @staticmethod
+    def find_by_pid_with_email_fallback(pid: str, email: str):
+        '''
+        Function that tries to find a user using their PID first,
+        then uses their email as a fallback.
+
+        Note that this function may return `None` if the given PID
+        and email both do not map to any known users.\n
+        Params: pid - string. email - string.\n
+        Returns: Optional[User]
+        '''
+        user = User.query.filter_by(pid=pid).first()
+
+        if not pid or pid == '' or not user:
+            user = User.query.filter_by(email=email).first()
+        return user
