@@ -90,6 +90,8 @@ class User(db.Model):
         Params: None\n
         Returns: A list of EnrolledCourses (can be empty)
         '''
+        # TODO: Come back to this and change it to a function call
+        # we don't wanna query a different table directly
         return EnrolledCourse.query.filter_by(user_id=self.id).all()
 
     @staticmethod
