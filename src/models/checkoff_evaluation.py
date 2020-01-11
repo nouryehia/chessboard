@@ -32,7 +32,8 @@ class CheckoffEvaluation(db.Model):
     grader --> Grader for the checkoff\n
     student --> User who the checkoff belongs to\n
     """
-    def create_eval(self, assignment: Checkoff, grader: User,
+    @staticmethod
+    def create_eval(assignment: Checkoff, grader: User,
                     student: User):
         return CheckoffEvaluation(assignment, grader, student)
 
@@ -42,10 +43,12 @@ class CheckoffEvaluation(db.Model):
     checkoff_id --> ID of the checkoff assignment\n
     student_id --> ID of the student\n
     """
-    def find_checkoff(self, checkoff_id: int,
+    @staticmethod
+    def find_checkoff(checkoff_id: int,
                       student_id: int):
-        return CheckoffEvaluation.query.filter_by(checkoff=checkoff_id,
-                                                  student=student_id).first()
+        return CheckoffEvaluation.query \
+            .filter_by(checkoff_id=checkoff_id,
+                       student_id=student_id).first()
 
     """
     Find the newest checkoff evaluated for the student\n
@@ -53,10 +56,11 @@ class CheckoffEvaluation(db.Model):
     checkoff_id --> ID of the checkoff\n
     student_id --> ID of the student\n
     """
-    def find_newest_checkoff(self, checkoff_id: int,
+    @staticmethod
+    def find_newest_checkoff(checkoff_id: int,
                              student_id: int):
         return CheckoffEvaluation.query \
-            .filter_by(checkoff=checkoff_id, student=student_id) \
+            .filter_by(checkoff_id=checkoff_id, student_id=student_id) \
             .order_by(self.checkoff_time).desc().first()
 
     """
@@ -66,12 +70,14 @@ class CheckoffEvaluation(db.Model):
     assignment_id --> ID of the assignment that is checked off\n
     student_id --> ID of the student\n
     """
-    def find_all_for_assignment_for_student_for_grader(self,
-                                                       assignment_id: int,
-                                                       student_id: int):
+    @staticmethod
+    def find_all_for_assignment_for_student_for_grader(assignment_id: int,
+                                                       student_id: int,
+                                                       grader_id: int):
         return CheckoffEvaluation.query \
-                .filter_by(assignment_id=self.checkoff.suite.assignment_id, #NOT SURE ABOUT THIS ONE??
-                           student=student_id, grader=self.grader_id).fetch()
+            checkoff.suite_id.assignment_id=assignment_id
+                .filter_by(checkoff.suite_id.assignment_id=assignment_id,
+                           student_id=student_id, grader_id=grader_id).fetch()
 
     """
     Finds all checkoffs evaluated by the grader for that assignment\n
@@ -80,51 +86,54 @@ class CheckoffEvaluation(db.Model):
     section_id --> ID of the section\n
     grader_id --> ID of the grader\n
     """
-    def find_all_for_assignment_for_grader(self, assignment_id: int,
+    @staticmethod
+    def find_all_for_assignment_for_grader(assignment_id: int,
                                            section_id: int,
                                            grader_id: int):
         section = Section.findById(section_id)
         evaluations = []
         for student in section.usernames:
-            evaluations.add(self
-                            .find_all_for_assignment_for_student_for_grader
-                            (assignment_id, self.student_id))
+            evaluations.add(find_all_for_assignment_for_student_for_grader
+                            (assignment_id, student_id))
         return evaluations
 
-    """
-    Finds all checkoffs evaluated for that assignment\n
-    Fields:
-    assignment_id --> ID of the assignment that is checked off\n
-    """
+    @staticmethod
     def find_all_for_assignment(self, assignment_id: int):
+        """
+        Finds all checkoffs evaluated for that assignment\n
+        Fields:
+        assignment_id --> ID of the assignment that is checked off\n
+        """
         return CheckoffEvaluation.query \
-            .filter_by(assignment_id=self.checkoff.suite_id.assignment_id) \  #NOT SURE ABOUT THIS ONE??
-            .order_by(self.checkoff_time).desc.fetch()
+            .filter_by(checkoff.suite_id.assignment_id=assignment_id) \
+            .order_by(checkoff_time).desc.fetch()
 
-    """
-    Finds checkoffs evaluated for the student for that assignment\n
-    Fields:
-    assignment_id --> ID of the assignment that is checked off\n
-    student_id --> ID of the student\n
-    """
-    def find_all_for_assignment_for_student(self, assignment_id: int,
+    @staticmethod
+    def find_all_for_assignment_for_student(assignment_id: int,
                                             student_id: int):
+        """
+        Finds checkoffs evaluated for the student for that assignment\n
+        Fields:
+        assignment_id --> ID of the assignment that is checked off\n
+        student_id --> ID of the student\n
+        """
         return CheckoffEvaluation.query \
-                .filter_by(assignment_id=self.checkoff.suite.assignment_id, #NOT SURE ABOUT THIS ONE??
-                           student=student_id).fetch()
+            .filter_by(assignment_id=checkoff.suite.assignment_id,
+                       student=student_id).fetch()
 
-    """
-    Finds all checkoffs evaluated for a section for that assignment
-    Fields:
-    assignment_id --> ID of the assignment that is checked off
-    section_id --> ID of the student\n
-    """
-    def find_all_for_assignment_for_section(self, assignment_id: int,
+    @staticmethod
+    def find_all_for_assignment_for_section(assignment_id: int,
                                             section_id: int):
+        """
+        Finds all checkoffs evaluated for a section for that assignment
+        Fields:
+        assignment_id --> ID of the assignment that is checked off
+        section_id --> ID of the student\n
+        """
         section = Section.findById(section_id)
         evaluations = []
         for student in section.usernames:
             evaluations \
-                .add(self.find_all_for_assignment_for_student(assignment_id,
-                                                              self.student_id))
+                .add(find_all_for_assignment_for_student(assignment_id,
+                                                         student_id))
         return evaluations
