@@ -49,7 +49,7 @@ class Queue(db.Model):
     """
     __tablename__ = 'Queue'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    status = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Integer, nullable=False, default=Status.CLOSED)
     high_capacity_enabled = db.Column(db.Boolean, nullable=False, default=True)
     high_capacity_threshold = db.Column(db.Integer, nullable=False,
                                         default=25)
@@ -63,6 +63,21 @@ class Queue(db.Model):
                                               You may not be helped before \
                                               tutor hours end.')
     ticket_cooldown = db.Column(db.Integer, nullable=False, default=10)
+
+    def __init__(self, **kwargs):
+        """
+        The constructor the queue object.\n
+        Inputs:\n
+        high_capacity_enabled --> Whether to enable high capacity or not.
+                                  Default is true. \n
+        high_capacity_enabled --> High capacity message. Default is provided.\n
+        high_Capacity_waring --> The Warning to the student.
+                                 Default is provided.\n
+        ticket_cooldown --> The cooldown time for the ticket.\n
+        """
+        super(Queue, self).__init__(**kwargs)
+        db.sessino.add(self)
+        db.session.commit()
 
     def add_ticket(self, student: User, title: str,
                    description: str, room: str,
@@ -503,21 +518,15 @@ class Queue(db.Model):
         The expected wait time for this student's ticket to be accepted.
         If this student has no tickect in the queue, return None.\n
         """
-        pending_tickets = self.get_pending_tickets()  # should be sorted
         student_ticket = self.get_pending_ticket_for(student=student)
         if student_ticket is None:
             return None
         # Get the number of tickets before this student's
-        index = 0
-        for ticket in pending_tickets:
-            if ticket.id == student_ticket.id:
-                break
-            else:
-                index += 1
+        position = student_ticket.get_position()
         wait_time = timedelta(seconds=0)
         next_avaliable = self.wait_time_for_next_tutor()
         ave_help_time = self.average_help_time()
-        wait_time = index * ave_help_time + next_avaliable
+        wait_time = position * ave_help_time + next_avaliable
 
         return wait_time
 

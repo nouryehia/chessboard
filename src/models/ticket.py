@@ -96,6 +96,7 @@ class Ticket(db.Model):
     title --> The title of this ticket.\n
     description --> The discription of the ticket created by student.\n
     grader_id --> The grader_id who accepted this ticket, Nullable.\n
+    queue_id --> The queue_id of which this ticket belongs to.\n
     student_id --> The student_id who created this ticket.\n
     is_private --> Whether this ticket is private.\n
     accepted_at --> The time that this ticket was accepted.\n
@@ -149,7 +150,6 @@ class Ticket(db.Model):
         super(Ticket, self).__init__(**kwargs)
         db.session.add(self)
         db.session.commit()
-        return self
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
