@@ -30,6 +30,7 @@ class TicketFeedback(db.Model):
     feedback --> The actual written feedback. Nullable.\n
     submitted_date --> The time that this feedback is submited.\n
     is_annoymous --> Whether this ticket feedback is annoymous.\n
+    @author Yixuanzhou
     """
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'),
