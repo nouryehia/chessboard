@@ -151,6 +151,12 @@ class Ticket(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def save(self):
+        """
+        Save the changes made to the object into the database.\n
+        """
+        db.seesion.commit()
+
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
         """
@@ -355,7 +361,7 @@ class Ticket(db.Model):
         self.tag_three = self_tag_list[2]
 
         # Update the database
-        db.session.commit()
+        self.save()
 
     # Setter functions
     def mark_pending(self) -> None:
@@ -363,7 +369,7 @@ class Ticket(db.Model):
         Mark the ticket as pending status.\n
         """
         self.status = Status.PENDING
-        db.session.commit()
+        self.save()
 
     def mark_accepted_by(self, grader_id: int) -> None:
         """
@@ -372,7 +378,7 @@ class Ticket(db.Model):
         self.status = Status.ACCEPTED
         self.accepted_at = datetime.now()
         self.grader_id = grader_id
-        db.session.commit()
+        self.save()
 
     def mark_resolved(self) -> None:
         """
@@ -380,7 +386,7 @@ class Ticket(db.Model):
         """
         self.status = Status.RESOLVED
         self.closed_at = datetime.now()
-        db.session.commit()
+        self.save()
 
     def mark_canceled(self) -> None:
         """
@@ -388,7 +394,7 @@ class Ticket(db.Model):
         """
         self.status = Status.CANCELED
         self.closed_at = datetime.now()
-        db.session.commit()
+        self.save()
 
     def student_update(self, title: str, description: str, room: str,
                        workstation: str, is_private: bool, help_type: HelpType,
@@ -413,7 +419,7 @@ class Ticket(db.Model):
         self.help_type = help_type
 
         # Commit the updates for basica info
-        db.session.commit()
+        self.save()
 
         # Update ticket tags
         self.update_ticket_tags(tag_list)

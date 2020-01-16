@@ -76,7 +76,13 @@ class Queue(db.Model):
         ticket_cooldown --> The cooldown time for the ticket.\n
         """
         super(Queue, self).__init__(**kwargs)
-        db.sessino.add(self)
+        db.session.add(self)
+        db.session.commit()
+
+    def save(self):
+        """
+        Save the object that is modified into the database.\n
+        """
         db.session.commit()
 
     def add_ticket(self, student: User, title: str,
@@ -178,19 +184,21 @@ class Queue(db.Model):
         Open the queue.
         """
         self.status = Status.OPEN
-        db.session.commit()
+        self.save()
 
     def lock(self) -> None:
         """
         Lock the queue.
         """
         self.status = Status.LOCKED
+        self.save()
 
     def close(self) -> None:
         """
         Close the queue.
         """
         self.status = Status.CLOSED
+        self.save()
 
     def clear_ticket(self) -> None:
         """
