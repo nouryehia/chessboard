@@ -441,7 +441,7 @@ def find_all_tickets(queue: Queue,
     queue --> The queue to search for.\n
     status --> Optional params for finding tickets with specific list status.\n
     Return:\n
-    The list of the ticket of this queue.\n
+    The list of the ticket of this queue ordered by create time.\n
     """
     if status:
         return Ticket.query.\
@@ -464,7 +464,7 @@ def find_all_tickets_by_student(queue: Queue,
     student --> The student to be looked for.\n
     status --> The list of status to filter.\n
     Return:\n
-    The list of the ticket of this queue.\n
+    The list of the ticket of this queue ordered by create time.\n
     """
     return Ticket.query.\
         filter_by(queue_id=queue.id, student_id=student.id).\
@@ -480,7 +480,7 @@ def find_all_tickets_for_grader(queue: Queue, grader: User) -> List[Ticket]:
     queue --> The queue to search for.\n
     grader --> The grader to be looked for.\n
     Return:\n
-    The list of the ticket of this queue.\n
+    The list of the ticket of this queue ordered by create time.\n
     """
     return Ticket.query.\
         filter_by(queue_id=queue.id, grader_id=grader.id).\

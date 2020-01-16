@@ -470,7 +470,7 @@ class Queue(db.Model):
 
     # getExpectedTimeUntilAvailableTutor need a query method probably in
     # enrolled classs...
-    def get_expected_time_for_next_tutor(self) -> timedelta:
+    def wait_time_for_next_tutor(self) -> timedelta:
         """
         Get the expected wait time for the next tutor to be avaliable
         Returns:\n
@@ -494,8 +494,46 @@ class Queue(db.Model):
 
         return next_avaliable
 
+    def get_wait_time(self, student: User) -> Optional[timedelta]:
+        """
+        Get the expected wait time for a student.\n
+        Inputs:\n
+        The student User object.\n
+        Returns:\n
+        The expected wait time for this student's ticket to be accepted.
+        If this student has no tickect in the queue, return None.\n
+        """
+        pending_tickets = self.get_pending_tickets()  # should be sorted
+        student_ticket = self.get_pending_ticket_for(student=student)
+        if student_ticket is None:
+            return None
+        # Get the number of tickets before this student's
+        index = 0
+        for ticket in pending_tickets:
+            if ticket.id == student_ticket.id:
+                break
+            else:
+                index += 1
+        wait_time = timedelta(seconds=0)
+        next_avaliable = self.wait_time_for_next_tutor()
+        ave_help_time = self.average_help_time()
+        wait_time = index * ave_help_time + next_avaliable
+
+        return wait_time
+
+    def get_queue_wait_time(self) -> timedelta:
+        """
+        Given all the tickets in the queue, calculate the expected wait time
+        if a ticket is submited now.\n
+        Return:\n
+        The expected wait time for a ticket that is submited now.\n
+        """
+        pending_num = len(self.get_pending_tickets())
+        ave_time = self.average_help_time()
+
+        return pending_num * ave_time
+
     # TODO
-    # Finish up queue stats
     # Login and Logout for the user (Grader)
 
 
