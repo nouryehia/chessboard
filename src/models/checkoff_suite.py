@@ -106,6 +106,10 @@ class CheckoffSuite(db.Model):
         self.checkoffs.add(checkoff)
         db.session.commit()
 
+    """
+    TODO: takes in an id and returns a checkoff_suite
+    """
+
     def get_max_score(self) -> int:
         """
         Sums up the scores off all the checkoffs in suite\n
