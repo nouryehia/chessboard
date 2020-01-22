@@ -85,8 +85,8 @@ class QueueLoginEvent(db.Model):
         Get all the queue login events for a queue in a given range.\n
         Inputs:\n
         queue --> The queue object to look for.\n
-        start --> The datetime object of the time to start looking for.\n
-        end --> The datetime objec tof the time to end looking for.
+        start --> The datetime object of the time to start looking for\n
+        end --> The datetime objec tof the time to end looking for
         (default = now).\n
         grader --> The grader to serch for (Optional if wanted).\n
         Returns:\n
