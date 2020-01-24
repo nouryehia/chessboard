@@ -1,10 +1,13 @@
 from app import db
 from enum import Enum
-from user import User
+from user import User # Pretending
+import user # Prentending
+import course as crs # prentending
 import ticket as t
 from models.events.ticket_event import TicketEvent, EventType
 from typing import List, Optional
 from datetime import datetime, timedelta
+import models.events.queue_login_event as qle
 from course import Course # pretending
 import news_feed_post as nfp # pretending
 import enrolled_class as ec # pretending
@@ -550,11 +553,46 @@ class Queue(db.Model):
 
         return pending_num * ave_time
 
-    # TODO
-    # Login and Logout for the user (Grader)
-
 
 # None Memeber Queue Methods
+def grader_login(queue: Queue, grader: User,
+                 action_type: qle.ActionType = qle.ActionType.MANUAL):
+    """
+    Login a grader when the grader login to he queue.\n
+    Inputs:\n
+    queue --> The queue that the grader is logging in.\n
+    grader --> The grader that is logging in.\n
+    action_type --> The type of action for logging in, default MANUAL.\n
+    """
+    course = crs.find_course_by_queue(queue)  # Prentending
+    grader.change_status(course, user.Status.AVALIABLE)
+    qle.QueueLoginEvent(event_type=qle.EventType.LOGIN,
+                        action_type=action_type,
+                        grader_id=grader.id,
+                        queue_id=queue.id
+                        )
+    queue.open()
+
+
+def grader_logout(queue: Queue, grader: User,
+                  action_type: qle.ActionType):
+    """
+    Logout a grader when the grader logout from queue.\n
+    Inputs:\n
+    queue --> The queue that the grader is logging out.\n
+    grader --> The grader that is logging out.\n
+    action_type --> The type of action for logging out.\n
+    """
+    course = crs.find_course_by_queue(queue)  # Prentending
+    grader.change_status(course, user.Status.AVALIABLE)
+    qle.QueueLoginEvent(event_type=qle.EventType.LOGOUT,
+                        action_type=action_type,
+                        grader_id=grader.id,
+                        queue_id=queue.id
+                        )
+    queue.open()
+
+
 def find_current_queue_for_user(user: User) -> List[Queue]:
     """
     Find all the queues that this user is in currently.

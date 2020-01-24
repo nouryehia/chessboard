@@ -10,11 +10,11 @@ class EventType(Enum):
     The enum of login events with the following
     option --> database value:\n
     LOGIN --> 0\n
-    LOGOFF --> 1 \n
+    LOGOUT --> 1 \n
     @author YixuanZhou
     """
     LOGIN = 0
-    LOGOFF = 1
+    LOGOUT = 1
 
 
 class ActionType(Enum):
@@ -34,8 +34,8 @@ class QueueLoginEvent(db.Model):
     The Queue Login Event model in the database.\n
     event_type --> The type of the event.\n
     action_type --> The action type of the event (auto or man).\n
-    timestamp --> The color of this calendar to be displayed.\n
-    tutor_id --> The id of the tutor who triggered this event, forign key\n
+    timestamp --> The time of the action related this event, default now.\n
+    grader_id --> The id of the tutor who triggered this event, forign key\n
     queue_id --> The id of the queue that the events are related to.\n
     @author YixuanZhou
     """
