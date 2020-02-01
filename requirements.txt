@@ -2,6 +2,7 @@ Flask
 flask-api
 flask_cors
 flask_sqlalchemy
+mysqlclient
 gunicorn
 passlib
 flake8

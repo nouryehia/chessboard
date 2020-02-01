@@ -2,9 +2,9 @@ from typing import List
 from datetime import datetime
 from passlib.hash import pbkdf2_sha256
 
-from app import db
-from .utils import gen_password
-from .models import EnrolledCourse
+from init import db
+#from .models import EnrolledCourse
+from ..utils.pass_gen import gen_password
 
 
 class User(db.Model):
@@ -84,6 +84,20 @@ class User(db.Model):
             return pbkdf2_sha256.verify(user.password, passwd)
         return False
 
+    @staticmethod
+    def create_user(email: str, f_name: str, l_name: str,
+                    pid: str, passwd: str) -> bool:
+
+        if not passwd:
+            passwd = gen_password()
+        u = User(email=email, first_name=f_name, last_name=l_name, pid=pid,
+                 password=pbkdf2_sha256.hash(passwd))
+
+        db.session.add(u)
+        u.save()
+        return True
+
+    """
     def get_courses_for_user(self) -> List[EnrolledCourse]:
         '''
         Database query for getting all EnrolledCourses for our user.\n
@@ -93,6 +107,7 @@ class User(db.Model):
         # TODO: Come back to this and change it to a function call
         # we don't wanna query a different table directly
         return EnrolledCourse.query.filter_by(user_id=self.id).all()
+        """
 
     @staticmethod
     def create_random_password(user) -> None:
@@ -120,3 +135,7 @@ class User(db.Model):
         if not pid or pid == '' or not user:
             user = User.query.filter_by(email=email).first()
         return user
+
+    @staticmethod
+    def get_all_users():
+        return User.query.all()

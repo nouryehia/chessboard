@@ -1,16 +1,8 @@
-from flask_api import FlaskAPI
-from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
+from init import app
 
-app = FlaskAPI(__name__)
-CORS(app)
-db = SQLAlchemy(app)
-db.init_app(app)
+from src.api.user import user_api_bp as uapi
 
-
-@app.route('/')
-def hello():
-    return {'sup': 'dude'}
+app.register_blueprint(uapi, url_prefix="/api/users")
 
 
 if __name__ == '__main__':
