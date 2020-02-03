@@ -65,6 +65,7 @@ class TicketFeedback(db.Model):
 
 
 # Static query methods for ticket feedbacks
+@staticmethod
 def get_ticket_feedback(ticket_list: List[t.Ticket])\
                             -> List[TicketFeedback]:
     """
@@ -85,6 +86,7 @@ def get_ticket_feedback(ticket_list: List[t.Ticket])\
     return feedback_list
 
 
+@staticmethod
 def find_all_feedback_for_queue(queue: q.Queue):
     """
     Find all the feedback of the tickets in a queue.\n
@@ -97,6 +99,7 @@ def find_all_feedback_for_queue(queue: q.Queue):
     return get_ticket_feedback(tickets)
 
 
+@staticmethod
 def find_for_grader(queue: q.Queue, grader: User)\
                             -> List[TicketFeedback]:
     """
@@ -111,6 +114,7 @@ def find_for_grader(queue: q.Queue, grader: User)\
     return get_ticket_feedback(tickets)
 
 
+@staticmethod
 def find_for_student(queue: q.Queue, student: User)\
                             -> List[TicketFeedback]:
     """

@@ -56,6 +56,7 @@ class QueueCalendar(db.Model):
 
 
 # Static query method
+@staticmethod
 def find_all_calendar_for_queue(queue: Queue) -> List[QueueCalendar]:
     """
     Find the all the queue calendars associsted to the queue.\n

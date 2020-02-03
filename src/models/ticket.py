@@ -230,9 +230,9 @@ class Ticket(db.Model):
         """
         ticket_tag = []
         ticket_tag.append(self.tag_one)
-        if (self.tag_two is not None):
+        if not self.tag_two:
             ticket_tag.append(self.tag_two)
-        if (self.tag_three is not None):
+        if self.tag_three is not None:
             ticket_tag.append(self.tag_three)
         return ticket_tag
 
@@ -273,8 +273,7 @@ class Ticket(db.Model):
         Return:\n
         Bool of saying if the ticket has a feedback or not.\n
         """
-        if (self.get_latest_feedback() is None):
-            return False
+        return not self.get_latest_feedback()
 
     def get_latest_feedback(self) -> Optional[TicketFeedback]:
         """
@@ -305,16 +304,16 @@ class Ticket(db.Model):
         Return:\n
         The bool for whether a user can view.\n
         """
-        if (user is None):
+        if not user:
             return False
-        elif (not self.is_private):
+        elif not self.is_private:
             return True
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if (fake_getrole(user.id, course.id) == Role.STAFF):
+            if fake_getrole(user.id, course.id) == Role.STAFF:
                 return True
             else:
-                if (self.student_id == user.id):
+                if self.student_id == user.id:
                     return True
                 else:
                     return False
@@ -328,14 +327,14 @@ class Ticket(db.Model):
         Return:\n
         The bool for whether a user can edit.\n
         """
-        if (self.is_resolved()):
+        if self.is_resolved():
             return False
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if (fake_getrole(user.id, course.id) == Role.STAFF):
+            if fake_getrole(user.id, course.id) == Role.STAFF:
                 return True
             else:
-                if (self.student_id == user.id):
+                if self.student_id == user.id:
                     return True
                 else:
                     return False
@@ -350,7 +349,7 @@ class Ticket(db.Model):
         # Update the tags
         self_tag_list = []
         for i in range(0, MAX_TAG_NUM):
-            if (i < len(tag_list)):
+            if i < len(tag_list):
                 self_tag_list.append(tag_list[i])
             else:
                 self_tag_list.append(None)
@@ -437,7 +436,7 @@ class Ticket(db.Model):
 # findLastResolvedTicketForQueueForGrader
 # For TicketFeedback:
 # findNewestFeedback should be in TicketFeedback
-
+@staticmethod
 def find_all_tickets(queue: Queue,
                      status: List[Status] = None) -> List[Ticket]:
     """
@@ -459,6 +458,7 @@ def find_all_tickets(queue: Queue,
             order_by(Ticket.created_at).desc.all()
 
 
+@staticmethod
 def find_all_tickets_by_student(queue: Queue,
                                 student: User,
                                 status: List[Status]) -> List[Ticket]:
@@ -478,6 +478,7 @@ def find_all_tickets_by_student(queue: Queue,
         order_by(Ticket.created_at).desc.all()
 
 
+@staticmethod
 def find_all_tickets_for_grader(queue: Queue, grader: User) -> List[Ticket]:
     """
     Get a list of all the tickets for a queue handled by a grader
@@ -493,6 +494,7 @@ def find_all_tickets_for_grader(queue: Queue, grader: User) -> List[Ticket]:
         order_by(Ticket.created_at).desc.all()
 
 
+@staticmethod
 def find_tickets_in_range(queue: Queue, start: datetime,
                           end: datetime, grader: User = None) -> List[Ticket]:
     """
@@ -506,20 +508,21 @@ def find_tickets_in_range(queue: Queue, start: datetime,
     Return:\n
     A list of tickets in this range.\n
     """
-    if (grader is None):
+    if not grader:
         ticket_list = Ticket.query.filter_by(queue=queue.id,
                                              status=Status.RESOLVED).all()
     else:
         ticket_list = Ticket.query.filter_by(queue_id=queue.id,
                                              grader_id=grader.id,
                                              status=Status.RESOLVED).all()
-    if (start is None):
+    if not start:
         start = datetime.now() - timedelta(hours=1)
-    if (end is None):
+    if not end:
         end = datetime.now()
     return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
 
 
+@staticmethod
 def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
     """
     Find the last ticket accepted by the grader.\n 
@@ -533,6 +536,7 @@ def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
                                   grader_id=grader.id).first()
 
 
+@staticmethod
 def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
                              day: bool = False,
                              start: datetime = None,
@@ -550,11 +554,11 @@ def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
     """
     ticket_list = Ticket.query.filter_by(queue_id=queue.id,
                                          status=Status.RESOLVED).all()
-    if (recent_hour):
+    if recent_hour:
         now = datetime.now()
         lasthour = datetime.now() - timedelta(hours=1)
         return find_tickets_in_range(queue=queue, start=lasthour, end=now)
-    elif (day):
+    elif day:
         return list(filter(lambda x: x.closed_at == datetime.today(),
                            ticket_list))
     else:
@@ -562,6 +566,7 @@ def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
         return ticket_list
 
 
+@staticmethod
 def find_ticket_history_with_offset(queue: Queue, offset: int = 0,
                                     limit: int = 10,
                                     student: User = None,
@@ -576,13 +581,13 @@ def find_ticket_history_with_offset(queue: Queue, offset: int = 0,
     Return:\n
     A list of tickets.
     """
-    if (student is not None):
+    if student:
         return Ticket.query().filter_by(queue_id=queue.id).\
             filter_by(Ticket.status.in_(Status.RESOLVED,
                                         Status.CANCELED)).\
             filter_by(student_id=student.id).\
             sort_by(id).offset(offset).limit(limit).all()
-    elif (grader is not None):
+    elif grader is not None:
         return Ticket.query().filter_by(queue_id=queue.id).\
             filter_by(Ticket.status.in_(Status.RESOLVED,
                                         Status.CANCELED)).\
@@ -596,6 +601,7 @@ def find_ticket_history_with_offset(queue: Queue, offset: int = 0,
 
 
 # Ticket stats calultaions
+@staticmethod
 def average_resolved_time(resolved_tickets: List[Ticket]) -> int:
     """
     Given a list of tickest, get the average time in second for resolve time.\n
@@ -607,10 +613,11 @@ def average_resolved_time(resolved_tickets: List[Ticket]) -> int:
     sum_time = 0
     for ticket in resolved_tickets:
         sum_time += ticket.get_help_time_in_second()
-    return (int)(sum_time / len(resolved_tickets))
+    return sum_time // len(resolved_tickets)
 
 
 # Do we need it?
+@staticmethod
 def defer_accpeted_ticket_for_grader(grader: User) -> None:
     """
     Set all the accepted ticket for a grader to pending incase multiple

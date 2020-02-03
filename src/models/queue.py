@@ -139,7 +139,7 @@ class Queue(db.Model):
         """
         old_ticket = t.find_pending_ticket_by_student(queue=self,
                                                       student=student)
-        if (old_ticket is not None):
+        if not old_ticket:
             old_ticket.student_update(title=title, description=description,
                                       room=room, workstation=workstation,
                                       is_private=is_private,
@@ -219,7 +219,7 @@ class Queue(db.Model):
         The string representation of the course it belongs to.\n
         """
         course = Course.query().filter_by(course_id=self.course_id)
-        if (course is not None):
+        if not course:
             return repr(course)
         else:
             return None
@@ -419,7 +419,7 @@ class Queue(db.Model):
         (If only one is needed, the ticket will be the first one and
         the only one in the list).\n
         """
-        if (all):
+        if all:
             return t.find_all_ticket_accpeted_by_grader(self, grader=grader)
         else:
             return [t.find_ticket_accpeted_by_grader(self, grader=grader)]
@@ -484,12 +484,12 @@ class Queue(db.Model):
         A timedelta object representing the averge help time for the tickes
         given that period.\n
         """
-        if (start is not None):
+        if not start:
             day = False
             hour = False
         tickets = t.find_resolved_tickets_in(self, day=day,
                                              hour=hour, start=start, end=end)
-        if (len(tickets) < 5):
+        if len(tickets) < 5:
             return MIN_WAIT_TIME
         average_resolved_time = t.average_resolved_time(tickets)
         return timedelta(seconds=average_resolved_time)
@@ -509,7 +509,7 @@ class Queue(db.Model):
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
-        if (active_tutor_num > len(accepted_tickets)):
+        if active_tutor_num > len(accepted_tickets):
             return next_avaliable
         now = datetime.now()
         # Simplifing the algorithm for now (without using utils)
@@ -555,6 +555,7 @@ class Queue(db.Model):
 
 
 # None Memeber Queue Methods
+@staticmethod
 def grader_login(queue: Queue, grader: User,
                  action_type: qle.ActionType = qle.ActionType.MANUAL):
     """
@@ -574,6 +575,7 @@ def grader_login(queue: Queue, grader: User,
     queue.open()
 
 
+@staticmethod
 def grader_logout(queue: Queue, grader: User,
                   action_type: qle.ActionType):
     """
@@ -593,6 +595,7 @@ def grader_logout(queue: Queue, grader: User,
     queue.open()
 
 
+@staticmethod
 def find_current_queue_for_user(user: User) -> List[Queue]:
     """
     Find all the queues that this user is in currently.
@@ -607,6 +610,7 @@ def find_current_queue_for_user(user: User) -> List[Queue]:
     pass
 
 
+@staticmethod
 def find_queue_for_course(course: Course) -> Optional[Queue]:
     """
     Find the queue corresponding for a course.
