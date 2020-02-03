@@ -54,8 +54,6 @@ class TicketFeedback(db.Model):
         The created ticket feedback object
         """
         super(TicketFeedback, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     def save(self):
         """
@@ -63,6 +61,17 @@ class TicketFeedback(db.Model):
         """
         db.session.commit()
 
+
+# Static add method
+@staticmethod
+def add_to_db(tf: TicketFeedback):
+    """
+    Add the queue to the database.\n
+    Inputs:\n
+    tf --> the ticketfeedback object created.\n
+    """
+    db.session.add(tf)
+    db.session.commit()
 
 # Static query methods for ticket feedbacks
 @staticmethod

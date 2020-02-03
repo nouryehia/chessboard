@@ -4,7 +4,7 @@ from user import User # Pretending
 import user # Prentending
 import course as crs # prentending
 import ticket as t
-from models.events.ticket_event import TicketEvent, EventType
+import models.events.ticket_event as tevent
 from typing import List, Optional
 from datetime import datetime, timedelta
 import models.events.queue_login_event as qle
@@ -79,8 +79,6 @@ class Queue(db.Model):
         ticket_cooldown --> The cooldown time for the ticket.\n
         """
         super(Queue, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     def save(self):
         """
@@ -117,6 +115,7 @@ class Queue(db.Model):
                               accepted_at=None, help_type=help_type,
                               tag_one=tag_one, tag_two=tag_two,
                               tag_three=tag_three)
+        t.add_to_db(new_ticket)
         return new_ticket
 
     def update_ticket(self, student: User, title: str,
@@ -146,8 +145,10 @@ class Queue(db.Model):
                                       help_type=help_type,
                                       tag_list=tag_list)
             # Create a new Ticket Event
-            TicketEvent(event_type=EventType.UPDATED,
-                        ticket_id=old_ticket.id, user_id=student.id)
+            te = tevent.TicketEvent(event_type=tevent.EventType.UPDATED,
+                                    ticket_id=old_ticket.id,
+                                    user_id=student.id)
+            tevent.add_to_db(te)
             return old_ticket
         else:
             return self.add_ticket(student=student, title=title,
@@ -554,6 +555,17 @@ class Queue(db.Model):
         return pending_num * ave_time
 
 
+# Static add method
+@staticmethod
+def add_to_db(queue: Queue):
+    """
+    Add the queue feedback to the database.\n
+    Inputs:\n
+    queue --> the queue object created.\n
+    """
+    db.session.add(queue)
+    db.session.commit()
+
 # None Memeber Queue Methods
 @staticmethod
 def grader_login(queue: Queue, grader: User,
@@ -567,11 +579,12 @@ def grader_login(queue: Queue, grader: User,
     """
     course = crs.find_course_by_queue(queue)  # Prentending
     grader.change_status(course, user.Status.AVALIABLE)
-    qle.QueueLoginEvent(event_type=qle.EventType.LOGIN,
-                        action_type=action_type,
-                        grader_id=grader.id,
-                        queue_id=queue.id
-                        )
+    event = qle.QueueLoginEvent(event_type=qle.EventType.LOGIN,
+                                action_type=action_type,
+                                grader_id=grader.id,
+                                queue_id=queue.id
+                                )
+    qle.add_to_db(event)
     queue.open()
 
 
@@ -587,11 +600,12 @@ def grader_logout(queue: Queue, grader: User,
     """
     course = crs.find_course_by_queue(queue)  # Prentending
     grader.change_status(course, user.Status.AVALIABLE)
-    qle.QueueLoginEvent(event_type=qle.EventType.LOGOUT,
-                        action_type=action_type,
-                        grader_id=grader.id,
-                        queue_id=queue.id
-                        )
+    event = qle.QueueLoginEvent(event_type=qle.EventType.LOGOUT,
+                                action_type=action_type,
+                                grader_id=grader.id,
+                                queue_id=queue.id
+                                )
+    qle.add_to_db(event)
     queue.open()
 
 

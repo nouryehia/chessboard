@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from operator import attrgetter
 from user import User
 from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
-from course import Course # Pretending
-from ticket_feedback import TicketFeedback # Pretending
-from ticket_event import TicketEvent # Pretending
+from course import Course  # Pretending
+from ticket_feedback import TicketFeedback
+from ticket_event import TicketEvent
 from queue import Queue
 
 
@@ -148,8 +148,6 @@ class Ticket(db.Model):
         tag_three --> The third tag (dfault is none) to the ticket.\n
         """
         super(Ticket, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     def save(self):
         """
@@ -436,6 +434,18 @@ class Ticket(db.Model):
 # findLastResolvedTicketForQueueForGrader
 # For TicketFeedback:
 # findNewestFeedback should be in TicketFeedback
+
+# Static add method
+@staticmethod
+def add_to_db(ticket: Ticket):
+    """
+    Add the ticket to the database.\n
+    Inputs:\n
+    ticket --> the ticket object created.\n
+    """
+    db.session.add(ticket)
+    db.session.commit()
+
 @staticmethod
 def find_all_tickets(queue: Queue,
                      status: List[Status] = None) -> List[Ticket]:

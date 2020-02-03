@@ -41,8 +41,6 @@ class NewsFeedPost(db.Model):
         queue_id --> The id of the queue that this news feed post is in.\n
         """
         super(NewsFeedPost, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     def save(self):
         """
@@ -70,3 +68,14 @@ class NewsFeedPost(db.Model):
         self.body = body
         self.last_edited_at = datetime.now()
         self.save()
+
+# Static add method
+@staticmethod
+def add_to_db(nfp: NewsFeedPost):
+    """
+    Add the NewsFeed post to the database.\n
+    Inputs:\n
+    nfp --> the NewsFeedPost object created.\n
+    """
+    db.session.add(nfp)
+    db.session.commit()

@@ -31,8 +31,6 @@ class QueueCalendar(db.Model):
         queue_id --> The queue_id that this calendar is in.\n
         """
         super(QueueCalendar, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     def save(self):
         """

@@ -125,6 +125,7 @@ class TicketEvent(db.model):
 
 
 # static query methods
+@staticmethod
 def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
     """
     Find all the ticket events associated to a ticket.\n
@@ -137,6 +138,7 @@ def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
         .sort_by(TicketEvent.timestamp).desc.all()
 
 
+@staticmethod
 def find_all_events_for_tickets(tickets: List[Ticket]) -> List[TicketEvent]:
     """
     Find all the ticket events of multiple tickets.\n
@@ -149,3 +151,14 @@ def find_all_events_for_tickets(tickets: List[Ticket]) -> List[TicketEvent]:
     for ticket in tickets:
         ticket_id_list.append(ticket.id)
     return TicketEvent.query().filter_by(Ticket.ticket_id.in_(ticket_id_list))
+
+# Static add method
+@staticmethod
+def add_to_db(te: TicketEvent):
+    """
+    Add the ticket event to the database.\n
+    Inputs:\n
+    te --> the ticket event object created.\n
+    """
+    db.session.add(te)
+    db.session.commit()

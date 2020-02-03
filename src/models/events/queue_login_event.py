@@ -57,8 +57,6 @@ class QueueLoginEvent(db.Model):
         grader_id --> The grader's id that created this event.\n
         """
         super(QueueLoginEvent, self).__init__(**kwargs)
-        db.session.add(self)
-        db.session.commit()
 
     # Bool query methods of Queue Login Event
     def is_manual(self) -> bool:
@@ -102,3 +100,14 @@ class QueueLoginEvent(db.Model):
                                     grader_id=grader.id)\
                          .order_by(QueueLoginEvent.timestamp).desc.all()
         return list(filter(lambda x: start <= x.closed_at <= end, event_list))
+
+# Static add method
+@staticmethod
+def add_to_db(qle: QueueLoginEvent):
+    """
+    Add the queue login event to the database.\n
+    Inputs:\n
+    qle --> the QueueLoginEvent object created.\n
+    """
+    db.session.add(qle)
+    db.session.commit()
