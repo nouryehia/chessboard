@@ -15,6 +15,16 @@ SPRING = 2
 SS1 = 3
 SS2 = 4
 
+fa_begin  = date(datetime.date.today().year,9,20)
+wi_begin  = date(datetime.date.today().year,1,1)
+sp_begin  = date(datetime.date.today().year,3,20)
+ss1_begin = date(datetime.date.today().year)
+ss2_begin = date(datetime.date.today().year)
+
+
+
+
+
 class Course(db.Model):
     """
     Represents a course in the DB with relevant functions for
@@ -93,6 +103,10 @@ class Course(db.Model):
 
         return instructors
 
+    def getCourseByQueueID(self, q_id):
+        course = Course.query.filter_by(queue_id=q_id).first()
+        return course
+
     def quarterYear(self):
         if self.quarter is FALL:
             return "FA" + str(self.year)
@@ -112,4 +126,5 @@ class Course(db.Model):
         Section.insert().values(section_name=section_name, course_id=self.id)
 
     def getCurrentQuarter():
-        date = date.today()
+        
+        today = date.today()
