@@ -2,7 +2,7 @@ Flask
 flask-api
 flask_cors
 flask_sqlalchemy
-mysqlclient
+psycopg2-binary
 gunicorn
 passlib
-flake8
+

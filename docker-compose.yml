@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  chessboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python runner.py run -h 0.0.0.0
+    ports:
+      - 1337:5000
+    env_file:
+      - ./.env.dev
+    volumes:
+      - '.:/usr/src/app'
+    depends_on:
+      - db
+  db:
+    build:
+      context: ./data
+      dockerfile: Dockerfile
+    ports:
+      - '5432:5432'
+    restart: on-failure
+    container_name: autograder_db
+    env_file:
+      - ./.env.dev.db
+

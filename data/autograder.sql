@@ -1,200 +1,273 @@
-DROP DATABASE autograder;
-CREATE DATABASE IF NOT EXISTS autograder CHARACTER SET utf8;
-USE autograder;
-
-CREATE TABLE `Users` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`email` varchar(255) NOT NULL UNIQUE,
-	`first_name` varchar(255) NOT NULL,
-	`last_name` varchar(255) NOT NULL,
-	`password` varchar(255) NOT NULL,
-	`pid` varchar(10) NOT NULL UNIQUE,
-	`last_login` DATETIME,
-	PRIMARY KEY (`id`)
+CREATE TABLE "Users" (
+	"id" serial NOT NULL,
+	"email" varchar(255) NOT NULL UNIQUE,
+	"first_name" varchar(255) NOT NULL,
+	"last_name" varchar(255) NOT NULL,
+	"password" varchar(255) NOT NULL,
+	"pid" varchar(10) NOT NULL UNIQUE,
+	"last_login" TIMESTAMP,
+	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Checkoff` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`description` varchar(255) NOT NULL,
-	`name` varchar(255) NOT NULL,
-	`suite_id` bigint(20) NOT NULL,
-	`points` int(11) NOT NULL DEFAULT '1',
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Checkoff" (
+	"id" serial NOT NULL,
+	"description" varchar(255) NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"suite_id" bigserial NOT NULL,
+	"points" integer NOT NULL DEFAULT '1',
+	CONSTRAINT "Checkoff_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `CheckoffSuite` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`status` int(11) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "CheckoffSuite" (
+	"id" serial NOT NULL,
+	"status" integer NOT NULL,
+	CONSTRAINT "CheckoffSuite_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `CheckoffEvaluation` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`checkoff_time` DATETIME NOT NULL,
-	`checkoff_id` bigint(20) NOT NULL,
-	`grader_id` bigint(20) NOT NULL,
-	`student_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "CheckoffEvaluation" (
+	"id" serial NOT NULL,
+	"checkoff_time" TIMESTAMP NOT NULL,
+	"checkoff_id" bigserial NOT NULL,
+	"grader_id" bigserial NOT NULL,
+	"student_id" bigserial NOT NULL,
+	CONSTRAINT "CheckoffEvaluation_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Queue` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`status` int(11) NOT NULL,
-	`high_capacity_enabled` BOOLEAN NOT NULL DEFAULT false,
-	`high_capacity_threshold` bigint(20) NOT NULL DEFAULT '25',
-	`high_capacity_message` varchar(255) NOT NULL DEFAULT 'The queue is currently at high capacity. The tutors will be limiting their time to 5 minutes per student.',
-	`high_capacity_warning` varchar(255) NOT NULL DEFAULT 'The queue is currently very busy. You may not be helped before tutor hours end.',
-	`ticket_cool_down` int(11) NOT NULL DEFAULT '10',
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Assignment" (
+	"id" serial NOT NULL,
+	"due" TIMESTAMP NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"category_id" bigserial NOT NULL,
+	"checkoff_suite_id" bigserial NOT NULL,
+	"total_grade_percent" double NOT NULL,
+	CONSTRAINT "Assignment_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Course` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`description` varchar(255),
-	`name` varchar(255) NOT NULL,
-	`quarter` int(11) NOT NULL,
-	`short_name` varchar(255) NOT NULL,
-	`url` varchar(255),
-	`year` int(11) NOT NULL,
-	`active` BOOLEAN NOT NULL,
-	`queue_enabled` BOOLEAN NOT NULL,
-	`cse` BOOLEAN NOT NULL DEFAULT true,
-	`lock_button` BOOLEAN DEFAULT true,
-	`queue_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Category" (
+	"id" serial NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"weight" double NOT NULL,
+	"course_id" bigserial NOT NULL,
+	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `EnrolledCourse` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`user_id` bigint(20) NOT NULL,
-	`role` int(11) NOT NULL,
-	`section_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Course" (
+	"id" serial NOT NULL,
+	"description" varchar(255),
+	"name" varchar(255) NOT NULL,
+	"quarter" integer NOT NULL,
+	"short_name" varchar(255) NOT NULL,
+	"url" varchar(255),
+	"year" integer NOT NULL,
+	"active" BOOLEAN NOT NULL,
+	"queue_enabled" BOOLEAN NOT NULL,
+	"cse" BOOLEAN NOT NULL DEFAULT 'true',
+	"lock_button" BOOLEAN DEFAULT 'true',
+	"queue_id" bigserial NOT NULL,
+	CONSTRAINT "Course_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Section` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`section_name` varchar(255) NOT NULL,
-	`section_id` bigint(20) NOT NULL,
-	`course_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Queue" (
+	"id" serial NOT NULL,
+	"status" integer NOT NULL,
+	"high_capacity_enable" BOOLEAN NOT NULL DEFAULT 'false',
+	"high_capacity_threshold" bigserial NOT NULL DEFAULT '25',
+	"high_capacity_message" varchar(255) NOT NULL DEFAULT 'The queue is currently at high capacity. The tutors will be limiting their time to 5 minutes per student.',
+	"high_capacity_warning" varchar(255) NOT NULL DEFAULT 'The queue is currently very busy. You may not be helped before tutor hours end.',
+	"ticket_cool_down" integer NOT NULL DEFAULT '10',
+	CONSTRAINT "Queue_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Ticket` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME NOT NULL,
-	`closed_at` DATETIME,
-	`room` varchar(255),
-	`workstation` varchar(255),
-	`status` int(11) NOT NULL,
-	`title` varchar(255) NOT NULL,
-	`description` longtext NOT NULL,
-	`grader_id` bigint(20),
-	`queue_id` bigint(20) NOT NULL,
-	`student_id` bigint(20) NOT NULL,
-	`is_private` BOOLEAN NOT NULL DEFAULT false,
-	`accepted_at` DATETIME,
-	`help_type` int(11) NOT NULL,
-	`tag_one` int(11) NOT NULL,
-	`tag_two` int(11),
-	`tag_three` int(11),
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Ticket" (
+	"id" serial NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"closed_at" TIMESTAMP,
+	"room" varchar(255),
+	"workstation" varchar(255),
+	"status" integer NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" TEXT NOT NULL,
+	"grader_id" bigserial,
+	"queue_id" bigserial NOT NULL,
+	"student_id" bigserial NOT NULL,
+	"is_private" BOOLEAN NOT NULL DEFAULT 'false',
+	"accepted_at" TIMESTAMP,
+	"help_type" integer NOT NULL,
+	"tag_one" integer NOT NULL,
+	"tag_two" integer,
+	"tag_three" integer,
+	CONSTRAINT "Ticket_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `TicketFeedback` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`ticket_id` bigint(20) NOT NULL,
-	`rating` int(11) NOT NULL,
-	`feedback` longtext,
-	`submitted_date` DATETIME NOT NULL,
-	`is_anonymous` BOOLEAN NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "EnrolledCourse" (
+	"id" serial NOT NULL,
+	"user_id" bigserial NOT NULL,
+	"role" integer NOT NULL,
+	"section_id" bigserial NOT NULL,
+	"status" integer NOT NULL,
+	"course_id" bigserial NOT NULL,
+	CONSTRAINT "EnrolledCourse_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `TicketEvent` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`type` int(11) NOT NULL,
-	`ticket_id` bigint(20) NOT NULL,
-	`message` varchar(255) NOT NULL,
-	`is_anonymous` BINARY NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "Section" (
+	"id" serial NOT NULL,
+	"section_name" varchar(255) NOT NULL,
+	"section_id" bigserial NOT NULL,
+	"course_id" bigserial NOT NULL,
+	CONSTRAINT "Section_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `QueueLoginEvent` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`event_type` int(11) NOT NULL,
-	`action_type` int(11) NOT NULL,
-	`timestamp` DATETIME NOT NULL,
-	`tutor_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "QueueLoginEvent" (
+	"id" serial NOT NULL,
+	"event_type" integer NOT NULL,
+	"action_type" integer NOT NULL,
+	"timestamp" TIMESTAMP NOT NULL,
+	"tutor_id" bigserial NOT NULL,
+	CONSTRAINT "QueueLoginEvent_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `NewsFeedPost` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`created_at` DATETIME NOT NULL,
-	`is_deleted` BOOLEAN NOT NULL,
-	`last_edited_at` DATETIME,
-	`subject` varchar(255) NOT NULL,
-	`body` longtext NOT NULL,
-	`owner_id` bigint(20) NOT NULL,
-	`queue_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "TicketEvent" (
+	"id" serial NOT NULL,
+	"event_type" integer NOT NULL,
+	"ticket_id" bigserial NOT NULL,
+	"message" varchar(255) NOT NULL,
+	"is_private" bytea NOT NULL,
+	"user_id" bigserial NOT NULL,
+	"timestamp" TIMESTAMP NOT NULL,
+	CONSTRAINT "TicketEvent_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Assignment` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`due` DATETIME NOT NULL,
-	`is_deleted` BOOLEAN NOT NULL,
-	`name` varchar(255) NOT NULL,
-	`category_id` bigint(20) NOT NULL,
-	`checkoff_suite_id` bigint(20) NOT NULL,
-	`total_grade_percent` double NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "QueueCalendar" (
+	"id" serial NOT NULL,
+	"url" TEXT NOT NULL,
+	"color" TEXT NOT NULL,
+	"is_enabled" BOOLEAN NOT NULL,
+	"queue_id" bigserial NOT NULL,
+	CONSTRAINT "QueueCalendar_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-CREATE TABLE `Category` (
-	`id` bigint(20) NOT NULL AUTO_INCREMENT,
-	`name` varchar(255) NOT NULL,
-	`weight` double NOT NULL,
-	`course_id` bigint(20) NOT NULL,
-	PRIMARY KEY (`id`)
+
+
+CREATE TABLE "NewsFeedPost" (
+	"id" serial NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL,
+	"last_edited_at" TIMESTAMP,
+	"subject" varchar(255) NOT NULL,
+	"body" TEXT(255) NOT NULL,
+	"owner_id" bigserial NOT NULL,
+	"queue_id" bigserial NOT NULL,
+	CONSTRAINT "NewsFeedPost_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
 );
 
-ALTER TABLE `Checkoff` ADD CONSTRAINT `Checkoff_fk0` FOREIGN KEY (`suite_id`) REFERENCES `CheckoffSuite`(`id`);
 
-ALTER TABLE `CheckoffEvaluation` ADD CONSTRAINT `CheckoffEvaluation_fk0` FOREIGN KEY (`checkoff_id`) REFERENCES `Checkoff`(`id`);
 
-ALTER TABLE `CheckoffEvaluation` ADD CONSTRAINT `CheckoffEvaluation_fk1` FOREIGN KEY (`grader_id`) REFERENCES `Users`(`id`);
+CREATE TABLE "TicketFeedback" (
+	"id" serial NOT NULL,
+	"ticket_id" bigserial NOT NULL,
+	"rating" integer NOT NULL,
+	"feedback" TEXT,
+	"submitted_date" TIMESTAMP NOT NULL,
+	"is_anonymous" BOOLEAN NOT NULL,
+	CONSTRAINT "TicketFeedback_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
 
-ALTER TABLE `CheckoffEvaluation` ADD CONSTRAINT `CheckoffEvaluation_fk2` FOREIGN KEY (`student_id`) REFERENCES `Users`(`id`);
 
-ALTER TABLE `Course` ADD CONSTRAINT `Course_fk0` FOREIGN KEY (`queue_id`) REFERENCES `Queue`(`id`);
 
-ALTER TABLE `EnrolledCourse` ADD CONSTRAINT `EnrolledCourse_fk0` FOREIGN KEY (`user_id`) REFERENCES `Users`(`id`);
 
-ALTER TABLE `EnrolledCourse` ADD CONSTRAINT `EnrolledCourse_fk1` FOREIGN KEY (`section_id`) REFERENCES `Section`(`id`);
+ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("suite_id") REFERENCES "CheckoffSuite"("id");
 
-ALTER TABLE `Section` ADD CONSTRAINT `Section_fk0` FOREIGN KEY (`course_id`) REFERENCES `Course`(`id`);
 
-ALTER TABLE `Ticket` ADD CONSTRAINT `Ticket_fk0` FOREIGN KEY (`grader_id`) REFERENCES `EnrolledCourse`(`user_id`);
+ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk0" FOREIGN KEY ("checkoff_id") REFERENCES "Checkoff"("id");
+ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk1" FOREIGN KEY ("grader_id") REFERENCES "Users"("id");
+ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN KEY ("student_id") REFERENCES "Users"("id");
 
-ALTER TABLE `Ticket` ADD CONSTRAINT `Ticket_fk1` FOREIGN KEY (`queue_id`) REFERENCES `Queue`(`id`);
+ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
+ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
 
-ALTER TABLE `Ticket` ADD CONSTRAINT `Ticket_fk2` FOREIGN KEY (`student_id`) REFERENCES `EnrolledCourse`(`user_id`);
+ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Assignment"("id");
 
-ALTER TABLE `TicketFeedback` ADD CONSTRAINT `TicketFeedback_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `Ticket`(`id`);
+ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
-ALTER TABLE `TicketEvent` ADD CONSTRAINT `TicketEvent_fk0` FOREIGN KEY (`ticket_id`) REFERENCES `Ticket`(`id`);
 
-ALTER TABLE `QueueLoginEvent` ADD CONSTRAINT `QueueLoginEvent_fk0` FOREIGN KEY (`tutor_id`) REFERENCES `Users`(`id`);
+ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk0" FOREIGN KEY ("grader_id") REFERENCES "EnrolledCourse"("id");
+ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
+ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk2" FOREIGN KEY ("student_id") REFERENCES "EnrolledCourse"("id");
 
-ALTER TABLE `NewsFeedPost` ADD CONSTRAINT `NewsFeedPost_fk0` FOREIGN KEY (`owner_id`) REFERENCES `EnrolledCourse`(`id`);
+ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk0" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
+ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("id");
+ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk2" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
-ALTER TABLE `NewsFeedPost` ADD CONSTRAINT `NewsFeedPost_fk1` FOREIGN KEY (`queue_id`) REFERENCES `Queue`(`id`);
+ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
-ALTER TABLE `Assignment` ADD CONSTRAINT `Assignment_fk0` FOREIGN KEY (`category_id`) REFERENCES `Category`(`id`);
+ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk0" FOREIGN KEY ("tutor_id") REFERENCES "Users"("id");
 
-ALTER TABLE `Assignment` ADD CONSTRAINT `Assignment_fk1` FOREIGN KEY (`checkoff_suite_id`) REFERENCES `CheckoffSuite`(`id`);
+ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
+ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
 
-ALTER TABLE `Category` ADD CONSTRAINT `Category_fk0` FOREIGN KEY (`course_id`) REFERENCES `Course`(`id`);
+ALTER TABLE "QueueCalendar" ADD CONSTRAINT "QueueCalendar_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
+
+ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk0" FOREIGN KEY ("owner_id") REFERENCES "EnrolledCourse"("id");
+ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
+
+ALTER TABLE "TicketFeedback" ADD CONSTRAINT "TicketFeedback_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
 

@@ -2,7 +2,7 @@ from typing import List
 from datetime import datetime
 from passlib.hash import pbkdf2_sha256
 
-from init import db
+from ...setup import db
 #from .models import EnrolledCourse
 from ..utils.pass_gen import gen_password
 
