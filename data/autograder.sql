@@ -56,7 +56,7 @@ CREATE TABLE "Assignment" (
 	"name" varchar(255) NOT NULL,
 	"category_id" bigserial NOT NULL,
 	"checkoff_suite_id" bigserial NOT NULL,
-	"total_grade_percent" double NOT NULL,
+	"total_grade_percent" double precision NOT NULL,
 	CONSTRAINT "Assignment_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -67,7 +67,7 @@ CREATE TABLE "Assignment" (
 CREATE TABLE "Category" (
 	"id" serial NOT NULL,
 	"name" varchar(255) NOT NULL,
-	"weight" double NOT NULL,
+	"weight" double precision NOT NULL,
 	"course_id" bigserial NOT NULL,
 	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
 ) WITH (
@@ -100,9 +100,9 @@ CREATE TABLE "Queue" (
 	"id" serial NOT NULL,
 	"status" integer NOT NULL,
 	"high_capacity_enable" BOOLEAN NOT NULL DEFAULT 'false',
-	"high_capacity_threshold" bigserial NOT NULL DEFAULT '25',
-	"high_capacity_message" varchar(255) NOT NULL DEFAULT 'The queue is currently at high capacity. The tutors will be limiting their time to 5 minutes per student.',
-	"high_capacity_warning" varchar(255) NOT NULL DEFAULT 'The queue is currently very busy. You may not be helped before tutor hours end.',
+	"high_capacity_threshold" integer NOT NULL DEFAULT '25',
+	"high_capacity_message" varchar(255) NOT NULL,
+	"high_capacity_warning" varchar(255) NOT NULL,
 	"ticket_cool_down" integer NOT NULL DEFAULT '10',
 	CONSTRAINT "Queue_pk" PRIMARY KEY ("id")
 ) WITH (
@@ -209,7 +209,7 @@ CREATE TABLE "NewsFeedPost" (
 	"is_deleted" BOOLEAN NOT NULL,
 	"last_edited_at" TIMESTAMP,
 	"subject" varchar(255) NOT NULL,
-	"body" TEXT(255) NOT NULL,
+	"body" TEXT NOT NULL,
 	"owner_id" bigserial NOT NULL,
 	"queue_id" bigserial NOT NULL,
 	CONSTRAINT "NewsFeedPost_pk" PRIMARY KEY ("id")
