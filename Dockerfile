@@ -24,4 +24,3 @@ COPY . /usr/src/app
 
 # run the entrypoint
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
-

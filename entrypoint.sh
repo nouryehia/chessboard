@@ -13,4 +13,3 @@ fi
 python runner.py
 
 exec "$@"
-

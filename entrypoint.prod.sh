@@ -11,4 +11,3 @@ if [ "$DATABASE" = "postgres" ]; then
 fi
 
 exec "$@"
-
