@@ -3,3 +3,7 @@ __pycache__
 .DS_Store
 *.dSYM
 *.sw*
+.env.prod
+.env.prod.db
+Dockerfile.prod
+
