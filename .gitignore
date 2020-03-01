@@ -6,3 +6,5 @@ __pycache__
 .env.prod
 .env.prod.db
 Dockerfile.prod
+autograder.conf
+
