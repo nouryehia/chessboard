@@ -13,12 +13,15 @@ You also may want to install vscode-icons and Visual Studio Intellicode here as 
 
 Flake8 is a linter which enforces strict style guidlines, so make sure to keep it happy and our code will look beautiful.
 
-To start developing: `docker-compose up -d --build`
+To start developing: `docker-compose up -d --build`. The `-d` flag makes the
+container run as a daemon, so if you want to see what's happening don't use it.
+It kind of hijacks your terminal, so I'd recommend letting it run in a terminal
+and opening a new window if you need to use your terminal.
 
 
 To shut down: `docker-compose down --volumes` (to take everything down) or `docker-compose stop` (to just stop the image from running)
 
-We'll eventually be using <a href="https://hub.docker/com" target="_blank">DockerHub</a> for image management, so be sure
+We'll eventually be using <a href="https://hub.docker.com" target="_blank">DockerHub</a> for image management, so be sure
 to make an account there.
 
 ### Production
