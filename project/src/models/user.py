@@ -1,10 +1,13 @@
-from typing import List
+# needed for annotating return types of the same object
+from __future__ import annotations
+
 from datetime import datetime
-from passlib.hash import pbkdf2_sha256
+from typing import List, Optional
 
 from ...setup import db
-#from .models import EnrolledCourse
+# from .models import EnrolledCourse
 from ..utils.pass_gen import gen_password
+from ..security.password import pwd_context
 
 
 class User(db.Model):
@@ -66,7 +69,7 @@ class User(db.Model):
         Params: pass - new password.\n
         Returns: None
         '''
-        self.password = pbkdf2_sha256.hash(passwd)
+        self.password = pwd_context.hash(passwd)
         self.save()
 
     @staticmethod
@@ -81,17 +84,32 @@ class User(db.Model):
         '''
         user = User.query.filter_by(email=email).first()
         if user:
-            return pbkdf2_sha256.verify(user.password, passwd)
+            return pwd_context.verify(user.password, passwd)
         return False
 
     @staticmethod
     def create_user(email: str, f_name: str, l_name: str,
                     pid: str, passwd: str) -> bool:
+        '''
+        Function that creates a new user object and adds it to the database.\n
+        If the password field isn't provided, we randomly generate one for the
+        user.\n
+        Params: email - string. Email address for the user.\n
+        f_name - string. User's first name.\n
+        l_name - string. User's surname.\n
+        pid - string. PID of the user. Can be null.\n
+        passwd - string. User's password. If null, it gets created.\n
+        Returns: boolean value
+        '''
+
+        # don't try to add someone who already is a user
+        if User.find_by_pid_email_fallback(pid, email):
+            return False
 
         if not passwd:
             passwd = gen_password()
         u = User(email=email, first_name=f_name, last_name=l_name, pid=pid,
-                 password=pbkdf2_sha256.hash(passwd))
+                 password=pwd_context.hash(passwd))
 
         db.session.add(u)
         u.save()
@@ -120,7 +138,7 @@ class User(db.Model):
         user.save()
 
     @staticmethod
-    def find_by_pid_with_email_fallback(pid: str, email: str):
+    def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:
         '''
         Function that tries to find a user using their PID first,
         then uses their email as a fallback.
@@ -137,5 +155,12 @@ class User(db.Model):
         return user
 
     @staticmethod
-    def get_all_users():
+    def get_all_users() -> List[User]:
+        '''
+        Function that returns a list of all users in the database.\n
+        Probably shouldn't be used much, given that the user list may be quite
+        large.\n
+        Params: None\n
+        Returns: List[User]
+        '''
         return User.query.all()

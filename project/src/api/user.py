@@ -11,7 +11,7 @@ def create_user():
     email = request.json['email']
     f_name = request.json['fname']
     l_name = request.json['lname']
-    pid = request.json['pid']
+    pid = request.json['pid'] if 'pid' in request.json else None
     password = request.json['passwd'] if 'passwd' in request.json else None
 
     if not User.create_user(email, f_name, l_name, pid, password):
@@ -22,17 +22,31 @@ def create_user():
 
 @user_api_bp.route('/get_all_users', methods=['GET'])
 def get_all():
-    return jsonify({'result': User.get_all_users()}), 200
+    res = []
+    all_users = User.get_all_users()
+    for user in all_users:
+        val = {}
+        val['first name'] = user.first_name
+        val['last name'] = user.last_name
+        val['email'] = user.email
+        res.append(val)
+    return jsonify({'result': res}), 200
 
 
 @user_api_bp.route('/get_user', methods=['GET'])
 def get():
     email = request.json['email']
-    pid = request.json['pid']
+    pid = request.json['pid'] if 'pid' in request.json else None
 
-    res = User.find_by_pid_with_email_fallback(pid, email)
+    found = User.find_by_pid_email_fallback(pid, email)
 
-    if not res:
+    if not found:
         return jsonify({'reason': 'User not found'}), 400
     else:
+        res = {}
+        res['id'] = found.id
+        res['first name'] = found.first_name
+        res['last name'] = found.last_name
+        res['pid'] = found.pid
+        res['email'] = found.email
         return jsonify({'result': res}), 200
