@@ -29,6 +29,8 @@ def get_all():
         val['first name'] = user.first_name
         val['last name'] = user.last_name
         val['email'] = user.email
+        val['id'] = user.id
+        val['pid'] = user.pid
         res.append(val)
     return jsonify({'result': res}), 200
 
