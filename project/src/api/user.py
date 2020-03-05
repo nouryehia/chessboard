@@ -37,10 +37,7 @@ def get_all():
     of records simulataneously.
     @author npcompletenate
     '''
-    res = []
-    all_users = User.get_all_users()
-    for user in all_users:
-        res.append(user.to_json())
+    res = list(map(lambda user: user.to_json(), User.get_all_users()))
     return jsonify({'reason': 'request OK', 'result': res}), 200
 
 
