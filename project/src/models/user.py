@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from ...setup import db
 # from .models import EnrolledCourse
@@ -71,6 +71,22 @@ class User(db.Model):
         '''
         self.password = pwd_context.hash(passwd)
         self.save()
+
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a user object and returns it in dictionary
+        form. Used on the API layer.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['fname'] = self.first_name
+        ret['lname'] = self.last_name
+        ret['email'] = self.email
+        ret['id'] = self.id
+        ret['pid'] = self.pid
+        ret['last_login'] = self.last_login
+        return ret
 
     @staticmethod
     def check_password(email: str, passwd: str) -> bool:
