@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from flask_login import UserMixin
 from typing import List, Optional
 
 from ...setup import db
@@ -10,7 +11,7 @@ from ..utils.pass_gen import gen_password
 from ..security.password import pwd_context
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """
     Represents a user in the DB with relevant functions for
     manipulation of user data.\n
@@ -164,3 +165,13 @@ class User(db.Model):
         Returns: List[User]
         '''
         return User.query.all()
+
+    @staticmethod
+    def get_user_by_id(user_id: db.Integer) -> Optional[User]:
+        '''
+        Function that retrieves a user by the user id.\n
+        Used for flask_login as a login manager.\n
+        Params: `user_id` - user ID in the DB.\n
+        Returns: Optional[User]
+        '''
+        return User.query.filter_by(id=user_id).first()

@@ -1,3 +1,5 @@
+from flask_login import login_required, login_user, logout_user
+
 from ..models.user import User
 
 from flask import Blueprint, request, jsonify
@@ -5,6 +7,18 @@ from flask import Blueprint, request, jsonify
 
 user_api_bp = Blueprint('user_api', __name__)
 
+
+@user_api_bp.route('/login', method=['GET'])
+def login():
+    email = request.json['email']
+    password = request.json['password']
+    remember = True if request.json['remember'] == 'true' else False
+
+    if User.check_password(email, password):
+        user = User.find_by_pid_email_fallback(None, email)
+        user.update_login_timestamp()
+        login_user(user, remember=remember)
+        return jsonify({'reason': 'logged in'})
 
 @user_api_bp.route('/create_user', methods=['POST'])
 def create_user():
