@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 from ...setup import db
 # from .models import EnrolledCourse
@@ -105,7 +105,7 @@ class User(db.Model):
 
     @staticmethod
     def create_user(email: str, f_name: str, l_name: str,
-                    pid: str, passwd: str) -> bool:
+                    pid: str, passwd: str) -> Tuple[bool, str]:
         '''
         Function that creates a new user object and adds it to the database.\n
         If the password field isn't provided, we randomly generate one for the
@@ -115,21 +115,23 @@ class User(db.Model):
         l_name - string. User's surname.\n
         pid - string. PID of the user. Can be null.\n
         passwd - string. User's password. If null, it gets created.\n
-        Returns: boolean value
+        Returns: boolean value, string of randomly generated password
         '''
 
         # don't try to add someone who already is a user
         if User.find_by_pid_email_fallback(pid, email):
-            return False
+            return False, None
 
+        ret = None
         if not passwd:
             passwd = gen_password()
+            ret = passwd
         u = User(email=email, first_name=f_name, last_name=l_name, pid=pid,
                  password=pwd_context.hash(passwd))
 
         db.session.add(u)
         u.save()
-        return True
+        return True, ret
 
     """
     def get_courses_for_user(self) -> List[EnrolledCourse]:

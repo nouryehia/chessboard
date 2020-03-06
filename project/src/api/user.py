@@ -21,10 +21,16 @@ def create_user():
     pid = request.json['pid'] if 'pid' in request.json else None
     password = request.json['passwd'] if 'passwd' in request.json else None
 
-    if not User.create_user(email, f_name, l_name, pid, password):
+    status, pwd = User.create_user(email, f_name, l_name, pid, password)
+    if not status:
         return jsonify({'reason': 'user exists'}), 300
     else:
         res = False if password else True
+
+        if res:
+            # TODO need to email out the password we generate
+            # if we generate one
+            pass
         ret = {'reason': 'user created', 'password generated': res}
         return jsonify(ret), 200
 
