@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 
 
 class TimeUtil(object):
+    '''
+    Utility functions used to handle things with time.
+    '''
 
     PST = tzone('US/Pacific')
 
