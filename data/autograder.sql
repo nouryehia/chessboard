@@ -55,6 +55,7 @@ CREATE TABLE "Assignment" (
 	"is_deleted" BOOLEAN NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"category_id" bigserial NOT NULL,
+	"course_id" bigserial NOT NULL,
 	"checkoff_suite_id" bigserial NOT NULL,
 	"total_grade_percent" double precision NOT NULL,
 	CONSTRAINT "Assignment_pk" PRIMARY KEY ("id")
