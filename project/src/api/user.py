@@ -17,7 +17,8 @@ def login():
     '''
     email = request.json['email']
     password = request.json['password']
-    remember = True if request.json['remember'] == 'true' else False
+    remember = True if 'remember' in request.json and \
+        request.json['remember'] == 'true' else False
 
     if User.check_password(email, password):
         user = User.find_by_pid_email_fallback(None, email)

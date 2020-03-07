@@ -1,4 +1,4 @@
-from Flask import jsonify
+from flask import jsonify
 
 from .setup import app, login_manager
 

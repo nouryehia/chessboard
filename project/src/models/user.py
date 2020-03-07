@@ -1,12 +1,12 @@
 # needed for annotating return types of the same object
 from __future__ import annotations
 
-from datetime import datetime
 from flask_login import UserMixin
 from typing import List, Optional, Dict, Tuple
 
 from ...setup import db
 # from .models import EnrolledCourse
+from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
 from ..security.password import pwd_context
 
@@ -30,7 +30,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=True, nullable=False)
     first_name = db.Column(db.String(255), nullable=False)
     last_name = db.Column(db.String(255), nullable=False)
-    password = db.Column(db.String(255), nullable=True)
+    password = db.Column(db.String(255), nullable=False)
     pid = db.Column(db.String(10), nullable=True, unique=True)
     last_login = db.Column(db.DateTime, nullable=True)
 
@@ -58,7 +58,7 @@ class User(db.Model, UserMixin):
         Returns: None
         '''
         # grab current time and update field
-        last_login = datetime.now()
+        last_login = TimeUtil.get_current_time()
         self.last_login = last_login
 
         # push change to the DB
@@ -101,7 +101,7 @@ class User(db.Model, UserMixin):
         '''
         user = User.query.filter_by(email=email).first()
         if user:
-            return pwd_context.verify(user.password, passwd)
+            return pwd_context.verify(passwd, user.password)
         return False
 
     @staticmethod

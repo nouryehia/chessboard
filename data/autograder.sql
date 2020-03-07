@@ -4,7 +4,7 @@ CREATE TABLE "Users" (
 	"first_name" varchar(255) NOT NULL,
 	"last_name" varchar(255) NOT NULL,
 	"password" varchar(255) NOT NULL,
-	"pid" varchar(10) NOT NULL UNIQUE,
+	"pid" varchar(10) UNIQUE,
 	"last_login" TIMESTAMP,
 	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
 ) WITH (
