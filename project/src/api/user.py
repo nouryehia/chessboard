@@ -8,8 +8,13 @@ from flask import Blueprint, request, jsonify
 user_api_bp = Blueprint('user_api', __name__)
 
 
-@user_api_bp.route('/login', method=['GET'])
+@user_api_bp.route('/login', methods=['POST'])
 def login():
+    '''
+    Route used to log in a user. Creates a session for them and returns the
+    user object.\n
+    @author npcompletenate
+    '''
     email = request.json['email']
     password = request.json['password']
     remember = True if request.json['remember'] == 'true' else False
@@ -18,7 +23,47 @@ def login():
         user = User.find_by_pid_email_fallback(None, email)
         user.update_login_timestamp()
         login_user(user, remember=remember)
-        return jsonify({'reason': 'logged in'})
+        return jsonify({'reason': 'logged in', 'result': user.to_json()})
+    else:
+        return jsonify({'reason': 'User/Password doesn\'t match'}), 400
+
+
+@user_api_bp.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    '''
+    Route used to log out a user. Ends their session.\n
+    @author npcompletenate
+    '''
+    logout_user()
+    return jsonify({'reason': 'request OK'}), 200
+
+
+@user_api_bp.route('/reset_password', methods=['POST'])
+@login_required
+def reset_password():
+    email = request.json['email']
+    passwd = request.json['password']
+    old_pass = request.json['old password']
+
+    if User.check_password(email, old_pass):
+        user = User.find_by_pid_email_fallback(None, email)
+        user.reset_password(passwd)
+        return jsonify({'reason': 'request OK'}), 200
+    else:
+        return jsonify({'reason': 'Old password doesn\'t match'}), 400
+
+
+@user_api_bp.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    user = User.find_by_pid_email_fallback(None, request.json['email'])
+    if user:
+        new_pass = user.create_random_password()
+        # TODO: send the email here
+        return jsonify({'reason': 'request OK'}), 200
+    else:
+        return jsonify({'reason': 'User not found'}), 400
+
 
 @user_api_bp.route('/create_user', methods=['POST'])
 def create_user():
@@ -50,6 +95,7 @@ def create_user():
 
 
 @user_api_bp.route('/get_all_users', methods=['GET'])
+@login_required
 def get_all():
     '''
     Route used to get all users in the DB. Probably won't be used
@@ -62,6 +108,7 @@ def get_all():
 
 
 @user_api_bp.route('/get_user', methods=['GET'])
+@login_required
 def get():
     '''
     Route used to get a particular user. We try to find by PID first,

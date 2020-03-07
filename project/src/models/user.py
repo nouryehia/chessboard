@@ -147,14 +147,15 @@ class User(db.Model, UserMixin):
         """
 
     @staticmethod
-    def create_random_password(user) -> None:
+    def create_random_password(user) -> str:
         '''
         Function used to generate a random password for a user.\n
         Params: user - User\n
-        Returns: None
+        Returns: The randomly generated password
         '''
         user.password = gen_password()
         user.save()
+        return user.password
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:
