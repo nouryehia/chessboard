@@ -40,7 +40,7 @@ def logout():
     return jsonify({'reason': 'request OK'}), 200
 
 
-@user_api_bp.route('/reset_password', methods=['POST'])
+@user_api_bp.route('/reset_password', methods=['PUT'])
 @login_required
 def reset_password():
     email = request.json['email']
@@ -55,12 +55,15 @@ def reset_password():
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
 
 
-@user_api_bp.route('/forgot_password', methods=['POST'])
+@user_api_bp.route('/forgot_password', methods=['PUT'])
 def forgot_password():
     user = User.find_by_pid_email_fallback(None, request.json['email'])
     if user:
         new_pass = user.create_random_password()
         # TODO: send the email here
+        # TODO: add logging stuff
+        # for now, just print it
+        print(new_pass)
         return jsonify({'reason': 'request OK'}), 200
     else:
         return jsonify({'reason': 'User not found'}), 400
