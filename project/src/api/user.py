@@ -17,8 +17,8 @@ def login():
     user object.\n
     @author npcompletenate
     '''
-    email = request.json['email']
-    password = request.json['password']
+    email = request.json['email'] if 'email' in request.json else None
+    password = request.json['password'] if 'password' in request.json else ''
     remember = True if 'remember' in request.json and \
         request.json['remember'] == 'true' else False
 
