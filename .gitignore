@@ -3,8 +3,6 @@ __pycache__
 .DS_Store
 *.dSYM
 *.sw*
-.env.prod
-.env.prod.db
-Dockerfile.prod
-docker-compose.prod.yml
-
+venv/
+app.py
+src/models/testing.py
