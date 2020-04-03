@@ -1,13 +1,14 @@
-from app import db
 from enum import Enum
 from datetime import datetime
 from typing import List
-from user import User  # Pretending
-import queue as q
-import ticket as t
+
+from ...setup import db
+from .model.user import User  # Pretending
+from .model import queue as q
+from .model import ticket as t
 
 
-class rating(Enum):
+class Rating(Enum):
     """
     The ratings for the feedback, with the following option --> Database
     value:\n

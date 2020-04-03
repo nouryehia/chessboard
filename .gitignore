@@ -3,4 +3,12 @@ __pycache__
 .DS_Store
 *.dSYM
 *.sw*
+<<<<<<< HEAD
 app.py
+=======
+.env.prod
+.env.prod.db
+Dockerfile.prod
+docker-compose.prod.yml
+
+>>>>>>> master

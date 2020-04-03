@@ -1,14 +1,16 @@
-from app import db
 from enum import Enum
 from typing import List, Optional
 from datetime import datetime, timedelta
 from operator import attrgetter
-from user import User
-from enrolled_course import EnrolledCourse, fake_getrole, Role  # Pretending
-from course import Course  # Pretending
-from ticket_feedback import TicketFeedback
-from ticket_event import TicketEvent
-from queue import Queue
+
+from ...setup import db
+from .model.user import User
+from .model import user
+from .model.enrolled_course import Role
+from .model.course import Course  # Pretending
+from .model.ticket_feedback import TicketFeedback
+from .model.event.ticket_event import TicketEvent
+from .model.queue import Queue
 
 
 """
@@ -308,7 +310,7 @@ class Ticket(db.Model):
             return True
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if fake_getrole(user.id, course.id) == Role.STAFF:
+            if getrole(user.id, course.id) == Role.STAFF:
                 return True
             else:
                 if self.student_id == user.id:
@@ -329,7 +331,7 @@ class Ticket(db.Model):
             return False
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if fake_getrole(user.id, course.id) == Role.STAFF:
+            if getrole(user.id, course.id) == Role.STAFF:
                 return True
             else:
                 if self.student_id == user.id:
@@ -372,6 +374,10 @@ class Ticket(db.Model):
         """
         Mark the ticket as accepted by a tutor.\n
         """
+        grader = user.find_user_by_id(grader_id)
+        # Prevent a tutor accept multiple tickets
+        defer_accpeted_ticket_for_grader(grader)
+
         self.status = Status.ACCEPTED
         self.accepted_at = datetime.now()
         self.grader_id = grader_id
@@ -445,6 +451,19 @@ def add_to_db(ticket: Ticket):
     """
     db.session.add(ticket)
     db.session.commit()
+
+
+@staticmethod
+def get_ticket_by_id(ticket_id) -> Optional(Ticket):
+    """
+    Get the ticket by ticket_id.\n
+    Inputs:\n
+    ticket_id --> The ticket_id to look for.\n
+    Return:\n
+    The ticket object, None if the ticket_id is not found.\n
+    """
+    return Ticket.query().filter_by(id=ticket_id)
+
 
 @staticmethod
 def find_all_tickets(queue: Queue,
@@ -637,4 +656,5 @@ def defer_accpeted_ticket_for_grader(grader: User) -> None:
     """
     ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
     for ticket in ticket_list:
-        ticket.mark_pending()
+        if (ticket.status == Status.ACCEPTED):
+            ticket.mark_pending()

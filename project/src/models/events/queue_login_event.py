@@ -1,8 +1,9 @@
-from app import db
-from user import User
 from enum import Enum
 from datetime import datetime
-from queue import Queue
+
+from ....setup import db
+from ..model.user import User
+from ..model.queue import Queue
 
 
 class EventType(Enum):

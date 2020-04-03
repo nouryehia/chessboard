@@ -1,6 +1,7 @@
-from app import db
-from queue import Queue
 from typing import List
+
+from ...setup import db
+from .model.queue import Queue
 
 
 class QueueCalendar(db.Model):

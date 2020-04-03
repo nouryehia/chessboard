@@ -1,6 +1,7 @@
-from app import db
 from datetime import datetime
-from user import User
+
+from ...setup import db
+from .model.user import User
 
 
 class NewsFeedPost(db.Model):

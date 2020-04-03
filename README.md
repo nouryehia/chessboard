@@ -13,15 +13,23 @@ You also may want to install vscode-icons and Visual Studio Intellicode here as 
 
 Flake8 is a linter which enforces strict style guidlines, so make sure to keep it happy and our code will look beautiful.
 
-To start developing: `docker-compose up -d --build`
+To start developing: `docker-compose up -d --build`. The `-d` flag makes the
+container run as a daemon, so if you want to see what's happening don't use it.
+It kind of hijacks your terminal, so I'd recommend letting it run in a terminal
+and opening a new window if you need to use your terminal.
 
 
 To shut down: `docker-compose down --volumes` (to take everything down) or `docker-compose stop` (to just stop the image from running)
 
-To get a visual representation of the API layer once it's running, navigate to localhost:1337
-
-We'll eventually be using <a href="https://hub.docker/com" target="_blank">DockerHub</a> for image management, so be sure
+We'll eventually be using <a href="https://hub.docker.com" target="_blank">DockerHub</a> for image management, so be sure
 to make an account there.
+
+### Production
+To run in production, pull the latest image from DockerHub and then run
+`docker-compose down --volumes`
+`docker-compose -f docker-compose.prod.yml up --build -d`
+
+If the container doesn't run, type `docker-compose -f docker-compose.prod.yml logs -f`
 
 ### Useful Links
 1. <a href="https://www.flaskapi.org/" target="_blank">Flask API documentation</a>
@@ -31,6 +39,8 @@ to make an account there.
 5. <a href="https://medium.com/@trstringer/debugging-a-python-flask-application-in-a-container-with-docker-compose-fa5be981ec9a" target="_blank">Debugging Flask Apps</a>
 6. <a href="https://flask.palletsprojects.com/en/1.1.x/blueprints/#blueprints" target="_blank">Flask Blueprints Documentation</a>
 7. <a href="https://stackoverflow.com/questions/41731704/use-docker-compose-with-multiple-repositories" target="_blank">Docker-Compose multiple repos together</a>
+8. <a href="https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx/"
+target="_blank">Docker configurations</a>
 
 
 ### License

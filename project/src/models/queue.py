@@ -1,16 +1,20 @@
-from app import db
+from __future__ import annotations
+from typing import List, Optional, Dict
 from enum import Enum
-from user import User # Pretending
-import user # Prentending
-import course as crs # prentending
-import ticket as t
-import models.events.ticket_event as tevent
-from typing import List, Optional
 from datetime import datetime, timedelta
-import models.events.queue_login_event as qle
-from course import Course # pretending
-import news_feed_post as nfp # pretending
-import enrolled_class as ec # pretending
+
+from ...setup import db
+
+from .models.user import User
+from .models import user 
+from .modesl.course import Course 
+from .models import course as crs 
+from .models import ticket as t
+from models.events import ticket_event as tevent
+from .models.events import queue_login_event as qle
+
+import news_feed_post as nfp 
+import enrolled_class as ec 
 
 
 """
@@ -215,7 +219,7 @@ class Queue(db.Model):
 
     def __repr__(self) -> str:
         """
-        The to string method to return which course this queue belongs to.\n
+        The to_string method to return which course this queue belongs to.\n
         Returns:\n
         The string representation of the course it belongs to.\n
         """
@@ -224,6 +228,22 @@ class Queue(db.Model):
             return repr(course)
         else:
             return None
+
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a user object and returns it in dictionary.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['queue_id'] = self.id
+        ret['status'] = self.status
+        ret['highCapacityEnabled'] = self.highCapacityEnabled
+        ret['high_capacity_message'] = self.high_capacity_message
+        ret['high_capacity_threshold'] = self.high_capacity_threshold
+        ret['high_capacity_warning'] = self.high_capacity_warning
+        ret['ticket_cooldown'] = self.ticket_cooldown
+        return ret
 
     # Get tickets / tickets related sttaus
     def get_pending_tickets(self) -> List[t.Ticket]:
@@ -566,39 +586,81 @@ def add_to_db(queue: Queue):
     db.session.add(queue)
     db.session.commit()
 
+
+@staticmethod
+def create_queue():
+    """
+    Create a new queue to the database.\n
+    """
+    queue = Queue()
+    add_to_db(queue)
+
+
+@staticmethod
+def get_queue_by_id(queue_id: id) -> Optional(Queue):
+    """
+    Find the queue by the queue_id.\n
+    Inputs:\n
+    queue_id --> The id of the queue to look for.\n
+    Returns:\n
+    The queue object, return None if it is not in the database.\n
+    """
+    return Queue.query().filter(id=queue_id).first()
+
 # None Memeber Queue Methods
 @staticmethod
-def grader_login(queue: Queue, grader: User,
-                 action_type: qle.ActionType = qle.ActionType.MANUAL):
+def grader_login(queue_id: int, grader_id: int,
+                 action_type: qle.ActionType = qle.ActionType.MANUAL) -> bool:
     """
     Login a grader when the grader login to he queue.\n
     Inputs:\n
     queue --> The queue that the grader is logging in.\n
     grader --> The grader that is logging in.\n
     action_type --> The type of action for logging in, default MANUAL.\n
+    Return:\n
+    True or false indicates whether the function is successful.
     """
-    course = crs.find_course_by_queue(queue)  # Prentending
+    queue = get_queue_by_id(queue_id)
+    if not queue:
+        return False
+    course = crs.find_course_by_queue(queue_id)
+    if not course:
+        return False
+    grader = user.get_user_by_id(grader_id)
+    if not grader:
+        return False
     grader.change_status(course, user.Status.AVALIABLE)
     event = qle.QueueLoginEvent(event_type=qle.EventType.LOGIN,
                                 action_type=action_type,
-                                grader_id=grader.id,
-                                queue_id=queue.id
+                                grader_id=grader_id,
+                                queue_id=queue_id
                                 )
     qle.add_to_db(event)
     queue.open()
+    return True
 
 
 @staticmethod
-def grader_logout(queue: Queue, grader: User,
-                  action_type: qle.ActionType):
+def grader_logout(queue_id: int, grader_id: int,
+                  action_type: qle.ActionType) -> bool:
     """
     Logout a grader when the grader logout from queue.\n
     Inputs:\n
     queue --> The queue that the grader is logging out.\n
     grader --> The grader that is logging out.\n
     action_type --> The type of action for logging out.\n
+    Return:\n
+    True or false indicates whether it the function runs successfully.
     """
+    queue = get_queue_by_id(queue_id)
+    if not queue:
+        return False
+    grader = user.get_user_by_id(grader_id)
+    if not grader:
+        return False
     course = crs.find_course_by_queue(queue)  # Prentending
+    if not course:
+        return False
     grader.change_status(course, user.Status.AVALIABLE)
     event = qle.QueueLoginEvent(event_type=qle.EventType.LOGOUT,
                                 action_type=action_type,
@@ -607,6 +669,7 @@ def grader_logout(queue: Queue, grader: User,
                                 )
     qle.add_to_db(event)
     queue.open()
+    return True
 
 
 @staticmethod
