@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import datetime
 
 from ...setup import db
@@ -70,13 +71,13 @@ class NewsFeedPost(db.Model):
         self.last_edited_at = datetime.now()
         self.save()
 
-# Static add method
-@staticmethod
-def add_to_db(nfp: NewsFeedPost):
-    """
-    Add the NewsFeed post to the database.\n
-    Inputs:\n
-    nfp --> the NewsFeedPost object created.\n
-    """
-    db.session.add(nfp)
-    db.session.commit()
+    # Static add method
+    @staticmethod
+    def add_to_db(nfp: NewsFeedPost):
+        """
+        Add the NewsFeed post to the database.\n
+        Inputs:\n
+        nfp --> the NewsFeedPost object created.\n
+        """
+        db.session.add(nfp)
+        db.session.commit()

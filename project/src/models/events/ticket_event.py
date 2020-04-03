@@ -1,10 +1,12 @@
-from app import db
+from __future__ import annotations
+
+from ....setup import db
 from enum import Enum
 from datetime import datetime
-from user import User
-from ticket import Ticket
+from ..models.user import User
+from ..models.ticket import Ticket
 from typing import List
-from course import Course # pretending
+from ..models.course import Course
 
 
 class EventType(Enum):
@@ -123,42 +125,42 @@ class TicketEvent(db.model):
     # Not implemnting (since not used):
     # findAllForTutor
 
+    # static query methods
+    @staticmethod
+    def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
+        """
+        Find all the ticket events associated to a ticket.\n
+        Inputs:\n
+        ticket --> The ticket object to be look for.\n
+        Return:\n
+        A list of event related to this ticket.\n
+        """
+        return TicketEvent.query().filter_by(ticket_id=ticket.id)\
+            .sort_by(TicketEvent.timestamp).desc.all()
 
-# static query methods
-@staticmethod
-def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
-    """
-    Find all the ticket events associated to a ticket.\n
-    Inputs:\n
-    ticket --> The ticket object to be look for.\n
-    Return:\n
-    A list of event related to this ticket.\n
-    """
-    return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-        .sort_by(TicketEvent.timestamp).desc.all()
+    @staticmethod
+    def find_all_events_for_tickets(tickets:
+                                    List[Ticket]) -> List[TicketEvent]:
+        """
+        Find all the ticket events of multiple tickets.\n
+        Inputs:\n
+        tickets --> A list of ticktes.\n
+        Return:\n
+        A list of event related to the tickets passed in.\n
+        """
+        ticket_id_list = []
+        for ticket in tickets:
+            ticket_id_list.append(ticket.id)
+        return TicketEvent.query().\
+            filter_by(Ticket.ticket_id.in_(ticket_id_list))
 
-
-@staticmethod
-def find_all_events_for_tickets(tickets: List[Ticket]) -> List[TicketEvent]:
-    """
-    Find all the ticket events of multiple tickets.\n
-    Inputs:\n
-    tickets --> A list of ticktes.\n
-    Return:\n
-    A list of event related to the tickets passed in.\n
-    """
-    ticket_id_list = []
-    for ticket in tickets:
-        ticket_id_list.append(ticket.id)
-    return TicketEvent.query().filter_by(Ticket.ticket_id.in_(ticket_id_list))
-
-# Static add method
-@staticmethod
-def add_to_db(te: TicketEvent):
-    """
-    Add the ticket event to the database.\n
-    Inputs:\n
-    te --> the ticket event object created.\n
-    """
-    db.session.add(te)
-    db.session.commit()
+    # Static add method
+    @staticmethod
+    def add_to_db(te: TicketEvent):
+        """
+        Add the ticket event to the database.\n
+        Inputs:\n
+        te --> the ticket event object created.\n
+        """
+        db.session.add(te)
+        db.session.commit()

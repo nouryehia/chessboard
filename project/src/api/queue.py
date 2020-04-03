@@ -10,9 +10,7 @@ and then use them to perform other things.
 """
 from flask import Blueprint, request, jsonify
 
-from ..models.user import User
 from ..models.queue import Queue
-from ..models import queue as q
 
 queue_api_bp = Blueprint('queue_api', __name__)
 
@@ -22,11 +20,11 @@ def find_queue():
     """
     Return the queue object corresponding to an id.\n
     """
-    queue_id = request.json("queue_id") if "queue_id" in request.json else None
+    queue_id = request.json["queue_id"] if "queue_id" in request.json else None
     if not queue_id:
         return jsonify({'reason': 'queue_id invalid'}), 400
 
-    queue = q.get_queue_by_id(queue_id)
+    queue = Queue.get_queue_by_id(queue_id)
 
     if not queue:
         return jsonify({'reason': 'queue not found'}), 400

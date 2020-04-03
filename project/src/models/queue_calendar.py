@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List
 
 from ...setup import db
@@ -53,16 +55,15 @@ class QueueCalendar(db.Model):
         self.is_enabled = True
         self.save()
 
-
-# Static query method
-@staticmethod
-def find_all_calendar_for_queue(queue: Queue) -> List[QueueCalendar]:
-    """
-    Find the all the queue calendars associsted to the queue.\n
-    Inputs:\n
-    queue --> The Queue to look for.\n
-    Return:\n
-    A list of queue calendar assocaited to the queue.\n
-    """
-    calendar_list = QueueCalendar.query().filter_by(queue_id=queue.id)
-    return calendar_list
+    # Static query method
+    @staticmethod
+    def find_all_calendar_for_queue(queue: Queue) -> List[QueueCalendar]:
+        """
+        Find the all the queue calendars associsted to the queue.\n
+        Inputs:\n
+        queue --> The Queue to look for.\n
+        Return:\n
+        A list of queue calendar assocaited to the queue.\n
+        """
+        calendar_list = QueueCalendar.query().filter_by(queue_id=queue.id)
+        return calendar_list
