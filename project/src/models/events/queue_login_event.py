@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import List
+
 from enum import Enum
 from datetime import datetime
 
@@ -102,13 +105,23 @@ class QueueLoginEvent(db.Model):
                          .order_by(QueueLoginEvent.timestamp).desc.all()
         return list(filter(lambda x: start <= x.closed_at <= end, event_list))
 
-# Static add method
-@staticmethod
-def add_to_db(qle: QueueLoginEvent):
-    """
-    Add the queue login event to the database.\n
-    Inputs:\n
-    qle --> the QueueLoginEvent object created.\n
-    """
-    db.session.add(qle)
-    db.session.commit()
+    # Static add method
+    @staticmethod
+    def get_event_timestamp(qle: QueueLoginEvent) -> datetime:
+        return qle.timestamp
+
+    @staticmethod
+    def add_to_db(qle: QueueLoginEvent):
+        """
+        Add the queue login event to the database.\n
+        Inputs:\n
+        qle --> the QueueLoginEvent object created.\n
+        """
+        db.session.add(qle)
+        db.session.commit()
+
+    @staticmethod
+    def find_login_time_for_user(grader: User) -> List[QueueLoginEvent]:
+        elist = QueueLoginEvent.query().filter_by(grader_id=grader.id).all()
+        sorted_elist = elist.sort(key=QueueLoginEvent.get_event_timestamp)
+        return sorted_elist
