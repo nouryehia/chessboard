@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from ..models.enrolled_course import Role, EnrolledCourse
 
 enrolled_course_api_bp = Blueprint('enrolled_course_api', __name__)
+CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
@@ -27,6 +28,7 @@ def enroll_user():
         return jsonify({'reason': 'user enrolled'}), 200
     else:
         return jsonify({'reason': 'user existed'}), 300
+
 
 @enrolled_course_api_bp.route('/delete_user_from_course', methods=['POST'])
 @login_required

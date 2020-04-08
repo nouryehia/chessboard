@@ -1,11 +1,10 @@
 from __future__ import annotations
+from enum import Enum
+from typing import List
 
 from ....setup import db
-from enum import Enum
-from datetime import datetime
 from ..models.user import User
 from ..models.ticket import Ticket
-from typing import List
 from ..models.course import Course
 
 
@@ -51,7 +50,7 @@ class TicketEvent(db.model):
     is_private = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                         nullable=False)
-    timestamp = db.Column(db.Datetime, nullable=False, default=datetime.now())
+    timestamp = db.Column(db.Datetime, nullable=False)
 
     # Getter Methods
     # Checking event types

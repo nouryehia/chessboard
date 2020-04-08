@@ -3,10 +3,10 @@ from enum import Enum
 from typing import List, Optional
 
 from ...setup import db
+from .models.user import User
 # from .models.queue import Queue
-# from .models.course import Course  # prentending
-from .user import User  # prentending
-# from .sections import Section  # prentending
+# from .models.course import Course
+# from .models.section import Section
 
 
 class Status(Enum):
@@ -53,9 +53,9 @@ class EnrolledCourse(db.Model):
     calling delete_enrolled_user.\n
     Fields: \n
     id --> The id of the queue, unique primary key.\n
-    user_id --> Forienkey to the user id corresponding to this entry\n
+    user_id --> Foreign key to the user id corresponding to this entry\n
     role --> The role of the user in this class.\n
-    section_id --> The forienkey to the section id
+    section_id --> The foreign key to the section id
                             at high capacity, not nullable.\n
     status --> The status of a user in the class.(mainly for tutor status)\n
     course_id --> The id of the coures that the user is enrolled in.\n
@@ -72,19 +72,6 @@ class EnrolledCourse(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
-
-    def __init__(self, **kwargs):
-        """
-        Constructor of the class Enrolled Course.\n
-        Inputs:\n
-        user_id --> The id of the corresponding user object.\n
-        role --> The role of this user in this course.\n
-        section_id --> The section the student is in.\n
-        course_id --> The id of the coures that the user is enrolled in.\n
-        status --> The current status of the user (grader), default
-        inactive.\n
-        """
-        super(EnrolledCourse, self).__init__(**kwargs)
 
     def __repr__(self) -> str:
         """
@@ -255,10 +242,11 @@ class EnrolledCourse(db.Model):
         Inputs:\n
         The Queue object to search for.\n
         Returns:\n
-        A list of active tutors User objects.\n
+        A list of active tutors User objects. Could have null entries\n
         """
-        queue = Queue.find_course_by_id(queue_id)  # TODO
-        course = Course.find_course_for(queue)  # need to ask
+        # TODO: return to this after Queue and Course exist
+        queue = Queue.find_course_by_id(queue_id)
+        course = Course.find_course_for(queue)
 
         grader_enrolled_course = EnrolledCourse.query\
             .filter_by(roles=Role.GRADER)\
@@ -268,14 +256,10 @@ class EnrolledCourse(db.Model):
 
         grader_set = set()
         grader_set.update(grader_enrolled_course)
-        grader_list = []
-        for grader in list(grader_set):
-            grader_list.append(User.find_user(id=grader.id))  # need to ask
-        return grader_list
-
+        return [User.get_user_by_id(grader.id) for grader in list(grader_set)]
 
     @staticmethod
-    def delete_enrolled_user_from_course(user_id: int, course_id: int):
+    def delete_enrolled_user_from_course(user_id: int, course_id: int) -> bool:
         """
         Delete an entry from the enrolled_course table.\n
         Inputs:\n

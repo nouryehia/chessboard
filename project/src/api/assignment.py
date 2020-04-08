@@ -1,14 +1,16 @@
-#from flask_login import login_required
+from flask_cors import CORS
+from flask_login import login_required
+from flask import Blueprint, request, jsonify
 
 from ..models.assignment import Assignment
 
-from flask import Blueprint, request, jsonify
 
 assignment_api_bp = Blueprint('assignment_api', __name__)
+CORS(assignment_api_bp, supports_credentials=True)
 
 
 @assignment_api_bp.route('/create_assignment', methods=['POST'])
-#@login_required
+@login_required
 def create_assignment():
     due = request.json['due']
     name = request.json['name']
@@ -24,7 +26,7 @@ def create_assignment():
 
 
 @assignment_api_bp.route('/get_assignments_for_course', methods=['GET'])
-#@login_required
+@login_required
 def get_assignments_for_course():
     course_id = request.json['course_id']
 
@@ -37,6 +39,7 @@ def get_assignments_for_course():
 
 
 @assignment_api_bp.route('/delete_assignment_for_course', methods=['PUT'])
+@login_required
 def delete_assignment_for_course():
     course_id = request.json['course']
     assignment_id = request.json['assignment']
@@ -47,7 +50,9 @@ def delete_assignment_for_course():
     else:
         return jsonify({'reason': 'assignment deleted'}), 200
 
+
 @assignment_api_bp.route('/delete_all_for_course', methods=['PUT'])
+@login_required
 def delete_all_for_course():
     course_id = request.json['course']
 
@@ -55,7 +60,9 @@ def delete_all_for_course():
 
     return jsonify({'reason': 'assignments deleted'}), 200
 
+
 @assignment_api_bp.route('/restore_assignment_for_course', methods=['PUT'])
+@login_required
 def restore_assignment_for_course():
     course_id = request.json['course']
     assignment_id = request.json['assignment']
@@ -66,7 +73,9 @@ def restore_assignment_for_course():
     else:
         return jsonify({'reason': 'assignment restored'}), 200
 
+
 @assignment_api_bp.route('/restore_all_for_course', methods=['PUT'])
+@login_required
 def restore_all_for_course():
     course_id = request.json['course']
 
