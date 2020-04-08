@@ -44,3 +44,8 @@ class MailUtil(object):
             msglg = 'Login attempt for donotreply account unsuccessful'
             log_util.custom_msg(msglg, LogLevels.ERR)
             return False
+
+
+# IMPORT THIS OBJECT
+# This is a singleton!
+mailer = MailUtil()

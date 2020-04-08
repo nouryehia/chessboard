@@ -5,9 +5,9 @@ from flask_login import UserMixin
 from typing import List, Optional, Dict, Tuple
 
 from ...setup import db
-from .models.enrolled_course import EnrolledCourse
 from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
+from .models.enrolled_course import EnrolledCourse
 from ..security.password import pwd_context, superpass
 
 

@@ -4,7 +4,7 @@ from flask_login import login_required, login_user, logout_user
 
 
 from ..models.user import User
-# from ..utils.mailer import MailUtil
+from ..utils.mailer import mailer
 from ..utils.logger import log_util, LogLevels
 
 
@@ -57,8 +57,15 @@ def reset_password():
         user = User.find_by_pid_email_fallback(None, email)
         user.reset_password(passwd)
         log_util.reset_password(user.email)
-        # TODO: email the user that they just reset their password
-        print("TODO: email the user that they just reset their password")
+        msg = 'Hi there!\nYou\'re getting this email because you' +\
+            ' reset your password. If this wasn\'t you, contact someone' +\
+            ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
+            ' this email; replies are not checked.' +\
+            '\n\nCheers,\nThe Autograder Team'
+        if mailer.send(user.email, 'Password Reset', msg):
+            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        else:
+            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
         return jsonify({'reason': 'request OK'}), 200
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
@@ -69,11 +76,18 @@ def forgot_password():
     user = User.find_by_pid_email_fallback(None, request.json['email'])
     if user:
         new_pass = user.create_random_password()
-        # TODO: send the email here
-        # for now, just print the generated password
-        print(new_pass)
-
         log_util.forgot_password(user.email)
+        msg = 'Hi there!\nYou\'re getting this email because you' +\
+            ' forgot your password. If this wasn\'t you, contact someone' +\
+            ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
+            ' this email; replies are not checked.' +\
+            f' Your temp password is {new_pass}; go change it ASAP!' +\
+            '\n\nCheers,\nThe Autograder Team'
+
+        if mailer.send(user.email, 'Forgot Password', msg):
+            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        else:
+            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
         return jsonify({'reason': 'request OK'}), 200
     else:
         return jsonify({'reason': 'User not found'}), 400
@@ -102,10 +116,21 @@ def create_user():
         res = False if password else True
         log_util.create_user(user)
 
+        msg = 'Hi there!\nYou\'re getting this email because an' +\
+            ' Autograder account was created for you.'
+
         if res:
-            # TODO need to email out the password we generate
-            # if we generate one
-            print("Send password gen email here")
+            msg += '\nA temporary password was created for you, so go change '
+            msg += f'it! Your temporary password is {pwd}.'
+        else:
+            msg += 'You set your password when you created, so try logging in!'
+
+        msg += '\n\nCheers,\nThe Autograder Team'
+
+        if mailer.send(user.email, 'Created Autograder Account', msg):
+            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        else:
+            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
         ret = {'reason': 'user created', 'password generated': res}
         return jsonify(ret), 200
 
