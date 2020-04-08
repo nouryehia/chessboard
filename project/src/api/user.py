@@ -1,11 +1,13 @@
+from flask_cors import CORS
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, login_user, logout_user
+
 
 from ..models.user import User
 
-from flask import Blueprint, request, jsonify
-
 
 user_api_bp = Blueprint('user_api', __name__)
+CORS(user_api_bp, supports_credentials=True)
 
 
 @user_api_bp.route('/login', methods=['POST'])
@@ -15,8 +17,8 @@ def login():
     user object.\n
     @author npcompletenate
     '''
-    email = request.json['email']
-    password = request.json['password']
+    email = request.json['email'] if 'email' in request.json else None
+    password = request.json['password'] if 'password' in request.json else ''
     remember = True if 'remember' in request.json and \
         request.json['remember'] == 'true' else False
 
@@ -40,7 +42,7 @@ def logout():
     return jsonify({'reason': 'request OK'}), 200
 
 
-@user_api_bp.route('/reset_password', methods=['POST'])
+@user_api_bp.route('/reset_password', methods=['PUT'])
 @login_required
 def reset_password():
     email = request.json['email']
@@ -55,12 +57,15 @@ def reset_password():
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
 
 
-@user_api_bp.route('/forgot_password', methods=['POST'])
+@user_api_bp.route('/forgot_password', methods=['PUT'])
 def forgot_password():
     user = User.find_by_pid_email_fallback(None, request.json['email'])
     if user:
         new_pass = user.create_random_password()
         # TODO: send the email here
+        # TODO: add logging stuff
+        # for now, just print it
+        print(new_pass)
         return jsonify({'reason': 'request OK'}), 200
     else:
         return jsonify({'reason': 'User not found'}), 400

