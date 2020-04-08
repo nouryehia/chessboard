@@ -5,13 +5,12 @@ from datetime import datetime, timedelta
 from operator import attrgetter
 
 from ...setup import db
-from .model.user import User
-from .model import user
-from .model.enrolled_course import Role
-from .model.course import Course  # Pretending
-from .model.ticket_feedback import TicketFeedback
-from .model.event.ticket_event import TicketEvent
-from .model.queue import Queue
+from .user import User
+from .enrolled_course import Role
+from .course import Course  # Pretending
+from .ticket_feedback import TicketFeedback
+from .event.ticket_event import TicketEvent
+from .queue import Queue
 
 
 """
@@ -375,7 +374,7 @@ class Ticket(db.Model):
         """
         Mark the ticket as accepted by a tutor.\n
         """
-        grader = user.find_user_by_id(grader_id)
+        grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
         Ticket.defer_accpeted_ticket_for_grader(grader)
 

@@ -3,10 +3,10 @@ from __future__ import annotations
 from ...setup import db
 from enum import Enum
 from typing import List, Optional
-from .models import queue as q
-from .models import course as crs  # prentending
-from .models import user as usr  # prentending
-from .models import sections as sec  # prentending
+# from .queue import Queue
+# from .models import course as crs  # prentending
+from .user import User  # prentending
+# from .models import sections as sec  # prentending
 
 
 class Status(Enum):
@@ -65,7 +65,7 @@ class EnrolledCourse(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.Forienkey('section.id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
                            nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
                           nullable=False)
@@ -253,7 +253,7 @@ def find_user_in_all_course(user_id: int,
 
 
 @staticmethod
-def find_active_tutor_for(queue_id: int) -> List[usr.User]:
+def find_active_tutor_for(queue_id: int) -> List[User]:
     """
     Find all the active tutor for a given queue object.\n
     Inputs:\n
@@ -261,8 +261,8 @@ def find_active_tutor_for(queue_id: int) -> List[usr.User]:
     Returns:\n
     A list of active tutors User objects.\n
     """
-    queue = q.find_course_by_id(queue_id)  # TODO
-    course = crs.find_course_for(queue)  # need to ask
+    queue = Queue.find_course_by_id(queue_id)  # TODO
+    course = Course.find_course_for(queue)  # need to ask
 
     grader_enrolled_course = EnrolledCourse.query\
         .filter_by(roles=Role.GRADER)\
@@ -274,7 +274,7 @@ def find_active_tutor_for(queue_id: int) -> List[usr.User]:
     grader_set.update(grader_enrolled_course)
     grader_list = []
     for grader in list(grader_set):
-        grader_list.append(usr.find_user(id=grader.id))  # need to ask
+        grader_list.append(User.find_user(id=grader.id))  # need to ask
     return grader_list
 
 
