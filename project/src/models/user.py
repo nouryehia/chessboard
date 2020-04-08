@@ -153,10 +153,9 @@ class User(db.Model, UserMixin):
         Params: user - User\n
         Returns: The randomly generated password
         '''
-        password = gen_password()
-        user.password = pwd_context.hash(password)
+        user.password = gen_password()
         user.save()
-        return password
+        return user.password
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:
