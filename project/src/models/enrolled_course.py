@@ -3,8 +3,7 @@ from __future__ import annotations
 from ...setup import db
 from enum import Enum
 from typing import List, Optional
-# from .queue import Queue
-# from .models import course as crs  # prentending
+# from .course import Course
 from .user import User  # prentending
 # from .models import sections as sec  # prentending
 
@@ -61,7 +60,7 @@ class EnrolledCourse(db.Model):
     course_id --> The id of the coures that the user is enrolled in.\n
     @author YixuanZhou
     """
-    __tablename__ = 'Queue'
+    __tablename__ = 'EnrolledCourse'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
@@ -119,6 +118,23 @@ class EnrolledCourse(db.Model):
         The hash result for the user_id field.\n
         """
         return hash(self.user_id)
+
+    def to_json(self):
+        '''
+        Function that takes a user object and returns it in dictionary
+        form. Used on the API layer.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['user_id'] = self.user_id
+        ret['course_id'] = self.course_id
+        ret['section_id'] = self.section_id
+        ret['id'] = self.id
+        ret['status'] = self.status.value
+        ret['role'] = self.role.value
+        ret['last_login'] = self.last_login
+        return ret
 
     def get_role(self) -> Role:
         """
@@ -261,8 +277,7 @@ def find_active_tutor_for(queue_id: int) -> List[User]:
     Returns:\n
     A list of active tutors User objects.\n
     """
-    queue = Queue.find_course_by_id(queue_id)  # TODO
-    course = Course.find_course_for(queue)  # need to ask
+    course = Course.find_course_for(queue_id)  # need to ask
 
     grader_enrolled_course = EnrolledCourse.query\
         .filter_by(roles=Role.GRADER)\

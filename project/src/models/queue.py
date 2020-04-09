@@ -15,7 +15,7 @@ from .events.ticket_event import TicketEvent, EventType
 from .events.queue_login_event import QueueLoginEvent, ActionType
 
 from .news_feed_post import NewsFeedPost
-from .enrolled_class import EnrolledClass
+from .enrolled_course import EnrolledCourse
 
 
 """
@@ -530,7 +530,7 @@ class Queue(db.Model):
         """
         ave_resolve_time = self.average_help_time(hour=True)
         # pending_num = self.get_pending_tickets()
-        active_tutor_num = EnrolledClass.find_active_tutor_for(self)  # need ec
+        active_tutor_num = EnrolledCourse.find_active_tutor_for(self)  # need ec
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
