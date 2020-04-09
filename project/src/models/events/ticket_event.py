@@ -54,7 +54,6 @@ class TicketEvent(db.model):
     timestamp = db.Column(db.Datetime, nullable=False, default=datetime.now())
 
     # Getter Methods
-    # Checking event types
     def is_create(self) -> bool:
         """
         Check if the event type is create.\n

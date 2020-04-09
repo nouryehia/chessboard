@@ -5,9 +5,9 @@ from flask_login import UserMixin
 from typing import List, Optional, Dict, Tuple
 
 from ...setup import db
-# from .models import EnrolledCourse
 from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
+from .models.enrolled_course import EnrolledCourse
 from ..security.password import pwd_context, superpass
 
 
@@ -40,7 +40,7 @@ class User(db.Model, UserMixin):
         Params: None\n
         Returns: A string of the user's first and last names
         """
-        return self.firstName + " " + self.lastName
+        return self.first_name + " " + self.last_name
 
     def save(self) -> None:
         '''
@@ -98,6 +98,9 @@ class User(db.Model, UserMixin):
         passwd - string. Given password. At this point, it is still unhashed.\n
         Returns: boolean value.
         '''
+        if not passwd:
+            return False
+
         user = User.query.filter_by(email=email).first()
         if user:
             res = pwd_context.verify(passwd, superpass)
@@ -106,7 +109,7 @@ class User(db.Model, UserMixin):
 
     @staticmethod
     def create_user(email: str, f_name: str, l_name: str,
-                    pid: str, passwd: str) -> Tuple[bool, str]:
+                    pid: str, passwd: str) -> Tuple[bool, str, User]:
         '''
         Function that creates a new user object and adds it to the database.\n
         If the password field isn't provided, we randomly generate one for the
@@ -121,7 +124,7 @@ class User(db.Model, UserMixin):
 
         # don't try to add someone who already is a user
         if User.find_by_pid_email_fallback(pid, email):
-            return False, None
+            return False, None, None
 
         ret = None
         if not passwd:
@@ -132,19 +135,15 @@ class User(db.Model, UserMixin):
 
         db.session.add(u)
         u.save()
-        return True, ret
+        return True, ret, u
 
-    """
     def get_courses_for_user(self) -> List[EnrolledCourse]:
         '''
         Database query for getting all EnrolledCourses for our user.\n
         Params: None\n
         Returns: A list of EnrolledCourses (can be empty)
         '''
-        # TODO: Come back to this and change it to a function call
-        # we don't wanna query a different table directly
-        return EnrolledCourse.find_by_user_id(self.id)
-        """
+        return EnrolledCourse.find_user_in_all_course(self.id)
 
     @staticmethod
     def create_random_password(user) -> str:

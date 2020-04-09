@@ -70,6 +70,7 @@ CREATE TABLE "Category" (
 	"name" varchar(255) NOT NULL,
 	"weight" double precision NOT NULL,
 	"course_id" bigserial NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL DEFAULT false,
 	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE

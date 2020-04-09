@@ -8,11 +8,13 @@ Typically, we need to retrive a queue object from the database first,
 and then use them to perform other things.
 @Yixuan Zhou
 """
+from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 
 from ..models.queue import Queue
 
 queue_api_bp = Blueprint('queue_api', __name__)
+CORS(queue_api_bp, supports_credentials=True)
 
 
 @queue_api_bp.route('/find_queue', methods=['GET'])
