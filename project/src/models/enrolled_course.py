@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ...setup import db
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 # from .course import Course
 from .user import User  # prentending
 # from .models import sections as sec  # prentending
@@ -119,7 +119,7 @@ class EnrolledCourse(db.Model):
         """
         return hash(self.user_id)
 
-    def to_json(self):
+    def to_json(self) -> Dict[str, str]:
         '''
         Function that takes a user object and returns it in dictionary
         form. Used on the API layer.\n
