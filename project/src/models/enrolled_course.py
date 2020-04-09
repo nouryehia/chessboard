@@ -289,7 +289,7 @@ def find_active_tutor_for(queue_id: int) -> List[User]:
     grader_set.update(grader_enrolled_course)
     grader_list = []
     for grader in list(grader_set):
-        grader_list.append(User.find_user(id=grader.id))  # need to ask
+        grader_list.append(User.get_user_by_id(id=grader.id))  # need to ask
     return grader_list
 
 
