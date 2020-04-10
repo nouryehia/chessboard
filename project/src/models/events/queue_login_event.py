@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 
 from enum import Enum
-from datetime import datetime
+from ...utils.time import TimeUtil
 
 from ....setup import db
 from ..model.user import User
@@ -46,7 +46,8 @@ class QueueLoginEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)
-    timestamp = db.Colunm(db.Datetime, nullable=False, default=datetime.now())
+    timestamp = db.Colunm(db.Datetime, nullable=False,
+                          default=TimeUtil.get_current_time())
     grader_id = db.Column(db.Integer, db.ForeignKey('tutor.id'),
                           nullable=False)
     queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'), nullable=False)
@@ -80,8 +81,8 @@ class QueueLoginEvent(db.Model):
         """
         return self.action_type == ActionType.AUTOMATIC
 
-    def find_event_in_range(self, queue: Queue, start: datetime,
-                            end: datetime = datetime.now(),
+    def find_event_in_range(self, queue: Queue, start: str,
+                            end: str = TimeUtil.get_current_time(),
                             grader: User = None):
         """
         Get all the queue login events for a queue in a given range.\n
@@ -107,7 +108,7 @@ class QueueLoginEvent(db.Model):
 
     # Static add method
     @staticmethod
-    def get_event_timestamp(qle: QueueLoginEvent) -> datetime:
+    def get_event_timestamp(qle: QueueLoginEvent) -> str:
         return qle.timestamp
 
     @staticmethod

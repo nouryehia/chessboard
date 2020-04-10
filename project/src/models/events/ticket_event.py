@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ....setup import db
 from enum import Enum
-from datetime import datetime
+from ...utils.time import TimeUtil
 from ..models.user import User
 from ..models.ticket import Ticket
 from typing import List
@@ -51,7 +51,8 @@ class TicketEvent(db.model):
     is_private = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                         nullable=False)
-    timestamp = db.Column(db.Datetime, nullable=False, default=datetime.now())
+    timestamp = db.Column(db.Datetime, nullable=False,
+                          default=TimeUtil.get_current_time())
 
     # Getter Methods
     def is_create(self) -> bool:

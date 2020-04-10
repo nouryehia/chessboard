@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import List, Optional, Dict
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import timedelta
+from ..utils.time import TimeUtil
 
 from ...setup import db
 
@@ -21,8 +22,8 @@ from .enrolled_course import EnrolledCourse
 """
 Define Constant
 """
-DEFAULT_WAIT_TIME = timedelta(minutes=12)  # 12min
-MIN_WAIT_TIME = timedelta(minutes=5)  # 5min
+DEFAULT_WAIT_TIME = '0:12:00'  # 12min
+MIN_WAIT_TIME = '0:05:00'  # 5min
 
 
 class Status(Enum):
@@ -112,7 +113,8 @@ class Queue(db.Model):
         tag_one = tag_list[0]
         tag_two = tag_list[1] if len(tag_list) > 1 else None
         tag_three = tag_list[2] if len(tag_list) > 2 else None
-        new_ticket = Ticket(created_at=datetime.now(), closed_at=None,
+        new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
+                            closed_at=None,
                             room=room, workstation=workstation,
                             title=title, description=description,
                             grader_id=None, queue_id=self.id,
@@ -232,7 +234,7 @@ class Queue(db.Model):
 
     def to_json(self) -> Dict[str, str]:
         '''
-        Function that takes a user object and returns it in dictionary.\n
+        Function that takes a queue object and returns it in dictionary.\n
         Params: none\n
         Returns: Dictionary of the user info
         '''
@@ -492,8 +494,8 @@ class Queue(db.Model):
 
     # Impelementing Queue Stats
     def average_help_time(self, day: bool = True, hour: bool = False,
-                          start: datetime = None,
-                          end: datetime = None) -> timedelta:
+                          start: str = None,
+                          end: str = None) -> timedelta:
         """
         Get the average help time within a time period for tickes in
         the queue.\n
@@ -530,13 +532,13 @@ class Queue(db.Model):
         """
         ave_resolve_time = self.average_help_time(hour=True)
         # pending_num = self.get_pending_tickets()
-        active_tutor_num = EnrolledCourse.find_active_tutor_for(self)  # need ec
+        active_tutor_num = EnrolledCourse.find_active_tutor_for(self)
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
         if active_tutor_num > len(accepted_tickets):
             return next_avaliable
-        now = datetime.now()
+        now = TimeUtil.get_current_time()
         # Simplifing the algorithm for now (without using utils)
         for ticket in accepted_tickets:
             current_help_time = now - ticket.accepted_at

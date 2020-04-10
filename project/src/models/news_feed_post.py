@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from ..utils.time import TimeUtil
 
 from ...setup import db
 from .model.user import User
@@ -19,10 +19,11 @@ class NewsFeedPost(db.Model):
     queue_id --> The queue_id of this news feed post belongs to.\n
     """
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    created_at = db.Column(db.Datetime, nullable=False, default=datetime.now())
+    created_at = db.Column(db.Datetime, nullable=False,
+                           default=TimeUtil.get_current_time())
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     last_edited_at = db.Column(db.Datetime, nullable=False,
-                               default=datetime.now())
+                               default=TimeUtil.get_current_time())
     subject = db.Column(db.String(255), nullable=False)
     body = db.Column(db.String(255), nullable=False, default="")
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
@@ -68,7 +69,7 @@ class NewsFeedPost(db.Model):
         self.subject = subject
         self.owner_id = editor.id
         self.body = body
-        self.last_edited_at = datetime.now()
+        self.last_edited_at = TimeUtil.get_current_time()
         self.save()
 
     # Static add method
