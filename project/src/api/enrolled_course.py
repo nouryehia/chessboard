@@ -42,7 +42,7 @@ def delete_user_from_course():
                                                        course_id=course_id):
         return jsonify({'reason': 'user deleted'}), 200
     else:
-        return jsonify({'reason': 'user not found'}), 300
+        return jsonify({'reason': 'user not found'}), 400
 
 
 @enrolled_course_api_bp.route('/get_user_in_course', methods=['GET'])

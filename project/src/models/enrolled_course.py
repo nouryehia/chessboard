@@ -65,8 +65,6 @@ class EnrolledCourse(db.Model):
     role = db.Column(db.Integer, nullable=False, default=True)
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
                            nullable=False)
-    course_id = db.Column(db.Integer,
-                          nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)

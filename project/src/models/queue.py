@@ -614,7 +614,7 @@ class Queue(db.Model):
     @staticmethod
     def grader_login(queue_id: int, grader_id: int,
                      action_type: ActionType =
-                     ActionType.MANUAL) -> bool:
+                     ActionType.MANUAL) -> (bool, str):
         """
         Login a grader when the grader login to he queue.\n
         Inputs:\n
@@ -626,13 +626,13 @@ class Queue(db.Model):
         """
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
-            return False
+            return False, 'Queue Not Found'
         course = Course.find_course_by_queue(queue_id)
         if not course:
-            return False
+            return False, 'Course Not Found'
         grader = User.get_user_by_id(grader_id)
         if not grader:
-            return False
+            return False, 'User Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
         event = QueueLoginEvent(event_type=EventType.LOGIN,
                                 action_type=action_type,
@@ -640,12 +640,12 @@ class Queue(db.Model):
                                 queue_id=queue_id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.open()
-        return True
+        queue.close()
+        return True, 'Success'
 
     @staticmethod
     def grader_logout(queue_id: int, grader_id: int,
-                      action_type: ActionType) -> bool:
+                      action_type: ActionType) -> [bool, str]:
         """
         Logout a grader when the grader logout from queue.\n
         Inputs:\n
@@ -654,16 +654,17 @@ class Queue(db.Model):
         action_type --> The type of action for logging out.\n
         Return:\n
         True or false indicates whether it the function runs successfully.
+        A string that tells what is the status.
         """
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
-            return False
+            return False, 'Queue Not Found'
         grader = User.get_user_by_id(grader_id)
         if not grader:
-            return False
+            return False, 'Course Not Found'
         course = Course.find_course_by_queue(queue)  # Prentending
         if not course:
-            return False
+            return False, 'User Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
@@ -671,25 +672,35 @@ class Queue(db.Model):
                                 queue_id=queue.id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.open()
-        return True
+        queue.lock()
+        return True, 'Success'
 
     @staticmethod
-    def find_current_queue_for_user(user: User) -> List[Queue]:
+    def find_current_queue_for_user(user_id: int) -> (bool, str, List[Queue]):
         """
         Find all the queues that this user is in currently.
         Inputs:\n
         user --> The User object to look for.
         Returns:\n
+        bool --> indicate whether it successed or not.
+        str --> the message
         A list of Queue that the user is in this quarter.
         """
-        # TODO
-        # Use the methods from enrolled class by using User methods to find
-        # the enrolled classes of that user and fetch the queues of class.
-        pass
+        ec_list = EnrolledCourse.find_user_in_all_course(user_id=user_id)
+        if not ec_list:
+            return (False, "User not found in any course", None)
+        q_id_list = []
+        for ec in ec_list:
+            q = find_queue_for_course(ec.course_id)
+            q_id_list.append(q)
+        q_list = []
+        for q_id in q_id_list:
+            q = Queue.query().filter_by(queue_id=q_id).first()
+            q_list.append(q)
+        return (True, "Success", q_list)
 
     @staticmethod
-    def find_queue_for_course(course: Course) -> Optional[Queue]:
+    def find_queue_for_course(course_id: int) -> Optional[Queue]:
         """
         Find the queue corresponding for a course.
         Inputs:\n
@@ -697,4 +708,5 @@ class Queue(db.Model):
         Returns:\n
         The queue for that course, if a queue does not exist, None is return.\n
         """
+        course = Course.find_course_by_id(course_id)
         return Queue.query().filter(id=course.queue_id).first()
