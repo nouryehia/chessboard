@@ -1,12 +1,10 @@
 from __future__ import annotations
 from enum import Enum
-from typing import List, Optional
-
 from ...setup import db
-from .models.user import User
-# from .models.queue import Queue
-# from .models.course import Course
-# from .models.section import Section
+from typing import List, Optional, Dict
+# from .course import Course
+from .user import User  # prentending
+# from .models import sections as sec  # prentending
 
 
 class Status(Enum):
@@ -67,8 +65,6 @@ class EnrolledCourse(db.Model):
     role = db.Column(db.Integer, nullable=False, default=True)
     section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
                            nullable=False)
-    course_id = db.Column(db.Integer,
-                          nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
@@ -108,6 +104,23 @@ class EnrolledCourse(db.Model):
         The hash result for the user_id field.\n
         """
         return hash(self.user_id)
+
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a user object and returns it in dictionary
+        form. Used on the API layer.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['user_id'] = self.user_id
+        ret['course_id'] = self.course_id
+        ret['section_id'] = self.section_id
+        ret['id'] = self.id
+        ret['status'] = self.status.value
+        ret['role'] = self.role.value
+        ret['last_login'] = self.last_login
+        return ret
 
     def get_role(self) -> Role:
         """
@@ -244,9 +257,7 @@ class EnrolledCourse(db.Model):
         Returns:\n
         A list of active tutors User objects. Could have null entries\n
         """
-        # TODO: return to this after Queue and Course exist
-        queue = Queue.find_course_by_id(queue_id)
-        course = Course.find_course_for(queue)
+        course = Course.find_course_for(queue_id)
 
         grader_enrolled_course = EnrolledCourse.query\
             .filter_by(roles=Role.GRADER)\

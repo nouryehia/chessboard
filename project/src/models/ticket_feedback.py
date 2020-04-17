@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from datetime import datetime
+from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
@@ -41,7 +41,7 @@ class TicketFeedback(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     feedback = db.Column(db.String(255), nullable=True)
     submitted_date = db.Column(db.Datetime, nullable=False,
-                               default=datetime.now)
+                               default=TimeUtil.get_current_time())
     is_annoymous = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):

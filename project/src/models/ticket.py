@@ -1,17 +1,18 @@
 from __future__ import annotations
+
 from enum import Enum
-from typing import List, Optional
-from datetime import datetime, timedelta
+from typing import List, Optional, Dict
 from operator import attrgetter
 
+from ..utils.time import TimeUtil
+
 from ...setup import db
-from .model.user import User
-from .model import user
-from .model.enrolled_course import Role
-from .model.course import Course  # Pretending
-from .model.ticket_feedback import TicketFeedback
-from .model.event.ticket_event import TicketEvent
-from .model.queue import Queue
+from .user import User
+from .enrolled_course import Role
+from .course import Course  # Pretending
+from .ticket_feedback import TicketFeedback
+from .event.ticket_event import TicketEvent
+from .queue import Queue
 
 
 """
@@ -112,7 +113,8 @@ class Ticket(db.Model):
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=True, default=datetime.now)
+    created_at = db.Column(db.DateTime, nullable=True,
+                           default=TimeUtil.get_current_time())
     closed_at = db.Column(db.DateTime, nullable=True, deafult=None)
     room = db.Column(db.String(255), nullable=False)
     workstaton = db.Column(db.String(255), nullable=False)
@@ -157,6 +159,32 @@ class Ticket(db.Model):
         Save the changes made to the object into the database.\n
         """
         db.seesion.commit()
+
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a ticket object and returns it in dictionary.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['ticket_id'] = self.id
+        ret['queue_id'] = self.queue_id
+        ret['closed_at'] = self.closed_at
+        ret['created_at'] = self.created_at
+        ret['status'] = self.status
+        ret['room'] = self.room
+        ret['workstaton'] = self.workstation
+        ret['title'] = self.title
+        ret['description'] = self.description
+        ret['grader_id'] = self.grader_id
+        ret['student_id'] = self.student_id
+        ret['is_private'] = self.is_private
+        ret['accepted_at'] = self.accepted_at
+        ret['help_type'] = self.help_type
+        ret['tag_one'] = self.tag_one
+        ret['tag_two'] = self.tag_two
+        ret['tag_three'] = self.tag_three
+        return ret
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
@@ -375,12 +403,12 @@ class Ticket(db.Model):
         """
         Mark the ticket as accepted by a tutor.\n
         """
-        grader = user.find_user_by_id(grader_id)
+        grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
         Ticket.defer_accpeted_ticket_for_grader(grader)
 
         self.status = Status.ACCEPTED
-        self.accepted_at = datetime.now()
+        self.accepted_at = TimeUtil.get_current_time()
         self.grader_id = grader_id
         self.save()
 
@@ -389,7 +417,7 @@ class Ticket(db.Model):
         Mark the ticket as resolved.\n
         """
         self.status = Status.RESOLVED
-        self.closed_at = datetime.now()
+        self.closed_at = TimeUtil.get_current_time()
         self.save()
 
     def mark_canceled(self) -> None:
@@ -397,7 +425,7 @@ class Ticket(db.Model):
         Mark the ticket as canceled.\n
         """
         self.status = Status.CANCELED
-        self.closed_at = datetime.now()
+        self.closed_at = TimeUtil.get_current_time()
         self.save()
 
     def student_update(self, title: str, description: str, room: str,
@@ -522,8 +550,8 @@ class Ticket(db.Model):
 
     @staticmethod
     def find_tickets_in_range(queue: Queue,
-                              start: datetime,
-                              end: datetime,
+                              start: str,
+                              end: str,
                               grader: User = None) -> List[Ticket]:
         """
         Find all the ticktes of the queue in range of two datetimes.\n
@@ -545,9 +573,9 @@ class Ticket(db.Model):
                                                  grader_id=grader.id,
                                                  status=Status.RESOLVED).all()
         if not start:
-            start = datetime.now() - timedelta(hours=1)
+            start = TimeUtil.get_time_before(hours=1)
         if not end:
-            end = datetime.now()
+            end = TimeUtil.get_current_time()
         return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
 
     @staticmethod
@@ -566,8 +594,8 @@ class Ticket(db.Model):
     @staticmethod
     def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
                                  day: bool = False,
-                                 start: datetime = None,
-                                 end: datetime = None) -> List[Ticket]:
+                                 start: str = None,
+                                 end: str = None) -> List[Ticket]:
         """
         Get the tickets for the queue that were reolsved.\n
         Inputs:\n
@@ -582,13 +610,15 @@ class Ticket(db.Model):
         ticket_list = Ticket.query.filter_by(queue_id=queue.id,
                                              status=Status.RESOLVED).all()
         if recent_hour:
-            now = datetime.now()
-            lasthour = datetime.now() - timedelta(hours=1)
+            now = TimeUtil.get_current_time()
+            lasthour = TimeUtil.get_time_before(hours=1)
             return Ticket.find_tickets_in_range(queue=queue,
                                                 start=lasthour, end=now)
         elif day:
-            return list(filter(lambda x: x.closed_at == datetime.today(),
-                               ticket_list))
+            now = TimeUtil.get_current_time()
+            lasthour = TimeUtil.get_time_before(hours=24)
+            return Ticket.find_tickets_in_range(queue=queue,
+                                                start=lasthour, end=now)
         else:
             return Ticket.find_tickets_in_range(queue=queue,
                                                 start=start, end=end)

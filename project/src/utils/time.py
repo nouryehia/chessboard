@@ -1,5 +1,6 @@
 from pytz import timezone as tzone
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import dateutil.parser
 
 
 class TimeUtil(object):
@@ -18,3 +19,52 @@ class TimeUtil(object):
         '''
         utc_dt = datetime.now(timezone.utc)
         return utc_dt.astimezone(TimeUtil.PST).isoformat()
+
+    @staticmethod
+    def convert_str_to_datetime(time: str) -> datetime:
+        '''
+        Util method to read a time and convert it into datetime obejct.\n
+        This function should give us back a datetime object so that we can
+        work with for time calculations.\n
+        Inputs:\n
+        time --> the str representation of the time.\n
+        Returns:\n
+        datetime object that consist of the current time.\n
+        @authoer YixuanZhou
+        '''
+        d = dateutil.parser.parse(time)
+        return d
+
+    @staticmethod
+    def get_time_diff(time_a: str, time_b: str) -> str:
+        '''
+        Util method to calculate time difference.\n
+        Inputs:\n
+        time_a --> the str representation of the time.\n
+        time_b --> the str representation of the time.\n
+        Returns:\n
+        str representation of the timedelta (a-b), but not in isoformat.\n
+        @authoer YixuanZhou
+        '''
+        d_a = TimeUtil.convert_str_to_datetime(time_a)
+        d_b = TimeUtil.convert_str_to_datetime(time_b)
+        return (str(d_a - d_b))
+
+    @staticmethod
+    def get_time_before(hours: float = 0,
+                        mins: float = 0, secs: float = 0) -> str:
+        '''
+        Util method to get the time given a period of time before.\n
+        Inputs:\n
+        hours --> Number of hours to go before.\n
+        mins --> Number of mins to go before.\n
+        secs --> Number of secs to go before.\n
+        Returns\n
+        Isoformated string time.
+        @author YixuanZhou
+        '''
+        curr = TimeUtil.get_current_time()
+        curr_d = TimeUtil.convert_str_to_datetime(curr)
+        diff = timedelta(hours=hours, minutes=mins, seconds=secs)
+        ret_d = curr_d - diff
+        return ret_d.astimezone(TimeUtil.PST).isoformat()
