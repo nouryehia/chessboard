@@ -70,6 +70,7 @@ CREATE TABLE "Category" (
 	"name" varchar(255) NOT NULL,
 	"weight" double precision NOT NULL,
 	"course_id" bigserial NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL DEFAULT false,
 	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -245,7 +246,7 @@ ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN
 ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
 ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
 
-ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Assignment"("id");
+ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
