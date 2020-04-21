@@ -18,6 +18,7 @@ class NewsFeedPost(db.Model):
     owner_id --> The id of the owner of this news feed post.\n
     queue_id --> The queue_id of this news feed post belongs to.\n
     """
+    __tablename__ = 'NewsFeedPost'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created_at = db.Column(db.Datetime, nullable=False,
                            default=TimeUtil.get_current_time())

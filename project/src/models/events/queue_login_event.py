@@ -43,6 +43,7 @@ class QueueLoginEvent(db.Model):
     queue_id --> The id of the queue that the events are related to.\n
     @author YixuanZhou
     """
+    __tablename__ = 'QueueLoginEvent'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)

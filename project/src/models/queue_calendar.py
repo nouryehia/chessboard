@@ -17,6 +17,7 @@ class QueueCalendar(db.Model):
     queue_id --> Foregin key, pointing to the queue that the calendar is in.\n
     @author Yixuanzhou
     """
+    __tablename__ = 'QueueCalendar'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     url = db.Column(db.String(255), nullable=False)
     color = db.Column(db.String(255), nullable=False)

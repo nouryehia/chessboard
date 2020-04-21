@@ -42,6 +42,7 @@ class TicketEvent(db.model):
     user_id --> The user that created this event.\n
     timestamp --> The timestamp of this event.\n
     """
+    __tablename__ = 'TicketEvent'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     # need to change a name in db, since type is a presereved word in python
     event_type = db.Column(db.Integer, nullable=False)

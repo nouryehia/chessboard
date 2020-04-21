@@ -1,18 +1,10 @@
-"""
-This file is for the api of queue and queue related functions.
-It is not finished, appearently.
-However, just to note that this should be the only api for this model.
-By how the models are constructed, now,
-all the requests should be sent through queue.
-Typically, we need to retrive a queue object from the database first,
-and then use them to perform other things.
-@Yixuan Zhou
-"""
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
 from ..models.queue import Queue, Status
+from ..models.news_feed_post import NewsFeedPost
+from ..models.
 
 queue_api_bp = Blueprint('queue_api', __name__)
 CORS(queue_api_bp, supports_credentials=True)
@@ -123,6 +115,9 @@ def find_queue_for_user():
 @queue_api_bp.route('/lock_queue', methods=['POST'])
 @login_required
 def lock_queue():
+    """
+    Lock the queue.
+    """
     qid = request.json['queue_id']
     q = Queue.get_queue_by_id(queue_id=qid)
     if not q:
@@ -131,3 +126,34 @@ def lock_queue():
         q.lock()
         return jsonify({'reason': 'success'}), 200
 
+
+@queue_api_bp.route('/find_queue_for_course', methods=['GET'])
+@login_required
+def find_queue_for_course():
+    """
+    Find the queue for a given course.
+    """
+    c_id = request.json['course_id']
+    sta, q = Queue.find_queue_for_course(course_id=c_id)
+    if sta:
+        return jsonify({'reason': 'success', 'result': q}), 200
+    else:
+        return jsonify({'reason': 'queue not found'}), 400
+
+
+@queue_api_bp.route('/get_news_feed_post', methods=['GET'])
+@login_required
+def get_news_feed_post():
+    """
+    Find the news feed post for a given queue.
+    """
+    q_id = request.json['queue_id']
+    q = Queue.get_queue_by_id(q_id)
+    if q:
+        sta, nfp = Queue.get_news_feed_post(q)
+        if sta:
+            return jsonify({'reason': 'success', 'result': nfp}), 200
+        else:
+            return jsonify({'reason': 'queue not found'}), 400
+    else:
+        return jsonify({'reason': 'queue not found'}), 400

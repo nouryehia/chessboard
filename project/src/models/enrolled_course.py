@@ -195,6 +195,10 @@ class EnrolledCourse(db.Model):
         Return:\n
         Whether the user is added.
         """
+        ec = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                course_id=course_id)
+        if ec:
+            return False
         enroll_student = EnrolledCourse(user_id=user_id,
                                         role=role.value,
                                         section_id=section_id,
@@ -218,7 +222,8 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_all_user_in_course(course_id: int,
-                                role: Role = None) -> List[EnrolledCourse]:
+                                role: Role = None) \
+            -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a course.\n
         There can be extra parameter provided which is role.\n
@@ -226,10 +231,13 @@ class EnrolledCourse(db.Model):
         course --> The Course object to look for.\n
         role --> (Optional) the role to look for.\n
         """
+        c = Course.find_course_by_id(course_id=course_id)
+        if not c:
+            return False, None
         if not role:
-            return EnrolledCourse.query.filter_by(course_id=course_id).all()
+            return EnrolledCourse.query.filter_by(course_id=c.id).all()
         else:
-            return EnrolledCourse.query.filter_by(course_id=course_id,
+            return EnrolledCourse.query.filter_by(course_id=c.id,
                                                   role=role).all()
 
     @staticmethod
@@ -249,7 +257,7 @@ class EnrolledCourse(db.Model):
                                                   role=role).all()
 
     @staticmethod
-    def find_active_tutor_for(queue_id: int) -> List[User]:
+    def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
         """
         Find all the active tutor for a given queue object.\n
         Inputs:\n
@@ -258,7 +266,8 @@ class EnrolledCourse(db.Model):
         A list of active tutors User objects. Could have null entries\n
         """
         course = Course.find_course_for(queue_id)
-
+        if not course:
+            return (False, 'Course not found', None)
         grader_enrolled_course = EnrolledCourse.query\
             .filter_by(roles=Role.GRADER)\
             .filter_by(course_id=course.id).all()

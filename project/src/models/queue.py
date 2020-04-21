@@ -532,7 +532,9 @@ class Queue(db.Model):
         """
         ave_resolve_time = self.average_help_time(hour=True)
         # pending_num = self.get_pending_tickets()
-        active_tutor_num = EnrolledCourse.find_active_tutor_for(self)
+        status, reason, active_tutors \
+            = EnrolledCourse.find_active_tutor_for(self.id)
+        active_tutor_num = len(active_tutors)
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
@@ -672,7 +674,9 @@ class Queue(db.Model):
                                 queue_id=queue.id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.lock()
+        s, r, grader = EnrolledCourse.find_active_tutor_for(queue.id)
+        if len(grader) == 0:
+            queue.lock()
         return True, 'Success'
 
     @staticmethod
@@ -691,7 +695,7 @@ class Queue(db.Model):
             return (False, "User not found in any course", None)
         q_id_list = []
         for ec in ec_list:
-            q = find_queue_for_course(ec.course_id)
+            q = Course.find_queue_for_course(ec.course_id)
             q_id_list.append(q)
         q_list = []
         for q_id in q_id_list:
@@ -700,7 +704,7 @@ class Queue(db.Model):
         return (True, "Success", q_list)
 
     @staticmethod
-    def find_queue_for_course(course_id: int) -> Optional[Queue]:
+    def find_queue_for_course(course_id: int) -> (bool, Optional[Queue]):
         """
         Find the queue corresponding for a course.
         Inputs:\n
@@ -709,4 +713,8 @@ class Queue(db.Model):
         The queue for that course, if a queue does not exist, None is return.\n
         """
         course = Course.find_course_by_id(course_id)
-        return Queue.query().filter(id=course.queue_id).first()
+        q = Queue.query().filter(id=course.queue_id).first()
+        if q:
+            return True, q
+        else:
+            return False, q

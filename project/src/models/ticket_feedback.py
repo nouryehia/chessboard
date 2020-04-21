@@ -35,6 +35,7 @@ class TicketFeedback(db.Model):
     is_annoymous --> Whether this ticket feedback is annoymous.\n
     @author Yixuanzhou
     """
+    __tablename__ = 'TicketFeedback'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'),
                           nullable=False)
