@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app import db
+from ...setup import db
 from typing import List
 from checkoff_evaluation import CheckoffEvaluation
 from checkoff_suite import Checkoff
@@ -22,7 +22,7 @@ class CheckoffSuite(db.Model):
     """
     Represents the readiness state of Checkoff in the Assignment lifecycle.\n
     Independent of the state of individual submissions\n
-    Fields:
+    Fields:\n
     id --> CheckoffSuite ID. Unique, primary key\n
     status --> Checkoff availability status \n
     @author sravyabalasa
@@ -110,7 +110,7 @@ class CheckoffSuite(db.Model):
         """
         Finds a CheckoffSuite by its id in the database\n
         Params: \n
-        checkoff_id --> id of the checkoffSuite
+        checkoff_id --> id of the checkoffSuite\n
         Return:\n
         CheckoffSuite corresponding to that id\n
         """

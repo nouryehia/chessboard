@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app import db
+from ...setup import db
 from checkoff import Checkoff
 from user import User
 

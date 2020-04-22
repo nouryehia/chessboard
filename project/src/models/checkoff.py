@@ -1,11 +1,11 @@
-from app import db
+from ...setup import db
 from checkoff_suite import CheckoffSuite
 
 
 class Checkoff(db.Model):
     """
     Represents a checkoff in the DB with relevant description and points.\n
-    Fields:
+    Fields:\n
     id --> Checkoff ID. Unique, primary key\n
     description --> Description of checkoff\n
     name --> Corresponding assignment\n
