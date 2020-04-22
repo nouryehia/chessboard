@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Dict
 
 from ...setup import db
-from .model.queue import Queue
 
 
 class QueueCalendar(db.Model):
@@ -42,6 +41,17 @@ class QueueCalendar(db.Model):
         """
         db.session.commit()
 
+    def to_json(self) -> Dict[QueueCalendar]:
+        """
+        Return the dictionary format for the current object.
+        """
+        ret = {}
+        ret['id'] = self.id
+        ret['url'] = self.url
+        ret['color'] = self.color
+        ret['is_enabled'] = self.is_enabled
+        ret['queue_id'] = self.queue_id
+
     def delete_queue_calendar(self):
         """
         Delete the queue calendar.
@@ -58,7 +68,7 @@ class QueueCalendar(db.Model):
 
     # Static query method
     @staticmethod
-    def find_all_calendar_for_queue(queue: Queue) -> List[QueueCalendar]:
+    def find_all_calendar_for_queue(queue_id: int) -> List[QueueCalendar]:
         """
         Find the all the queue calendars associsted to the queue.\n
         Inputs:\n
@@ -66,5 +76,5 @@ class QueueCalendar(db.Model):
         Return:\n
         A list of queue calendar assocaited to the queue.\n
         """
-        calendar_list = QueueCalendar.query().filter_by(queue_id=queue.id)
+        calendar_list = QueueCalendar.query().filter_by(queue_id=queue_id)
         return calendar_list
