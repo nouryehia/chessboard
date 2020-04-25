@@ -282,6 +282,30 @@ class Ticket(db.Model):
         """
         return self.title
 
+    def get_description(self) -> str:
+        """
+        Return the description of the ticket.\n
+        Return:\n
+        The description in string.\n
+        """
+        return self.description
+
+    def get_room(self) -> str:
+        """
+        Return the room of the ticket.\n
+        Return:\n
+        The room in string.\n
+        """
+        return self.room
+
+    def get_workstation(self) -> str:
+        """
+        Return the workstation of the ticket.\n
+        Return:\n
+        The workstation in string.\n
+        """
+        return self.room
+
     def get_position(self) -> int:
         """
         Return the position of the ticket in the current queue.\n
@@ -455,6 +479,8 @@ class Ticket(db.Model):
 
         # Update ticket tags
         self.update_ticket_tags(tag_list)
+
+        return True
 
     # Note:
     # So far not implementing the methods used by controllers, including
