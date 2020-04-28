@@ -5,9 +5,9 @@ from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
-from .model.user import User  # Pretending
-from .model.queue import Queue
-from .model.ticket import Ticket, Status
+from .user import User  # Pretending
+from .queue import Queue
+# from .ticket import Ticket, Status
 
 
 class Rating(Enum):
@@ -40,7 +40,7 @@ class TicketFeedback(db.Model):
                           nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     feedback = db.Column(db.String(255), nullable=True)
-    submitted_date = db.Column(db.Datetime, nullable=False,
+    submitted_date = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
     is_annoymous = db.Column(db.Boolean, nullable=False)
 

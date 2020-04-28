@@ -5,8 +5,8 @@ from enum import Enum
 from ...utils.time import TimeUtil
 
 from ....setup import db
-from ..model.user import User
-from ..model.queue import Queue
+from ..user import User
+# from ..queue import Queue
 
 
 class EventType(Enum):
@@ -46,7 +46,7 @@ class QueueLoginEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)
-    timestamp = db.Colunm(db.Datetime, nullable=False,
+    timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
     grader_id = db.Column(db.Integer, db.ForeignKey('tutor.id'),
                           nullable=False)

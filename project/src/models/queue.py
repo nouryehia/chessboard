@@ -10,8 +10,8 @@ from .user import User
 # from .user import Status as u_status
 # from .course import Course
 # from .course import Course
-from .ticket import Ticket, TicketTag, HelpType
-from .ticket import Status as t_status
+# from .ticket import Ticket, TicketTag, HelpType
+# from .ticket import Status as t_status
 from .events.ticket_event import TicketEvent, EventType
 from .events.queue_login_event import QueueLoginEvent, ActionType
 

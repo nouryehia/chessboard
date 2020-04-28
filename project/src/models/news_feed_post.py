@@ -2,7 +2,7 @@ from __future__ import annotations
 from ..utils.time import TimeUtil
 
 from ...setup import db
-from .model.user import User
+from .user import User
 
 
 class NewsFeedPost(db.Model):
@@ -19,16 +19,16 @@ class NewsFeedPost(db.Model):
     queue_id --> The queue_id of this news feed post belongs to.\n
     """
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    created_at = db.Column(db.Datetime, nullable=False,
+    created_at = db.Column(db.DateTime, nullable=False,
                            default=TimeUtil.get_current_time())
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    last_edited_at = db.Column(db.Datetime, nullable=False,
+    last_edited_at = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
     subject = db.Column(db.String(255), nullable=False)
     body = db.Column(db.String(255), nullable=False, default="")
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                          nullable=False)
-    queue_id = db.Column(db.Datetime, db.ForeignKey('queue.id'),
+    queue_id = db.Column(db.DateTime, db.ForeignKey('queue.id'),
                          nullable=False)
 
     def __init__(self, **kwargs):

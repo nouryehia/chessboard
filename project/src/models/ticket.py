@@ -8,11 +8,11 @@ from ..utils.time import TimeUtil
 
 from ...setup import db
 from .user import User
-from .enrolled_course import Role
-from .course import Course  # Pretending
-from .ticket_feedback import TicketFeedback
-from .event.ticket_event import TicketEvent
-from .queue import Queue
+from .enrolled_course import Role  #
+# from .course import Course
+from .ticket_feedback import TicketFeedback  #
+from .events.ticket_event import TicketEvent  #
+from .queue import Queue  #
 
 
 """
@@ -115,7 +115,7 @@ class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created_at = db.Column(db.DateTime, nullable=True,
                            default=TimeUtil.get_current_time())
-    closed_at = db.Column(db.DateTime, nullable=True, deafult=None)
+    closed_at = db.Column(db.DateTime, nullable=True, default=None)
     room = db.Column(db.String(255), nullable=False)
     workstaton = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer, nullable=False,
