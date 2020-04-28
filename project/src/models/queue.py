@@ -632,7 +632,8 @@ class Queue(db.Model):
         course = Course.find_course_by_queue(queue_id)
         if not course:
             return False, 'Course Not Found'
-        grader = User.get_user_by_id(grader_id)
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
         if not grader:
             return False, 'User Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
@@ -642,7 +643,7 @@ class Queue(db.Model):
                                 queue_id=queue_id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.close()
+        queue.open()
         return True, 'Success'
 
     @staticmethod
@@ -661,12 +662,13 @@ class Queue(db.Model):
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
             return False, 'Queue Not Found'
-        grader = User.get_user_by_id(grader_id)
-        if not grader:
-            return False, 'Course Not Found'
         course = Course.find_course_by_queue(queue)  # Prentending
         if not course:
-            return False, 'User Not Found'
+            return False, 'course Not Found'
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
+        if not grader:
+            return False, 'Course Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
