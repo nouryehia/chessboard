@@ -3,7 +3,6 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
 from ..models.queue import Queue, Status
-from ..models.news_feed_post import NewsFeedPost
 from ..models.queue_calendar import QueueCalendar
 
 queue_api_bp = Blueprint('queue_api', __name__)
@@ -30,28 +29,28 @@ def find_queue():
     return jsonify(ret), 200
 
 
-@queue_api_bp.route('/create_queue', methods=['GET'])
+@queue_api_bp.route('/create_queue', methods=['POST'])
 @login_required
 def create_queue():
     """
     Create a queue for a course.\n
     """
-    hce = request.json['high_capacity_enabled'] if \
+    hce = bool(request.json['high_capacity_enabled']) if \
         'high_capacity_enabled' in request.json else None
-    hct = request.json['high_capacity_threshold'] if \
+    hct = int(request.json['high_capacity_threshold']) if \
         'high_capacity_threshold' in request.json else None
     hcm = request.json['high_capacity_message'] if \
         'high_capacity_message' in request.json else None
     hcw = request.json['high_capacity_warning'] if \
         'high_capacity_warning' in request.json else None
-    tc = request.json['ticket_cooldown'] if \
+    tc = int(request.json['ticket_cooldown']) if \
         'ticket_cooldown' in request.json else None
     q = Queue(status=Status.CLOSED.value,
-              high_capacity_enabled=hce,
+              high_capacity_enable=hce,
               high_capacity_threshold=hct,
               high_capacity_message=hcm,
               high_capacity_warning=hcw,
-              ticket_cooldown=tc)
+              ticket_cool_down=tc)
     Queue.add_to_db(q)
     return jsonify({'reason': 'queue created'}), 200
 
@@ -141,25 +140,7 @@ def find_queue_for_course():
         return jsonify({'reason': 'queue not found'}), 400
 
 
-@queue_api_bp.route('/get_news_feed_post', methods=['GET'])
-@login_required
-def get_news_feed_post():
-    """
-    Find the news feed post for a given queue.
-    """
-    q_id = request.json['queue_id']
-    q = Queue.get_queue_by_id(q_id)
-    if q:
-        sta, nfp = Queue.get_news_feed_post(q)
-        if sta:
-            return jsonify({'reason': 'success', 'result': nfp}), 200
-        else:
-            return jsonify({'reason': 'queue not found'}), 400
-    else:
-        return jsonify({'reason': 'queue not found'}), 400
-
-
-@queue_api_bp.route('/create_queue_calendar', method=['POST'])
+@queue_api_bp.route('/create_queue_calendar', methods=['POST'])
 @login_required
 def create_queue_calendar():
     """
@@ -174,7 +155,7 @@ def create_queue_calendar():
     return jsonify({'reason': 'success'}), 200
 
 
-@queue_api_bp.route('/find_queue_calendar', method=['GET'])
+@queue_api_bp.route('/find_queue_calendar', methods=['GET'])
 @login_required
 def find_queue_calendar():
     """

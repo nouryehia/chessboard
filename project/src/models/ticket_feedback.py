@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime  # just importing for type
+
 from enum import Enum
 from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
-from .model.user import User  # Pretending
-from .model.queue import Queue
-from .model.ticket import Ticket, Status
+from .user import User  # Pretending
+# from .queue import Queue
+# from .ticket import Ticket, Status
 
 
 class Rating(Enum):
@@ -41,7 +43,7 @@ class TicketFeedback(db.Model):
                           nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     feedback = db.Column(db.String(255), nullable=True)
-    submitted_date = db.Column(db.Datetime, nullable=False,
+    submitted_date = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
     is_annoymous = db.Column(db.Boolean, nullable=False)
 
@@ -95,41 +97,3 @@ class TicketFeedback(db.Model):
             if feedback is not None:
                 feedback_list.append(feedback)
         return feedback_list
-
-    @staticmethod
-    def find_all_feedback_for_queue(queue: Queue):
-        """
-        Find all the feedback of the tickets in a queue.\n
-        Inputs:\n
-        queue --> The Queue object to search for.\n
-        Return:\n
-        A list of feedbacks of this queue.\n
-        """
-        tickets = Ticket.find_all_tickets(queue, [Status.RESOLVED])
-        return Ticket.get_ticket_feedback(tickets)
-
-    @staticmethod
-    def find_for_grader(queue: Queue, grader: User) -> List[TicketFeedback]:
-        """
-        Find all the feedback to a grader that is in the queue.
-        Inputs:\n
-        queue --> The Queue object to search for.\n
-        grader --> The User object for the grader to search for.\n
-        Return:\n
-        A list of ticket feedbacks to the grader.\n
-        """
-        tickets = Ticket.find_all_tickets_for_grader(queue, grader)
-        return TicketFeedback.get_ticket_feedback(tickets)
-
-    @staticmethod
-    def find_for_student(queue: Queue, student: User) -> List[TicketFeedback]:
-        """
-        Find all the feedback from a student that is in the queue.
-        Inputs:\n
-        queue --> The Queue object to search for.\n
-        student --> The User object for the student to search for.\n
-        Return:\n
-        A list of ticket feedbacks from the student.\n
-        """
-        tickets = Ticket.find_all_tickets_for_student(queue, student)
-        return TicketFeedback.get_ticket_feedback(tickets)

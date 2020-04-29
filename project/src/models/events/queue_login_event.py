@@ -5,8 +5,8 @@ from enum import Enum
 from ...utils.time import TimeUtil
 
 from ....setup import db
-from ..model.user import User
-from ..model.queue import Queue
+from ..user import User
+# from ..queue import Queue
 
 
 class EventType(Enum):
@@ -47,7 +47,7 @@ class QueueLoginEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)
-    timestamp = db.Colunm(db.Datetime, nullable=False,
+    timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
     grader_id = db.Column(db.Integer, db.ForeignKey('tutor.id'),
                           nullable=False)
@@ -82,7 +82,7 @@ class QueueLoginEvent(db.Model):
         """
         return self.action_type == ActionType.AUTOMATIC
 
-    def find_event_in_range(self, queue: Queue, start: str,
+    def find_event_in_range(self, queue_id: int, start: str,
                             end: str = TimeUtil.get_current_time(),
                             grader: User = None):
         """
@@ -98,11 +98,11 @@ class QueueLoginEvent(db.Model):
         given queue for a given range of time.\n
         """
         if (grader is not None):
-            event_list = QueueLoginEvent.query().filter_by(queue_id=queue.id)\
+            event_list = QueueLoginEvent.query().filter_by(queue_id=queue_id)\
                         .order_by(QueueLoginEvent.timestamp).desc.all()
         else:
             event_list = QueueLoginEvent.query()\
-                         .filter_by(queue_id=queue.id,
+                         .filter_by(queue_id=queue_id,
                                     grader_id=grader.id)\
                          .order_by(QueueLoginEvent.timestamp).desc.all()
         return list(filter(lambda x: start <= x.closed_at <= end, event_list))

@@ -8,10 +8,12 @@ from .src.models.user import User
 from .src.api.user import user_api_bp as uapi
 from .src.api.assignment import assignment_api_bp as aapi
 from .src.api.enrolled_course import enrolled_course_api_bp as eapi
+from .src.api.queue import queue_api_bp as qapi
 
 app.register_blueprint(uapi, url_prefix="/api/users")
 app.register_blueprint(aapi, url_prefix="/api/assignment")
 app.register_blueprint(eapi, url_prefix="/api/enroll_course")
+app.register_blueprint(qapi, url_prefix="/api/queue")
 
 
 def load_user(user_id):

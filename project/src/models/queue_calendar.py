@@ -20,7 +20,7 @@ class QueueCalendar(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     url = db.Column(db.String(255), nullable=False)
     color = db.Column(db.String(255), nullable=False)
-    is_enabled = db.Colunm(db.Boolean, nullable=False, default=True)
+    is_enabled = db.Column(db.Boolean, nullable=False, default=True)
     queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'),
                          nullable=False)
 
