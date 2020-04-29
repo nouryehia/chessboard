@@ -2,7 +2,7 @@ from __future__ import annotations
 from ..utils.time import TimeUtil
 
 from ...setup import db
-from .model.user import User
+from ..models.user import User
 
 
 class NewsFeedPost(db.Model):
@@ -18,17 +18,18 @@ class NewsFeedPost(db.Model):
     owner_id --> The id of the owner of this news feed post.\n
     queue_id --> The queue_id of this news feed post belongs to.\n
     """
+    __tablename__ = 'NewsFeedPost'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    created_at = db.Column(db.Datetime, nullable=False,
+    created_at = db.Column(db.DateTime, nullable=False,
                            default=TimeUtil.get_current_time())
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    last_edited_at = db.Column(db.Datetime, nullable=False,
+    last_edited_at = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
     subject = db.Column(db.String(255), nullable=False)
     body = db.Column(db.String(255), nullable=False, default="")
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                          nullable=False)
-    queue_id = db.Column(db.Datetime, db.ForeignKey('queue.id'),
+    queue_id = db.Column(db.DateTime, db.ForeignKey('queue.id'),
                          nullable=False)
 
     def __init__(self, **kwargs):
@@ -71,6 +72,27 @@ class NewsFeedPost(db.Model):
         self.body = body
         self.last_edited_at = TimeUtil.get_current_time()
         self.save()
+
+    @staticmethod
+    def get_posts(queue_id: int):
+        """
+        Get all the NewsFeed post for a queue in the database.\n
+        Inputs:\n
+        queue_id --> list of all feeds retrieved.\n
+        """
+        posts = NewsFeedPost.query.filter_by(queue_id=queue_id, is_deleted=False).all()
+
+        return posts
+
+    @staticmethod
+    def get_post(queue_id: int, post_id: int):
+        """
+        Get a specific NewsFeed post by id from a given queue.\n
+        Inputs:\n
+        queue_id, post_id --> the NewsFeed post by the given id.\n
+        """
+        post = NewsFeedPost.query.filter_by(queue_id=queue_id, id=post_id).first()
+        return post
 
     # Static add method
     @staticmethod
