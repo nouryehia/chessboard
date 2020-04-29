@@ -43,6 +43,7 @@ class QueueLoginEvent(db.Model):
     queue_id --> The id of the queue that the events are related to.\n
     @author YixuanZhou
     """
+    __tablename__ = 'QueueLoginEvent'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)
@@ -81,7 +82,7 @@ class QueueLoginEvent(db.Model):
         """
         return self.action_type == ActionType.AUTOMATIC
 
-    def find_event_in_range(self, queue: Queue, start: str,
+    def find_event_in_range(self, queue_id: int, start: str,
                             end: str = TimeUtil.get_current_time(),
                             grader: User = None):
         """
@@ -97,11 +98,11 @@ class QueueLoginEvent(db.Model):
         given queue for a given range of time.\n
         """
         if (grader is not None):
-            event_list = QueueLoginEvent.query().filter_by(queue_id=queue.id)\
+            event_list = QueueLoginEvent.query().filter_by(queue_id=queue_id)\
                         .order_by(QueueLoginEvent.timestamp).desc.all()
         else:
             event_list = QueueLoginEvent.query()\
-                         .filter_by(queue_id=queue.id,
+                         .filter_by(queue_id=queue_id,
                                     grader_id=grader.id)\
                          .order_by(QueueLoginEvent.timestamp).desc.all()
         return list(filter(lambda x: start <= x.closed_at <= end, event_list))
