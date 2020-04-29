@@ -10,7 +10,7 @@ from ...setup import db
 from .user import User
 from .enrolled_course import Role
 # from .course import Course  # Pretending
-# from .ticket_feedback import TicketFeedback
+from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
 # from .queue import Queue
 
@@ -558,3 +558,56 @@ class Ticket(db.Model):
         for ticket in ticket_list:
             if (ticket.status == Status.ACCEPTED):
                 ticket.mark_pending()
+
+    # Moved from ticket_event
+
+    # static query methods
+    @staticmethod
+    def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
+        """
+        Find all the ticket events associated to a ticket.\n
+        Inputs:\n
+        ticket --> The ticket object to be look for.\n
+        Return:\n
+        A list of event related to this ticket.\n
+        """
+        return TicketEvent.query().filter_by(ticket_id=ticket.id)\
+            .sort_by(TicketEvent.timestamp).desc.all()
+
+    @staticmethod
+    def find_all_events_for_tickets(tickets:
+                                    List[Ticket]) -> List[TicketEvent]:
+        """
+        Find all the ticket events of multiple tickets.\n
+        Inputs:\n
+        tickets --> A list of ticktes.\n
+        Return:\n
+        A list of event related to the tickets passed in.\n
+        """
+        ticket_id_list = []
+        for ticket in tickets:
+            ticket_id_list.append(ticket.id)
+        return TicketEvent.query().\
+            filter_by(Ticket.ticket_id.in_(ticket_id_list))
+
+    # Moved from ticket_feedback
+
+    # Static query methods for ticket feedbacks
+    @staticmethod
+    def get_ticket_feedback(ticket_list: List[Ticket]) -> List[TicketFeedback]:
+        """
+        Given a list of tickets, get the feedback of each ticket and put
+        them into a list.\n
+        Inputs:\n
+        ticket_list --> The list of tickets to look for.\n
+        Returns:\n
+        A list of TicketFeedback, if a ticket does not have a feedback,
+        it will not show up in the list.\n
+        """
+        feedback_list = []
+        for ticket in ticket_list:
+            feedback = TicketFeedback.query().filter_by(ticket_id=ticket.id)\
+                        .ordered_by(TicketFeedback.submitted_date).first()
+            if feedback is not None:
+                feedback_list.append(feedback)
+        return feedback_list
