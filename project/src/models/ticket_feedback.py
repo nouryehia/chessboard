@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from operator import attrgetter
 from enum import Enum
 from ..utils.time import TimeUtil
-# from typing import List
+from typing import List
 
 from ...setup import db
 # from .user import User  # Pretending
@@ -76,3 +77,16 @@ class TicketFeedback(db.Model):
         """
         db.session.add(tf)
         db.session.commit()
+
+    @staticmethod
+    def get_ticket_feedback(ticket_id: int) -> List[TicketFeedback]:
+        """
+        Given a ticket, return the ticket feedbacks
+        Input:\n
+        ticket_id --> The id of the ticket
+        Returns:\n
+        A list of tickect feedback related to that ticket.
+        """
+        ret = TicketFeedback.query.filter_by(ticket_id=ticket_id).all()
+        ret = ret.sort(key=attrgetter('submitted_date'))
+        return ret
