@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
 from ..models.queue import Queue, Status
+from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
 
 queue_api_bp = Blueprint('queue_api', __name__)
@@ -16,7 +17,7 @@ def find_queue():
     Return the queue object corresponding to an id.\n
     @authoer: YixuanZhou
     """
-    queue_id = request.json['queue_id'] if 'queue_id' in request.json else None
+    queue_id = int(request.json['queue_id']) if 'queue_id' in request.json else None
     if not queue_id:
         return jsonify({'reason': 'queue_id invalid'}), 400
 
@@ -171,4 +172,77 @@ def find_queue_calendar():
     for c in c_list:
         i += 1
         ret['queue_calander' + str(i)] = c.to_json()
-    return jsonify({'reason': 'Success', 'result': ret}), 400
+    return jsonify({'reason': 'Success', 'result': ret}), 200
+
+
+@queue_api_bp.route('/find_all_tickets_for_queue', methods=['GET'])
+@login_required
+def find_all_ticket_for_queue():
+    """
+    Find all the tickest for queue.
+    """
+    q_id = request.json['queue_id']
+    s_type_list = []
+    if 'status' in request.json:
+        s_list = list(request.json['status'])
+        for s in s_list:
+            t_s = t_Status(s)
+            s_type_list.append(t_s)
+        t_list = Queue.find_all_tickets(queue_id=q_id, status=s_type_list)
+    else:
+        t_list = Queue.find_all_tickets(queue_id=q_id)
+
+    ret = {}
+    i = 0
+    for t in t_list:
+        i += 1
+        ret['ticket' + str(i)] = t.to_json()
+    return jsonify({'reason': 'Success', 'result': ret}), 200
+
+
+@queue_api_bp.route('/find_all_tickets_for_student', methods=['GET'])
+@login_required
+def find_all_ticket_for_student():
+    """
+    Find all the tickest for queue.
+    """
+    q_id = request.json['queue_id']
+    s_id = request.json['student_id']
+    s_type_list = []
+    s_list = list(request.json['status'])
+    for s in s_list:
+        t_s = t_Status(s)
+        s_type_list.append(t_s)
+    t_list = Queue.find_all_tickets_by_student(queue_id=q_id,
+                                               student_id=s_id,
+                                               status=s_type_list)
+    ret = {}
+    i = 0
+    for t in t_list:
+        i += 1
+        ret['ticket' + str(i)] = t.to_json()
+    return jsonify({'reason': 'Success', 'result': ret}), 200
+
+
+@queue_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
+@login_required
+def find_all_ticket_for_grader():
+    """
+    Find all the tickest for queue.
+    """
+    q_id = request.json['queue_id']
+    g_id = request.json['grader_id']
+    s_type_list = []
+    s_list = list(request.json['status'])
+    for s in s_list:
+        t_s = t_Status(s)
+        s_type_list.append(t_s)
+    t_list = Queue.find_all_tickets_by_student(queue_id=q_id,
+                                               student_id=g_id,
+                                               status=s_type_list)
+    ret = {}
+    i = 0
+    for t in t_list:
+        i += 1
+        ret['ticket' + str(i)] = t.to_json()
+    return jsonify({'reason': 'Success', 'result': ret}), 200

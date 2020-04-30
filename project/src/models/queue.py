@@ -227,7 +227,7 @@ class Queue(db.Model):
         Returns:\n
         The string representation of the course it belongs to.\n
         """
-        course = Course.query().filter_by(course_id=self.course_id)
+        course = Course.query.filter_by(course_id=self.course_id)
         if not course:
             return repr(course)
         else:
@@ -242,11 +242,11 @@ class Queue(db.Model):
         ret = {}
         ret['queue_id'] = self.id
         ret['status'] = self.status
-        ret['highCapacityEnabled'] = self.highCapacityEnabled
+        ret['highCapacityEnabled'] = self.high_capacity_enable
         ret['high_capacity_message'] = self.high_capacity_message
         ret['high_capacity_threshold'] = self.high_capacity_threshold
         ret['high_capacity_warning'] = self.high_capacity_warning
-        ret['ticket_cooldown'] = self.ticket_cooldown
+        ret['ticket_cooldown'] = self.ticket_cool_down
         return ret
 
     # Get tickets / tickets related sttaus
@@ -611,7 +611,7 @@ class Queue(db.Model):
         Returns:\n
         The queue object, return None if it is not in the database.\n
         """
-        return Queue.query().filter(id=queue_id).first()
+        return Queue.query.filter_by(id=queue_id).first()
 
     # None Memeber Queue Methods
     @staticmethod
@@ -702,7 +702,7 @@ class Queue(db.Model):
             q_id_list.append(q)
         q_list = []
         for q_id in q_id_list:
-            q = Queue.query().filter_by(queue_id=q_id).first()
+            q = Queue.query.filter_by(queue_id=q_id).first()
             q_list.append(q)
         return (True, "Success", q_list)
 
@@ -716,15 +716,17 @@ class Queue(db.Model):
         The queue for that course, if a queue does not exist, None is return.\n
         """
         course = Course.find_course_by_id(course_id)
-        q = Queue.query().filter(id=course.queue_id).first()
+        q = Queue.query.filter(id=course.queue_id).first()
         if q:
             return True, q
         else:
             return False, q
 
     @staticmethod
-    def find_all_tickets(queue: Queue,
-                         status: List[Status] = None) -> List[Ticket]:
+    def find_all_tickets(queue_id: int,
+                         status: List[Status] = [t_status.PENDING,
+                                                 t_status.ACCEPTED])\
+            -> List[Ticket]:
         """
         Get a list of all the tickets for a queue with decending order
         by the time it was created.\n
@@ -737,16 +739,16 @@ class Queue(db.Model):
         """
         if status:
             return Ticket.query.\
-                filter_by(queue_id=queue.id).\
+                filter_by(queue_id=queue_id).\
                 order_by(Ticket.created_at).desc.all()
         else:
             return Ticket.query.\
-                filter_by(queue_id=queue.id).filter_by(status.in_(status)).\
+                filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
                 order_by(Ticket.created_at).desc.all()
 
     @staticmethod
-    def find_all_tickets_by_student(queue: Queue,
-                                    student: User,
+    def find_all_tickets_by_student(queue_id: int,
+                                    student_id: int,
                                     status: List[Status]) -> List[Ticket]:
         """
         Get a list of all the tickets for a queue created by a student
@@ -759,13 +761,13 @@ class Queue(db.Model):
         The list of the ticket of this queue ordered by create time.\n
         """
         return Ticket.query.\
-            filter_by(queue_id=queue.id, student_id=student.id).\
+            filter_by(queue_id=queue_id, student_id=student_id).\
             filter_by(status.in_(status)).\
             order_by(Ticket.created_at).desc.all()
 
     @staticmethod
-    def find_all_tickets_for_grader(queue: Queue,
-                                    grader: User) -> List[Ticket]:
+    def find_all_tickets_for_grader(queue_id: int,
+                                    grader_id: int) -> List[Ticket]:
         """
         Get a list of all the tickets for a queue handled by a grader
         with decending order by the time it was created.\n
@@ -776,14 +778,14 @@ class Queue(db.Model):
         The list of the ticket of this queue ordered by create time.\n
         """
         return Ticket.query.\
-            filter_by(queue_id=queue.id, grader_id=grader.id).\
+            filter_by(queue_id=queue_id, grader_id=grader_id).\
             order_by(Ticket.created_at).desc.all()
 
     @staticmethod
-    def find_tickets_in_range(queue: Queue,
+    def find_tickets_in_range(queue_id: int,
                               start: str,
                               end: str,
-                              grader: User = None) -> List[Ticket]:
+                              grader_id: int = None) -> List[Ticket]:
         """
         Find all the ticktes of the queue in range of two datetimes.\n
         Input:\n
@@ -796,12 +798,12 @@ class Queue(db.Model):
         Return:\n
         A list of tickets in this range.\n
         """
-        if not grader:
-            ticket_list = Ticket.query.filter_by(queue=queue.id,
+        if not grader_id:
+            ticket_list = Ticket.query.filter_by(queue=queue_id,
                                                  status=Status.RESOLVED).all()
         else:
-            ticket_list = Ticket.query.filter_by(queue_id=queue.id,
-                                                 grader_id=grader.id,
+            ticket_list = Ticket.query.filter_by(queue_id=queue_id,
+                                                 grader_id=grader_id,
                                                  status=Status.RESOLVED).all()
         if not start:
             start = TimeUtil.get_time_before(hours=1)
@@ -810,7 +812,7 @@ class Queue(db.Model):
         return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
 
     @staticmethod
-    def find_resolved_tickets_in(queue: Queue, recent_hour: bool = False,
+    def find_resolved_tickets_in(queue_id: int, recent_hour: bool = False,
                                  day: bool = False,
                                  start: str = None,
                                  end: str = None) -> List[Ticket]:
@@ -825,25 +827,25 @@ class Queue(db.Model):
         Return:\n
         A list of tickets resolved for this queue given a certain range.\n
         """
-        ticket_list = Ticket.query.filter_by(queue_id=queue.id,
+        ticket_list = Ticket.query.filter_by(queue_id=queue_id,
                                              status=Status.RESOLVED).all()
         if recent_hour:
             now = TimeUtil.get_current_time()
             lasthour = TimeUtil.get_time_before(hours=1)
-            return Ticket.find_tickets_in_range(queue=queue,
+            return Ticket.find_tickets_in_range(queue=queue_id,
                                                 start=lasthour, end=now)
         elif day:
             now = TimeUtil.get_current_time()
             lasthour = TimeUtil.get_time_before(hours=24)
-            return Ticket.find_tickets_in_range(queue=queue,
+            return Ticket.find_tickets_in_range(queue=queue_id,
                                                 start=lasthour, end=now)
         else:
-            return Ticket.find_tickets_in_range(queue=queue,
+            return Ticket.find_tickets_in_range(queue=queue_id,
                                                 start=start, end=end)
             return ticket_list
 
     @staticmethod
-    def find_ticket_history_with_offset(queue: Queue, offset: int = 0,
+    def find_ticket_history_with_offset(queue_id: int, offset: int = 0,
                                         limit: int = 10,
                                         student: User = None,
                                         grader: User = None) -> List[Ticket]:
@@ -858,19 +860,19 @@ class Queue(db.Model):
         A list of tickets.
         """
         if student:
-            return Ticket.query().filter_by(queue_id=queue.id).\
+            return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
                 filter_by(student_id=student.id).\
                 sort_by(id).offset(offset).limit(limit).all()
         elif grader is not None:
-            return Ticket.query().filter_by(queue_id=queue.id).\
+            return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
                 filter_by(grader_id=grader.id).\
                 sort_by(id).offset(offset).limit(limit).all()
         else:
-            Ticket.query().filter_by(queue_id=queue.id).\
+            Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
                 sort_by(id).offset(offset).limit(limit).all()
@@ -884,11 +886,11 @@ class Queue(db.Model):
         Return:\n
         A list of feedbacks of this queue.\n
         """
-        tickets = Ticket.find_all_tickets(queue, [Status.RESOLVED])
+        tickets = Ticket.find_all_tickets(queue_id, [Status.RESOLVED])
         return Ticket.get_ticket_feedback(tickets)
 
     @staticmethod
-    def find_for_grader(queue: Queue, grader: User) -> List[TicketFeedback]:
+    def find_for_grader(queue_id: int, grader_id: int) -> List[TicketFeedback]:
         """
         Find all the feedback to a grader that is in the queue.
         Inputs:\n
@@ -897,7 +899,7 @@ class Queue(db.Model):
         Return:\n
         A list of ticket feedbacks to the grader.\n
         """
-        tickets = Ticket.find_all_tickets_for_grader(queue, grader)
+        tickets = Ticket.find_all_tickets_for_grader(queue_id, grader_id)
         return TicketFeedback.get_ticket_feedback(tickets)
 
     @staticmethod

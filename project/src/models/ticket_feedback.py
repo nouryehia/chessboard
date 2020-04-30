@@ -7,7 +7,6 @@ from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
-from .user import User  # Pretending
 # from .queue import Queue
 # from .ticket import Ticket, Status
 
