@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime  # just importing for type
-
+from operator import attrgetter
 from enum import Enum
 from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
+# from .user import User  # Pretending
 # from .queue import Queue
 # from .ticket import Ticket, Status
+# from typing import List
 
 
 class Rating(Enum):
@@ -77,22 +78,15 @@ class TicketFeedback(db.Model):
         db.session.add(tf)
         db.session.commit()
 
-    # Static query methods for ticket feedbacks
     @staticmethod
-    def get_ticket_feedback(ticket_list: List[Ticket]) -> List[TicketFeedback]:
+    def get_ticket_feedback(ticket_id: int) -> List[TicketFeedback]:
         """
-        Given a list of tickets, get the feedback of each ticket and put
-        them into a list.\n
-        Inputs:\n
-        ticket_list --> The list of tickets to look for.\n
+        Given a ticket, return the ticket feedbacks
+        Input:\n
+        ticket_id --> The id of the ticket
         Returns:\n
-        A list of TicketFeedback, if a ticket does not have a feedback,
-        it will not show up in the list.\n
+        A list of tickect feedback related to that ticket.
         """
-        feedback_list = []
-        for ticket in ticket_list:
-            feedback = TicketFeedback.query().filter_by(ticket_id=ticket.id)\
-                        .ordered_by(TicketFeedback.submitted_date).first()
-            if feedback is not None:
-                feedback_list.append(feedback)
-        return feedback_list
+        ret = TicketFeedback.query.filter_by(ticket_id=ticket_id).all()
+        ret = ret.sort(key=attrgetter('submitted_date'))
+        return ret
