@@ -1,5 +1,5 @@
 from flask_cors import CORS
-from flask_login import login_required
+# from flask_login import login_required
 from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket
@@ -11,7 +11,7 @@ CORS(ticket_api_bp, supports_credentials=True)
 
 
 @ticket_api_bp.route('/is_question', methods=['GET'])
-@login_required
+# @login_required
 def is_question():
     '''
     Route used to determine if a ticket is a question.\n
@@ -25,7 +25,7 @@ def is_question():
 
 
 @ticket_api_bp.route('/is_checkoff', methods=['GET'])
-@login_required
+# @login_required
 def is_checkoff():
     '''
     Route used to determine if a ticket is a checkoff.\n
@@ -39,7 +39,7 @@ def is_checkoff():
 
 
 @ticket_api_bp.route('/is_pending', methods=['GET'])
-@login_required
+# @login_required
 def is_pending():
     '''
     Route used to determine if a ticket is pending.\n
@@ -53,7 +53,7 @@ def is_pending():
 
 
 @ticket_api_bp.route('/is_accepted', methods=['GET'])
-@login_required
+# @login_required
 def is_accepted():
     '''
     Route used to determine if a ticket is accepted.\n
@@ -67,7 +67,7 @@ def is_accepted():
 
 
 @ticket_api_bp.route('/is_resolved', methods=['GET'])
-@login_required
+# @login_required
 def is_resolved():
     '''
     Route used to determine if a ticket is resolved.\n
@@ -81,7 +81,7 @@ def is_resolved():
 
 
 @ticket_api_bp.route('/is_canceled', methods=['GET'])
-@login_required
+# @login_required
 def is_canceled():
     '''
     Route used to determine if a ticket is canceled.\n
@@ -95,7 +95,7 @@ def is_canceled():
 
 
 @ticket_api_bp.route('/is_non_cse', methods=['GET'])
-@login_required
+# @login_required
 def is_non_cse():
     '''
     Route used to determine if a ticket is not in the CSE building.\n
@@ -109,7 +109,7 @@ def is_non_cse():
 
 
 @ticket_api_bp.route('/is_hallway', methods=['GET'])
-@login_required
+# @login_required
 def is_hallway():
     '''
     Route used to determine if a ticket is in the hallway.\n
@@ -123,7 +123,7 @@ def is_hallway():
 
 
 @ticket_api_bp.route('/get_tags_list', methods=['GET'])
-@login_required
+# @login_required
 def get_tags_list():
     '''
     Route used to get the tags on a ticket.\n
@@ -134,7 +134,7 @@ def get_tags_list():
 
 
 @ticket_api_bp.route('/get_help_time_in_second', methods=['GET'])
-@login_required
+# @login_required
 def get_help_time_in_second():
     '''
     Route used to get the help time of a ticket (in seconds).\n
@@ -145,7 +145,7 @@ def get_help_time_in_second():
 
 
 @ticket_api_bp.route('/get_title', methods=['GET'])
-@login_required
+# @login_required
 def get_title():
     '''
     Route used to get the get the title of a ticket.\n
@@ -156,7 +156,7 @@ def get_title():
 
 
 @ticket_api_bp.route('/get_description', methods=['GET'])
-@login_required
+# @login_required
 def get_description():
     '''
     Route used to get the description of a ticket.\n
@@ -167,7 +167,7 @@ def get_description():
 
 
 @ticket_api_bp.route('/get_room', methods=['GET'])
-@login_required
+# @login_required
 def get_room():
     '''
     Route used to get the room of a ticket.\n
@@ -178,7 +178,7 @@ def get_room():
 
 
 @ticket_api_bp.route('/get_workstation', methods=['GET'])
-@login_required
+# @login_required
 def get_workstation():
     '''
     Route used to get the workstation of a ticket.\n
@@ -189,7 +189,7 @@ def get_workstation():
 
 
 @ticket_api_bp.route('/get_position', methods=['GET'])
-@login_required
+# @login_required
 def get_position():
     '''
     Route used to get the position of a ticket in the current queue.\n
@@ -200,7 +200,7 @@ def get_position():
 
 
 @ticket_api_bp.route('/get_latest_feedback', methods=['GET'])
-@login_required
+# @login_required
 def get_latest_feedback():
     '''
     Route used to get the latest feedback on a ticket.\n
@@ -211,7 +211,7 @@ def get_latest_feedback():
 
 
 @ticket_api_bp.route('/get_ticket_events', methods=['GET'])
-@login_required
+# @login_required
 def get_ticket_events():
     '''
     Route used to get a ticket's events.\n
@@ -222,7 +222,7 @@ def get_ticket_events():
 
 
 @ticket_api_bp.route('/can_view_by', methods=['GET'])
-@login_required
+# @login_required
 def can_view_by():
     '''
     Route used to determine if a user can see a ticket.\n
@@ -237,7 +237,7 @@ def can_view_by():
 
 
 @ticket_api_bp.route('/can_edit_by', methods=['GET'])
-@login_required
+# @login_required
 def can_edit_by():
     '''
     Route used to determine if a user can edit a ticket.\n
@@ -252,7 +252,7 @@ def can_edit_by():
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
-@login_required
+# @login_required
 def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
@@ -283,7 +283,7 @@ def student_update():
 
 
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
-@login_required
+# @login_required
 def find_all_tickets():
     '''
     Route used to get all the tickets currently on a queue.\n
@@ -297,7 +297,7 @@ def find_all_tickets():
 
 
 @ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-@login_required
+# @login_required
 def find_all_tickets_for_grader():
     '''
     Route used to get all tickets handled by a grader.\n
@@ -310,7 +310,7 @@ def find_all_tickets_for_grader():
 
 
 @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-@login_required
+# @login_required
 def find_tickets_in_range():
     '''
     Route used to find all the tickets on a queue created between two dates.\n
@@ -327,7 +327,7 @@ def find_tickets_in_range():
 
 
 @ticket_api_bp.route('/find_ticket_accepted_by_grader', methods=['GET'])
-@login_required
+# @login_required
 def find_ticket_accepted_by_grader():
     '''
     Route used to find the last ticket accepted by a grader.\n
@@ -338,7 +338,7 @@ def find_ticket_accepted_by_grader():
 
 
 @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-@login_required
+# @login_required
 def find_resolved_tickets_in():
     '''
     Route used to find all resolved tickets in queue. Can query for the last
@@ -360,7 +360,7 @@ def find_resolved_tickets_in():
 
 
 @ticket_api_bp.route('/average_resolved_time', methods=['GET'])
-@login_required
+# @login_required
 def average_resolved_time():
     '''
     Route used to find the average time it took to resolve a list of tickets
@@ -372,7 +372,7 @@ def average_resolved_time():
 
 
 @ticket_api_bp.route('/defer_accepted_ticket_for_grader', methods=['POST'])
-@login_required
+# @login_required
 def defer_accepted_ticket_for_grader():
     '''
     Route used to return tickets accepted by a grader to the queue. \n
