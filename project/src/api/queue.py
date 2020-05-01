@@ -73,7 +73,8 @@ def add_ticket():
     description = request.json['description']
     room = request.json['room']
     workstation = request.json['workstation']
-    is_private = request.json['is_private']
+    is_private = True if request.json['is_private'] and\
+        request.json['is_private'] == 'true' else False
     help_type = request.json['help_type']
     tag_list = request.json['tag_list']
 
