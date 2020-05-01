@@ -10,10 +10,11 @@ class MailUtil(object):
     Utility class for sending emails.
     '''
 
-    email = getenv('AG_EMAIL')
-    passwd = getenv('AG_PASSWORD')
-    host = 'smtp.gmail.com'
-    port = 465
+    def __init__(self):
+        self.email = getenv('AG_EMAIL')
+        self.passwd = getenv('AG_PASSWORD')
+        self.host = 'smtp.gmail.com'
+        self.port = 465
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
