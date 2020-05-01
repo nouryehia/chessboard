@@ -208,7 +208,7 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_user_in_course(user_id: int,
-                            course_id: int) -> Optional(EnrolledCourse):
+                            course_id: int) -> List[EnrolledCourse]:
         """
         Find a user which is in a specific course.\n
         Inputs:\n
@@ -219,6 +219,12 @@ class EnrolledCourse(db.Model):
         """
         return EnrolledCourse.query.filter_by(course_id=course_id,
                                               user_id=user_id).first()
+
+    @staticmethod
+    def find_all_user_in_section(course_id: int, section_id: int)\
+            -> List[EnrolledCourse]:
+        return EnrolledCourse.query.filter_by(course_id=course_id,
+                                              section_id=section_id).all()
 
     @staticmethod
     def find_all_user_in_course(course_id: int,
@@ -235,14 +241,15 @@ class EnrolledCourse(db.Model):
         if not c:
             return False, None
         if not role:
-            return EnrolledCourse.query.filter_by(course_id=c.id).all()
+            return True, EnrolledCourse.query.filter_by(course_id=c.id).all()
         else:
-            return EnrolledCourse.query.filter_by(course_id=c.id,
-                                                  role=role).all()
+            return True, EnrolledCourse.query.filter_by(course_id=c.id,
+                                                        role=role).all()
 
     @staticmethod
     def find_user_in_all_course(user_id: int,
-                                role: Role = None) -> List[EnrolledCourse]:
+                                role: Role = None) \
+            -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a user.\n
         There can be extra parameter provided which is role.\n
@@ -251,10 +258,10 @@ class EnrolledCourse(db.Model):
         role --> (Optional) the role to look for.\n
         """
         if not role:
-            return EnrolledCourse.query.filter_by(user_id=user_id).all()
+            return True, EnrolledCourse.query.filter_by(user_id=user_id).all()
         else:
-            return EnrolledCourse.query.filter_by(user_id=user_id,
-                                                  role=role).all()
+            return True, EnrolledCourse.query.filter_by(user_id=user_id,
+                                                        role=role).all()
 
     @staticmethod
     def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
