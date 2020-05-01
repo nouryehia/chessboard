@@ -6,6 +6,7 @@ CREATE TABLE "Users" (
 	"password" varchar(255) NOT NULL,
 	"pid" varchar(10) UNIQUE,
 	"last_login" TIMESTAMP,
+	"urole" integer NOT NULL DEFAULT '1',
 	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE

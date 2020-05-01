@@ -3,13 +3,12 @@ from __future__ import annotations
 
 from flask_login import UserMixin
 from typing import List, Optional, Dict, Tuple
-
 from ...setup import db
 from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
-# from .models.enrolled_course import EnrolledCourse
+#from .enrolled_course import EnrolledCourse
 from ..security.password import pwd_context, superpass
-
+from ..security.roles import URole
 
 class User(db.Model, UserMixin):
     """
@@ -33,6 +32,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     pid = db.Column(db.String(10), nullable=True, unique=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    urole = db.Column(db.Integer, nullable=True)
 
     def __repr__(self) -> str:
         """
@@ -131,20 +131,22 @@ class User(db.Model, UserMixin):
             passwd = gen_password()
             ret = passwd
         u = User(email=email, first_name=f_name, last_name=l_name, pid=pid,
-                 password=pwd_context.hash(passwd))
+                 password=pwd_context.hash(passwd),
+                 urole=URole.NONE.value)
 
         db.session.add(u)
         u.save()
         return True, ret, u
 
+    '''
     def get_courses_for_user(self) -> List[EnrolledCourse]:
-        '''
+        """
         Database query for getting all EnrolledCourses for our user.\n
         Params: None\n
         Returns: A list of EnrolledCourses (can be empty)
-        '''
+        """
         return EnrolledCourse.find_user_in_all_course(self.id)
-
+    '''
     @staticmethod
     def create_random_password(user) -> str:
         '''
@@ -194,3 +196,10 @@ class User(db.Model, UserMixin):
         Returns: Optional[User]
         '''
         return User.query.filter_by(id=user_id).first()
+
+    @staticmethod
+    def get_urole(self):
+        """
+        Gets the role of an user.
+        """
+        return self.urole

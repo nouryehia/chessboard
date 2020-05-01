@@ -3,10 +3,9 @@ from __future__ import annotations
 from ....setup import db
 from enum import Enum
 from ...utils.time import TimeUtil
-from ..models.user import User
-from ..models.ticket import Ticket
-from typing import List
-from ..models.course import Course
+from ..user import User
+# from ..ticket import Ticket
+from ..course import Course
 
 
 class EventType(Enum):
@@ -30,7 +29,7 @@ class EventType(Enum):
     COMMENTED = 6
 
 
-class TicketEvent(db.model):
+class TicketEvent(db.Model):
     """
     The event happened on ticket.\n
     Fields:\n
@@ -42,6 +41,7 @@ class TicketEvent(db.model):
     user_id --> The user that created this event.\n
     timestamp --> The timestamp of this event.\n
     """
+    __tablename__ = 'TicketEvent'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     # need to change a name in db, since type is a presereved word in python
     event_type = db.Column(db.Integer, nullable=False)
@@ -51,7 +51,7 @@ class TicketEvent(db.model):
     is_private = db.Column(db.Boolean, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
                         nullable=False)
-    timestamp = db.Column(db.Datetime, nullable=False,
+    timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
 
     # Getter Methods
@@ -124,35 +124,6 @@ class TicketEvent(db.model):
 
     # Not implemnting (since not used):
     # findAllForTutor
-
-    # static query methods
-    @staticmethod
-    def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
-        """
-        Find all the ticket events associated to a ticket.\n
-        Inputs:\n
-        ticket --> The ticket object to be look for.\n
-        Return:\n
-        A list of event related to this ticket.\n
-        """
-        return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-            .sort_by(TicketEvent.timestamp).desc.all()
-
-    @staticmethod
-    def find_all_events_for_tickets(tickets:
-                                    List[Ticket]) -> List[TicketEvent]:
-        """
-        Find all the ticket events of multiple tickets.\n
-        Inputs:\n
-        tickets --> A list of ticktes.\n
-        Return:\n
-        A list of event related to the tickets passed in.\n
-        """
-        ticket_id_list = []
-        for ticket in tickets:
-            ticket_id_list.append(ticket.id)
-        return TicketEvent.query().\
-            filter_by(Ticket.ticket_id.in_(ticket_id_list))
 
     # Static add method
     @staticmethod

@@ -9,13 +9,14 @@ from ...setup import db
 from .user import User
 # from .user import Status as u_status
 # from .course import Course
-# from .course import Course
+from .course import Course
 from .ticket import Ticket, TicketTag, HelpType
 from .ticket import Status as t_status
+from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent, EventType
 from .events.queue_login_event import QueueLoginEvent, ActionType
 
-from .news_feed_post import NewsFeedPost
+# from .news_feed_post import NewsFeedPost
 from .enrolled_course import EnrolledCourse
 
 
@@ -59,7 +60,7 @@ class Queue(db.Model):
     __tablename__ = 'Queue'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.CLOSED)
-    high_capacity_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    high_capacity_enable = db.Column(db.Boolean, nullable=False, default=True)
     high_capacity_threshold = db.Column(db.Integer, nullable=False,
                                         default=25)
     high_capacity_message = db.Column(db.Text, nullable=False,
@@ -71,7 +72,7 @@ class Queue(db.Model):
                                       default='The queue is currently very busy. \
                                               You may not be helped before \
                                               tutor hours end.')
-    ticket_cooldown = db.Column(db.Integer, nullable=False, default=10)
+    ticket_cool_down = db.Column(db.Integer, nullable=False, default=10)
 
     def __init__(self, **kwargs):
         """
@@ -226,7 +227,7 @@ class Queue(db.Model):
         Returns:\n
         The string representation of the course it belongs to.\n
         """
-        course = Course.query().filter_by(course_id=self.course_id)
+        course = Course.query.filter_by(course_id=self.course_id)
         if not course:
             return repr(course)
         else:
@@ -241,11 +242,11 @@ class Queue(db.Model):
         ret = {}
         ret['queue_id'] = self.id
         ret['status'] = self.status
-        ret['highCapacityEnabled'] = self.highCapacityEnabled
+        ret['highCapacityEnabled'] = self.high_capacity_enable
         ret['high_capacity_message'] = self.high_capacity_message
         ret['high_capacity_threshold'] = self.high_capacity_threshold
         ret['high_capacity_warning'] = self.high_capacity_warning
-        ret['ticket_cooldown'] = self.ticket_cooldown
+        ret['ticket_cooldown'] = self.ticket_cool_down
         return ret
 
     # Get tickets / tickets related sttaus
@@ -532,7 +533,9 @@ class Queue(db.Model):
         """
         ave_resolve_time = self.average_help_time(hour=True)
         # pending_num = self.get_pending_tickets()
-        active_tutor_num = EnrolledCourse.find_active_tutor_for(self)
+        status, reason, active_tutors \
+            = EnrolledCourse.find_active_tutor_for(self.id)
+        active_tutor_num = len(active_tutors)
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
@@ -608,7 +611,7 @@ class Queue(db.Model):
         Returns:\n
         The queue object, return None if it is not in the database.\n
         """
-        return Queue.query().filter(id=queue_id).first()
+        return Queue.query.filter_by(id=queue_id).first()
 
     # None Memeber Queue Methods
     @staticmethod
@@ -630,7 +633,8 @@ class Queue(db.Model):
         course = Course.find_course_by_queue(queue_id)
         if not course:
             return False, 'Course Not Found'
-        grader = User.get_user_by_id(grader_id)
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
         if not grader:
             return False, 'User Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
@@ -640,7 +644,7 @@ class Queue(db.Model):
                                 queue_id=queue_id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.close()
+        queue.open()
         return True, 'Success'
 
     @staticmethod
@@ -659,12 +663,13 @@ class Queue(db.Model):
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
             return False, 'Queue Not Found'
-        grader = User.get_user_by_id(grader_id)
-        if not grader:
-            return False, 'Course Not Found'
         course = Course.find_course_by_queue(queue)  # Prentending
         if not course:
-            return False, 'User Not Found'
+            return False, 'course Not Found'
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
+        if not grader:
+            return False, 'Course Not Found'
         grader.change_status(course, User.Status.AVALIABLE)
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
@@ -672,7 +677,9 @@ class Queue(db.Model):
                                 queue_id=queue.id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.lock()
+        s, r, grader = EnrolledCourse.find_active_tutor_for(queue.id)
+        if len(grader) == 0:
+            queue.lock()
         return True, 'Success'
 
     @staticmethod
@@ -691,16 +698,16 @@ class Queue(db.Model):
             return (False, "User not found in any course", None)
         q_id_list = []
         for ec in ec_list:
-            q = find_queue_for_course(ec.course_id)
+            q = Course.find_queue_for_course(ec.course_id)
             q_id_list.append(q)
         q_list = []
         for q_id in q_id_list:
-            q = Queue.query().filter_by(queue_id=q_id).first()
+            q = Queue.query.filter_by(queue_id=q_id).first()
             q_list.append(q)
         return (True, "Success", q_list)
 
     @staticmethod
-    def find_queue_for_course(course_id: int) -> Optional[Queue]:
+    def find_queue_for_course(course_id: int) -> (bool, Optional[Queue]):
         """
         Find the queue corresponding for a course.
         Inputs:\n
@@ -709,4 +716,47 @@ class Queue(db.Model):
         The queue for that course, if a queue does not exist, None is return.\n
         """
         course = Course.find_course_by_id(course_id)
-        return Queue.query().filter(id=course.queue_id).first()
+        q = Queue.query.filter(id=course.queue_id).first()
+        if q:
+            return True, q
+        else:
+            return False, q
+
+    @staticmethod
+    def get_all_feedback_for_queue(queue_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticketfeedback for the queue.\n
+        Input:\n
+        queue_id --> The id of the queue
+        Returns:\n
+        A list of ticket feedback.
+        """
+        return Ticket.find_all_feedback_for_queue(queue_id)
+
+    @staticmethod
+    def get_feedback_for_grader(queue_id: int,
+                                grader_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticket feedbacks to the grader.\n
+        Inputs:\n
+        queue_id --> The id of teh queue
+        grader_id --> The id of the grader.
+        Returns:\n
+        A list of tickect feedbacks
+        """
+        return Ticket.find_feedback_for_grader(queue_id=queue_id,
+                                               grader_id=grader_id)
+
+    @staticmethod
+    def get_feedback_for_student(queue_id: int,
+                                 student_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticket feedbacks to the grader.\n
+        Inputs:\n
+        queue_id --> The id of teh queue
+        grader_id --> The id of the grader.
+        Returns:\n
+        A list of tickect feedbacks
+        """
+        return Ticket.find_feedback_for_grader(queue_id=queue_id,
+                                               student_id=student_id)

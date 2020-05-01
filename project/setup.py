@@ -9,4 +9,8 @@ db = SQLAlchemy(app)
 db.init_app(app)
 cli = FlaskGroup(app)
 login_manager = LoginManager()
-login_manager.init_app(app)
+current_app = login_manager.init_app(app)
+
+@app.route('/')
+def hello_world():
+    return 'Hello Queues!'
