@@ -87,6 +87,28 @@ def get_all_user():
         return jsonify({'reason': 'course not found'}), 400
 
 
+@enrolled_course_api_bp.route('/get_user_in_section', methods=['POST'])
+@login_required
+def delete_user_from_course():
+    """
+    The route to remote an user from a particular course.
+    """
+    section_id = request.json['section_id']
+    course_id = request.json['course_id']
+    ecs = EnrolledCourse.find_user_in_all_course(user_id=user_id,
+                                                 role=role)
+    i = 0
+    ret = {}
+    for ec in ecs:
+        user = User.get_user_by_id(id=ec.user_id)
+        i += 1
+        scr = {}
+        scr['user_info'] = user.to_json()
+        scr['enrolled_user_info'] = ec.to_json()
+        ret['User' + str(i)] = scr
+    return jsonify{('reason': 'success', 'result': ret)}, 200
+
+
 @enrolled_course_api_bp.route('/get_user_in_all_course',
                               methods=['GET'])
 @login_required
@@ -108,7 +130,7 @@ def get_user_in_all_course():
     while i < len(courses):
         scr = {}
         scr['course_info'] = courses[i].to_json()
-        scr['enrolled_User_Info'] = ec[i].to_json()
+        scr['enrolled_user_info'] = ec[i].to_json()
         i += 1
         ret['course' + str(i)] = scr
     return jsonify({'reason': 'success', 'result': ret}), 200

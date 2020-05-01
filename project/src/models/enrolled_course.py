@@ -208,7 +208,7 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_user_in_course(user_id: int,
-                            course_id: int) -> Optional(EnrolledCourse):
+                            course_id: int) -> List[EnrolledCourse]:
         """
         Find a user which is in a specific course.\n
         Inputs:\n
@@ -219,6 +219,12 @@ class EnrolledCourse(db.Model):
         """
         return EnrolledCourse.query.filter_by(course_id=course_id,
                                               user_id=user_id).first()
+
+    @staticmethod
+    def find_all_user_in_section(course_id: int, section_id: int)\
+            -> List[EnrolledCourse]:
+        return EnrolledCourse.query.filter_by(course_id=course_id,
+                                              section_id=section_id).all()
 
     @staticmethod
     def find_all_user_in_course(course_id: int,
