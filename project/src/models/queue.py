@@ -16,7 +16,7 @@ from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent, EventType
 from .events.queue_login_event import QueueLoginEvent, ActionType
 
-# from .news_feed_post import NewsFeedPost
+from .news_feed_post import NewsFeedPost
 from .enrolled_course import EnrolledCourse
 
 
