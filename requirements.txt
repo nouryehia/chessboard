@@ -1,6 +1,10 @@
 Flask
+flask-login
 flask-api
 flask_cors
 flask_sqlalchemy
+psycopg2-binary
 gunicorn
-flake8
+passlib
+pytz
+python-dateutil
