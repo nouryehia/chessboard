@@ -1,5 +1,5 @@
 from flask_cors import CORS
-# from flask_login import login_required
+from flask_login import login_required
 from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket
@@ -11,7 +11,7 @@ CORS(ticket_api_bp, supports_credentials=True)
 
 
 @ticket_api_bp.route('/is_question', methods=['GET'])
-# @login_required
+@login_required
 def is_question():
     '''
     Route used to determine if a ticket is a question.\n

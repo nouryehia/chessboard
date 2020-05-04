@@ -117,16 +117,16 @@ class Ticket(db.Model):
                            default=TimeUtil.get_current_time())
     closed_at = db.Column(db.DateTime, nullable=True, default=None)
     room = db.Column(db.String(255), nullable=False)
-    workstaton = db.Column(db.String(255), nullable=False)
+    workstation = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer, nullable=False,
-                       default=Status.PENDING)
+                       default=Status.PENDING.value)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    grader_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
                           nullable=True, default=None)
-    queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'),
+    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'),
                          nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    student_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True, default=None)
