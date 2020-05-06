@@ -18,6 +18,8 @@ from .events.queue_login_event import QueueLoginEvent, ActionType
 
 from .news_feed_post import NewsFeedPost
 from .enrolled_course import EnrolledCourse
+from .enrolled_course import Status as EStatus
+from .enrolled_course import Role as ERole
 
 
 """
@@ -681,6 +683,30 @@ class Queue(db.Model):
         if len(grader) == 0:
             queue.lock()
         return True, 'Success'
+
+    @staticmethod
+    def accept_ticket(queue_id: int, ticket_id: int,
+                      grader_id: int) -> (bool, str):
+        """
+        Accept a ticket.\n
+        Inputs:\n
+        queue_id --> The id of the course that we are in.\n
+        ticket_id --> The id of the ticket to be accepted.\n
+        grader_id --> The id of the grader to accept the ticket.\n
+        Return:\n
+        Whether the operation successed or not.
+        """
+        course_id = Course.find_course_by_queue(queue_id=queue_id)
+        e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                      course_id=course_id)
+        if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
+            return (False, 'You cant take the ticket')
+        if e_grader.get_status() != EStatus.ACTIVE:
+            return (False, 'The user is currently busy')
+        t = Ticket.get_ticket_by_id(ticket_id)
+        t.mark_accepted_by(grader_id)
+        e_grader.change_status(EStatus.BUSY)
+        return True
 
     @staticmethod
     def find_current_queue_for_user(user_id: int) -> (bool, str, List[Queue]):
