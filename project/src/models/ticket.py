@@ -126,7 +126,7 @@ class Ticket(db.Model):
                           nullable=True, default=None)
     queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'),
                          nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
+    student_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True, default=None)
