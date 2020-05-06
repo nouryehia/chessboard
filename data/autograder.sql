@@ -92,6 +92,7 @@ CREATE TABLE "Course" (
 	"cse" BOOLEAN NOT NULL DEFAULT 'true',
 	"lock_button" BOOLEAN DEFAULT 'true',
 	"queue_id" bigserial NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL DEFAULT 'false',
 	CONSTRAINT "Course_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE

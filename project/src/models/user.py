@@ -33,7 +33,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     pid = db.Column(db.String(10), nullable=True, unique=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    urole = db.Column(db.Integer, nullable=True)
+    urole = db.Column(db.Integer, nullable=False, default=1)
 
     def __repr__(self) -> str:
         """

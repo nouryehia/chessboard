@@ -55,6 +55,7 @@ class Course(db.Model):
     cse = db.Column(db.Boolean, nullable=False, default=True)
     lock_button = db.Column(db.Boolean, nullable=False, default=False)
     queue_id = db.Column(db.Integer, nullable=False)
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, **kwargs):
         """
@@ -224,7 +225,7 @@ class Course(db.Model):
         """
         enrolled_user = Course.exists_course(quarter, short_name, year)
         if enrolled_user:
-            db.session.delete(enrolled_user)
+            enrolled_user.is_deleted = True
             db.session.commit()
             return True
         else:
