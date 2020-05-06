@@ -12,6 +12,7 @@ CORS(course_api_bp, supports_credentials=True)
 def create_course():
     """
     @author : @mihaivaduva21
+    Creates a course, only users with ADMIN role should call this.
     """
 
     description = request.json['description']

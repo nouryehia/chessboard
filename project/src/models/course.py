@@ -1,4 +1,5 @@
-# from typing import Optional, List
+from __future__ import annotations
+from typing import Optional
 from ...setup import db
 from enum import Enum
 # from .enrolled_course import EnrolledCourse
@@ -15,7 +16,7 @@ class Quarter(Enum):
     SPRING --> 2\n
     SS1 --> 3\n
     SS2 --> 4\n
-    @author: mihaivaduva21 
+    @author: mihaivaduva21
     """
     FALL = 0
     WINTER = 1
@@ -134,28 +135,31 @@ class Course(db.Model):
         return instructors
     '''
 
-    def get_course_by_id(self, couse_id):
+    def get_course_by_id(self, couse_id) -> Optional[Course]:
         """
         Returns a Course from a course id
         """
         course = Course.query.filter_by(id=couse_id).first()
         return course
 
-    def get_course_by_queue_id(self, q_id):
+    def get_course_by_queue_id(self, q_id) -> Optional[Course]:
         """
         Returns a Course from a queue id
         """
         course = Course.query.filter_by(queue_id=q_id).first()
         return course
 
-    def get_queue_id_by_id(self, couse_id):
+    def get_queue_id_by_id(self, couse_id) -> Optional[int]:
         """
         Returns a queue_id from a course id
         """
         course = Course.query.filter_by(id=couse_id).first()
-        return course.queue_id
+        if course is not None:
+            course.queue_id
+        else:
+            return None
 
-    def quarter_year(self):
+    def quarter_year(self) -> str:
         """
         Returns the quarter and the year.
         """
@@ -178,7 +182,7 @@ class Course(db.Model):
         Section.insert().values(section_name=section_name, course_id=self.id)
     '''
 
-    def exists_course(quarter: int, short_name: str, year: int):
+    def exists_course(quarter: int, short_name: str, year: int) -> Optional[Course]:
         '''
         Function that tries to find a course by short name, quarter and year.
 
@@ -198,7 +202,7 @@ class Course(db.Model):
     def create_course(description: str, name: str, quarter: int,
                       short_name: str, url: str, year: int,
                       active: bool, queue_enabled: bool, cse: bool,
-                      queue_id: int):
+                      queue_id: int) -> Optional[Course]:
 
         """
         Creates a new course and adds it to the databease.
@@ -214,14 +218,14 @@ class Course(db.Model):
         db.session.commit()
         return course
 
-
     @staticmethod
     def delete_course(short_name: str, quarter: int, year: int) -> bool:
         """
         Delete an entry from the enrolled_course table.\n
         Inputs:\n
-        user_id --> The user_id of the user to delete.\n
-        course_id --> The course_id of the course to delete user from.\n
+        short_name --> The short_name of the course to delete.\n
+        quarter --> The quarter of the course to delete.\n
+        year --> The year of the course to delete.\n
         """
         enrolled_user = Course.exists_course(quarter, short_name, year)
         if enrolled_user:
