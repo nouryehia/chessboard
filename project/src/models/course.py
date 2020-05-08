@@ -3,7 +3,6 @@ from typing import Optional
 from ...setup import db
 from enum import Enum
 # from .enrolled_course import EnrolledCourse
-# from . import  Section
 from ..security.roles import CRole
 
 
@@ -74,35 +73,34 @@ class Course(db.Model):
         """
         repr
         """
-        return (str)(self.id, self.name, self.short_name, self.quarter,
-                     self.year)
+        return 'course ' + str(year) + ' ' + short_name + ' ' + quarter
 
     def switch_queue_status(self):
         """
         Switches the status of the queue.
         """
-        self.queue_enabled = not (self.queue_enabled)
+        self.queue_enabled = not self.queue_enabled
         self.save()
 
     def switch_lock_status(self):
         """
         Switches the status of the lock.
         """
-        self.lock_button = not (self.lock_button)
+        self.lock_button = not self.lock_button
         self.save()
 
     def switch_active_status(self):
         """
         Switches the active status
         """
-        self.active = not(self.active)
+        self.active = not self.active
         self.save()
 
     def switch_cse(self):
         """
         Switch the value of the cse boolean
         """
-        self.cse = not(self.cse)
+        self.cse = not self.cse
         self.save()
 
     ''' Dependancies on Section
@@ -139,25 +137,21 @@ class Course(db.Model):
         """
         Returns a Course from a course id
         """
-        course = Course.query.filter_by(id=couse_id).first()
-        return course
+        return Course.query.filter_by(id=couse_id).first()
 
     def get_course_by_queue_id(self, q_id) -> Optional[Course]:
         """
         Returns a Course from a queue id
         """
-        course = Course.query.filter_by(queue_id=q_id).first()
-        return course
+        return Course.query.filter_by(queue_id=q_id).first()
 
-    def get_queue_id_by_id(self, couse_id) -> Optional[int]:
+    def get_queue_id_by_id(self, course_id) -> Optional[int]:
         """
         Returns a queue_id from a course id
         """
-        course = Course.query.filter_by(id=couse_id).first()
-        if course is not None:
-            course.queue_id
-        else:
-            return None
+        course = Course.query.filter_by(id=course_id).first()
+        
+        return course.queue_id if course else None
 
     def quarter_year(self) -> str:
         """
@@ -189,14 +183,9 @@ class Course(db.Model):
         Params: pid - string. email - string.\n
         Returns: Optional[Course] or None
         '''
-        try:
-            user = Course.query.filter_by(quarter=quarter,
-                                          short_name=short_name,
-                                          year=year).first()
-        except KeyError:
-            user = None
-
-        return user
+        return Course.query.filter_by(quarter=quarter,
+                                      short_name=short_name,
+                                      year=year).first()
 
     @staticmethod
     def create_course(description: str, name: str, quarter: int,
@@ -207,7 +196,7 @@ class Course(db.Model):
         """
         Creates a new course and adds it to the databease.
         """
-        if Course.exists_course(quarter, short_name, year) is not None:
+        if Course.exists_course(quarter, short_name, year):
             return None
 
         course = Course(description=description, name=name, quarter=quarter,
@@ -215,7 +204,7 @@ class Course(db.Model):
                         active=active, queue_enabled=queue_enabled, cse=cse,
                         lock_button=False, queue_id=queue_id)
         db.session.add(course)
-        db.session.commit()
+        course.save()
         return course
 
     @staticmethod
@@ -227,10 +216,10 @@ class Course(db.Model):
         quarter --> The quarter of the course to delete.\n
         year --> The year of the course to delete.\n
         """
-        enrolled_user = Course.exists_course(quarter, short_name, year)
-        if enrolled_user:
-            enrolled_user.is_deleted = True
-            db.session.commit()
+        course = Course.exists_course(quarter, short_name, year)
+        if course:
+            course.is_deleted = True
+            course.save()
             return True
         else:
             return False
