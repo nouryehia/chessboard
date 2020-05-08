@@ -122,7 +122,7 @@ CREATE TABLE "Ticket" (
 	"status" integer NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" TEXT NOT NULL,
-	"grader_id" bigserial,
+	"grader_id" bigint,
 	"queue_id" bigserial NOT NULL,
 	"student_id" bigserial NOT NULL,
 	"is_private" BOOLEAN NOT NULL DEFAULT 'false',

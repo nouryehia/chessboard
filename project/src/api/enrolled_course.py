@@ -12,6 +12,7 @@ CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
+@login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.

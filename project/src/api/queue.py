@@ -2,6 +2,7 @@ from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
+from ..models.ticket import HelpType, TicketTag
 from ..models.queue import Queue, Status
 from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
@@ -12,7 +13,7 @@ CORS(queue_api_bp, supports_credentials=True)
 
 
 @queue_api_bp.route('/find_queue', methods=['GET'])
-@login_required
+# @login_required
 def find_queue():
     """
     Return the queue object corresponding to an id.\n
@@ -33,7 +34,7 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-@login_required
+# @login_required
 def create_queue():
     """
     Create a queue for a course.\n
@@ -59,28 +60,26 @@ def create_queue():
 
 
 @queue_api_bp.route('/add_ticket', methods=['POST'])
-@login_required
+# @login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
     """
-    queue = Queue.get_queue_by_id(request.json['queue_id'])
-    student_pid = (request.json['student_pid'] if 'student_pid' in request.json
-                   else None)
-    student_email = (request.json['student_email']
-                     if 'student_email' in request.json else None)
+    queue = Queue.get_queue_by_id(int(request.json['queue_id']))
+    student_id = int(request.json['student_id'])
     title = request.json['title']
     description = request.json['description']
     room = request.json['room']
     workstation = request.json['workstation']
     is_private = request.json['is_private']
-    help_type = request.json['help_type']
-    tag_list = request.json['tag_list']
+    help_type = HelpType(request.json['help_type'])
+    tag_list_raw = request.json['tag_list'].split(';')
+    tag_list = []
+    for tag in tag_list_raw:
+        tag_list.append(TicketTag(int(tag)).value)
 
-    student = User.find_by_pid_email_fallback(student_pid, student_email)
-
-    ticket = (queue.add_ticket(student, title, description, room, workstation,
-                               is_private, help_type, tag_list))
+    ticket = (queue.add_ticket(student_id, title, description, room,
+                               workstation, is_private, help_type, tag_list))
 
     return (jsonify({'reason': 'ticket added to queue',
                      'result': ticket.to_json()}), 200)
@@ -276,3 +275,19 @@ def find_all_ticket_for_grader():
         i += 1
         ret['ticket' + str(i)] = t.to_json()
     return jsonify({'reason': 'Success', 'result': ret}), 200
+
+
+@queue_api_bp.route('/accept_ticket', methods=['POST'])
+@login_required
+def accept_ticket():
+    """
+    User accept a ticket.
+    """
+    q_id = request.json['queue_id']
+    g_id = request.json['grader_id']
+    t_id = request.json['ticket_id']
+    s, r = Queue.accept_ticket(queue_id=q_id, grader_id=g_id, ticket_id=t_id)
+    if s:
+        return jsonify({'reason': r}), 200
+    else:
+        return jsonify({'reason': r}), 400

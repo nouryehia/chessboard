@@ -95,7 +95,7 @@ class Queue(db.Model):
         """
         db.session.commit()
 
-    def add_ticket(self, student: User, title: str,
+    def add_ticket(self, student_id: int, title: str,
                    description: str, room: str,
                    workstation: str, is_private: bool,
                    help_type: HelpType,
@@ -121,10 +121,10 @@ class Queue(db.Model):
                             room=room, workstation=workstation,
                             title=title, description=description,
                             grader_id=None, queue_id=self.id,
-                            student_id=student.id, is_private=is_private,
-                            accepted_at=None, help_type=help_type,
+                            student_id=student_id, is_private=is_private,
+                            accepted_at=None, help_type=help_type.value,
                             tag_one=tag_one, tag_two=tag_two,
-                            tag_three=tag_three)
+                            tag_three=tag_three, status=t_status.PENDING.value)
         Ticket.add_to_db(new_ticket)
         return new_ticket
 
@@ -639,7 +639,7 @@ class Queue(db.Model):
                                                     course_id=course.id)
         if not grader:
             return False, 'User Not Found'
-        grader.change_status(course, User.Status.AVALIABLE)
+        grader.change_status(course, grader.change_status(EStatus.ACTIVE))
         event = QueueLoginEvent(event_type=EventType.LOGIN,
                                 action_type=action_type,
                                 grader_id=grader_id,
@@ -672,7 +672,7 @@ class Queue(db.Model):
                                                     course_id=course.id)
         if not grader:
             return False, 'Course Not Found'
-        grader.change_status(course, User.Status.AVALIABLE)
+        grader.change_status(course, grader.change_status(EStatus.INACTIVE))
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
                                 grader_id=grader.id,
@@ -704,9 +704,33 @@ class Queue(db.Model):
         if e_grader.get_status() != EStatus.ACTIVE:
             return (False, 'The user is currently busy')
         t = Ticket.get_ticket_by_id(ticket_id)
-        t.mark_accepted_by(grader_id)
+        t.mark_accepted_by(e_grader.id)
         e_grader.change_status(EStatus.BUSY)
-        return True
+        return (True, 'Ticket Accepted')
+
+    @staticmethod
+    def resolve_ticket(queue_id: int, ticket_id: int,
+                       grader_id: int) -> (bool, str):
+        """
+        Reolve a ticket.\n
+        Inputs:\n
+        queue_id --> The id of the course that we are in.\n
+        ticket_id --> The id of the ticket to be accepted.\n
+        grader_id --> The id of the grader to accept the ticket.\n
+        Return:\n
+        Whether the operation successed or not.
+        """
+        course_id = Course.find_course_by_queue(queue_id=queue_id)
+        e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                      course_id=course_id)
+        if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
+            return (False, 'You cant resolve the ticket')
+        t = Ticket.get_ticket_by_id(ticket_id)
+        accepter = EnrolledCourse.find_user_in_course(user_id=t.get_grader_id,
+                                                      course_id=course_id)
+        t.mark_resolved()
+        accepter.change_status(EStatus.ACTIVE)
+        return (True, 'Ticket Resolved')
 
     @staticmethod
     def find_current_queue_for_user(user_id: int) -> (bool, str, List[Queue]):

@@ -95,7 +95,7 @@ class Ticket(db.Model):
                    default is the current time.\n
     closed_at --> The time that this ticket is closed. Nullable\n
     room --> The room that this student is in.\n
-    workstaton --> The workstation of the student.\n
+    workstation --> The workstation of the student.\n
     status --> The status of this ticket.\n
     title --> The title of this ticket.\n
     description --> The discription of the ticket created by student.\n
@@ -117,16 +117,16 @@ class Ticket(db.Model):
                            default=TimeUtil.get_current_time())
     closed_at = db.Column(db.DateTime, nullable=True, default=None)
     room = db.Column(db.String(255), nullable=False)
-    workstaton = db.Column(db.String(255), nullable=False)
+    workstation = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer, nullable=False,
-                       default=Status.PENDING)
+                       default=Status.PENDING.value)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    grader_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    grader_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
                           nullable=True, default=None)
-    queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'),
+    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'),
                          nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    student_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
                            nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True, default=None)
@@ -173,7 +173,7 @@ class Ticket(db.Model):
         ret['created_at'] = self.created_at
         ret['status'] = self.status
         ret['room'] = self.room
-        ret['workstaton'] = self.workstation
+        ret['workstation'] = self.workstation
         ret['title'] = self.title
         ret['description'] = self.description
         ret['grader_id'] = self.grader_id
