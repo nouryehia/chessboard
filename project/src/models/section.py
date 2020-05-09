@@ -113,3 +113,13 @@ class Section (db.Model):
             filter_by(section_id=section_id, course_id=course_id).first()
 
         return section
+
+    @staticmethod
+    def add_to_db(section: Section):
+        """
+        Adds a ticket to the database.\n
+        Param: section --> the section object being added\n
+        Returns: None.
+        """
+        db.session.add(section)
+        db.session.commit()
