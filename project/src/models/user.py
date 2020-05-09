@@ -7,9 +7,9 @@ from typing import List, Optional, Dict, Tuple
 from ...setup import db
 from ..utils.time import TimeUtil
 from ..utils.pass_gen import gen_password
-# from .models.enrolled_course import EnrolledCourse
 from ..security.password import pwd_context, superpass
 from ..security.roles import URole
+
 
 class User(db.Model, UserMixin):
     """
@@ -138,14 +138,6 @@ class User(db.Model, UserMixin):
         db.session.add(u)
         u.save()
         return True, ret, u
-
-    def get_courses_for_user(self) -> List[EnrolledCourse]:
-        '''
-        Database query for getting all EnrolledCourses for our user.\n
-        Params: None\n
-        Returns: A list of EnrolledCourses (can be empty)
-        '''
-        return EnrolledCourse.find_user_in_all_course(self.id)
 
     @staticmethod
     def create_random_password(user) -> str:
