@@ -9,11 +9,9 @@ from ..utils.time import TimeUtil
 from ...setup import db
 from .user import User
 from .enrolled_course import Role
-# from .course import Course  # Pretending
+from .course import Course  # Pretending
 from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
-# from .queue import Queue
-
 
 """
 Note for implementation:

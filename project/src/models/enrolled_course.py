@@ -1,10 +1,9 @@
 from __future__ import annotations
 from enum import Enum
 from ...setup import db
-from typing import List, Optional, Dict
-# from .course import Course
-from .user import User  # prentending
-# from .models import sections as sec  # prentending
+from typing import List, Dict
+from .course import Course
+from .user import User
 
 
 class Status(Enum):
@@ -162,6 +161,20 @@ class EnrolledCourse(db.Model):
         self.save()
         return True
 
+    def find_students_in_section(self, given_id: int):
+        user_ids = []
+        students = []
+
+        records = EnrolledCourse.query.filter_by(section_id=given_id).all()
+        for rec in records:
+            user_ids.add(rec.user_id)
+
+        for id in user_ids:
+            student = User.get_user_by_id(id)
+            students.add(student.first_name + " " + student.last_name)
+
+        return students
+
     def save(self):
         """
         Update the object to the database.\n
@@ -301,3 +314,17 @@ class EnrolledCourse(db.Model):
             return True
         else:
             return False
+
+    '''
+    Was in User model, but should not be needed anymore as same result can be
+    obtained by calling find_user_in_all_course directly. Keeping it here just
+    in case though.
+    '''
+    # @staticmethod
+    # def get_courses_for_user(self) -> List[EnrolledCourse]:
+    #    '''
+    #    Database query for getting all EnrolledCourses for our user.\n
+    #    Params: None\n
+    #    Returns: A list of EnrolledCourses (can be empty)
+    #    '''
+    #    return EnrolledCourse.find_user_in_all_course(self.id)
