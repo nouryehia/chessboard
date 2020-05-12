@@ -25,10 +25,10 @@ def enroll_user():
 
     # Check the authroity of the operation
     # c_u_id = current_user.id
-    ecu = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                             course_id=course_id)
-    if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
-        return jsonify({'reason': 'Method is forbiden from you'}), 400
+    # ecu = EnrolledCourse.find_user_in_course(user_id=user_id,
+    #                                          course_id=course_id)
+    # if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
+    #    return jsonify({'reason': 'Method is forbiden from you'}), 400
 
     if EnrolledCourse.enroll_user_to(user_id=user_id,
                                      course_id=course_id,
