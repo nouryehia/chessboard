@@ -61,11 +61,11 @@ class EnrolledCourse(db.Model):
     """
     __tablename__ = 'EnrolledCourse'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.id'),
                            nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
+    course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
 

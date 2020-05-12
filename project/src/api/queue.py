@@ -13,7 +13,7 @@ CORS(queue_api_bp, supports_credentials=True)
 
 
 @queue_api_bp.route('/find_queue', methods=['GET'])
-# @login_required
+@login_required
 def find_queue():
     """
     Return the queue object corresponding to an id.\n
@@ -34,7 +34,7 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-# @login_required
+@login_required
 def create_queue():
     """
     Create a queue for a course.\n
@@ -60,7 +60,7 @@ def create_queue():
 
 
 @queue_api_bp.route('/add_ticket', methods=['POST'])
-# @login_required
+@login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
