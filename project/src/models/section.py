@@ -41,11 +41,12 @@ class Section (db.Model):
 
         # Initialize the object
         super(Section, self).__init__(**kwargs)
-
+        """
         # Find all the students in the section using a database query
         # that returns a set of strings in the format of "First Last"
         self.students_in_section =\
             EnrolledCourse.find_students_in_section(self.id)
+        """
 
     def __repr__(self):
         '''

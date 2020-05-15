@@ -9,7 +9,7 @@ CORS(section_api_bp, supports_credentials=True)
 
 
 @section_api_bp.route('/create_section', methods=['POST'])
-@login_required
+# @login_required
 def create_section():
     """
     Route used to create a section for a course.\n

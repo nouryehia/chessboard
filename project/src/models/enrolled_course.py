@@ -62,7 +62,7 @@ class EnrolledCourse(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('Section.id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.section_id'),
                            nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
@@ -213,7 +213,7 @@ class EnrolledCourse(db.Model):
         if ec:
             return False
         enroll_student = EnrolledCourse(user_id=user_id,
-                                        role=role.value,
+                                        role=role,
                                         section_id=section_id,
                                         status=Status.ACTIVE.value,
                                         course_id=course_id)
