@@ -1,30 +1,29 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 from ..security.roles import role_required, URole
-from ..models.course import Course
+from ..models.course import Course, Quarter
 
 course_api_bp = Blueprint('course_api', __name__)
 CORS(course_api_bp, supports_credentials=True)
 
 
 @course_api_bp.route('/create_course', methods=['POST'])
-@role_required(role=URole.ADMIN.value)
+# @role_required(role=URole.ADMIN.value)
 def create_course():
     """
     @author : @mihaivaduva21
     Creates a course, only users with ADMIN role should call this.
     """
-
     description = request.json['description']
-    name = request.json['name'] 
-    quarter = request.json['quarter']
+    name = request.json['name']
+    quarter = Quarter(int(request.json['quarter'])).value
     short_name = request.json['short_name']
     url = request.json['url'] if 'url' in request.json else None
-    year = request.json['year']
-    active = request.json['active'] if 'active' in request.json else False
-    queue_enabled = request.json['queue_enabled'] if 'queue_enabled' in request.json else False
-    cse = request.json['cse'] if 'cse' in request.json else False
-    queue_id = request.json['queue_id']
+    year = int(request.json['year'])
+    active = bool(request.json['active']) if 'active' in request.json else False
+    queue_enabled = bool(request.json['queue_enabled']) if 'queue_enabled' in request.json else False
+    cse = bool(request.json['cse']) if 'cse' in request.json else False
+    queue_id = int(request.json['queue_id'])
 
     if Course.create_course(description=description, name=name,
                             quarter=quarter, short_name=short_name, url=url,
@@ -37,7 +36,7 @@ def create_course():
 
 
 @course_api_bp.route('/delete_course', methods=['POST'])
-@role_required(role=URole.ADMIN.value)
+# @role_required(role=URole.ADMIN.value)
 def delete_course():
     """
     @author : @mihaivaduva21

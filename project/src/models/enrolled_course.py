@@ -1,10 +1,9 @@
 from __future__ import annotations
 from enum import Enum
 from ...setup import db
-from typing import List, Optional, Dict
-# from .course import Course
-from .user import User  # prentending
-# from .models import sections as sec  # prentending
+from typing import List, Dict
+from .course import Course
+from .user import User
 
 
 class Status(Enum):
@@ -61,11 +60,11 @@ class EnrolledCourse(db.Model):
     """
     __tablename__ = 'EnrolledCourse'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.section_id'),
                            nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
+    course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
 
@@ -162,6 +161,20 @@ class EnrolledCourse(db.Model):
         self.save()
         return True
 
+    def find_students_in_section(self, given_id: int):
+        user_ids = []
+        students = []
+
+        records = EnrolledCourse.query.filter_by(section_id=given_id).all()
+        for rec in records:
+            user_ids.add(rec.user_id)
+
+        for id in user_ids:
+            student = User.get_user_by_id(id)
+            students.add(student.first_name + " " + student.last_name)
+
+        return students
+
     def save(self):
         """
         Update the object to the database.\n
@@ -195,8 +208,12 @@ class EnrolledCourse(db.Model):
         Return:\n
         Whether the user is added.
         """
+        ec = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                course_id=course_id)
+        if ec:
+            return False
         enroll_student = EnrolledCourse(user_id=user_id,
-                                        role=role.value,
+                                        role=role,
                                         section_id=section_id,
                                         status=Status.ACTIVE.value,
                                         course_id=course_id)
@@ -204,7 +221,7 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_user_in_course(user_id: int,
-                            course_id: int) -> Optional(EnrolledCourse):
+                            course_id: int) -> List[EnrolledCourse]:
         """
         Find a user which is in a specific course.\n
         Inputs:\n
@@ -217,8 +234,15 @@ class EnrolledCourse(db.Model):
                                               user_id=user_id).first()
 
     @staticmethod
+    def find_all_user_in_section(course_id: int, section_id: int)\
+            -> List[EnrolledCourse]:
+        return EnrolledCourse.query.filter_by(course_id=course_id,
+                                              section_id=section_id).all()
+
+    @staticmethod
     def find_all_user_in_course(course_id: int,
-                                role: Role = None) -> List[EnrolledCourse]:
+                                role: Role = None) \
+            -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a course.\n
         There can be extra parameter provided which is role.\n
@@ -226,15 +250,19 @@ class EnrolledCourse(db.Model):
         course --> The Course object to look for.\n
         role --> (Optional) the role to look for.\n
         """
+        c = Course.get_course_by_id(course_id=course_id)
+        if not c:
+            return False, None
         if not role:
-            return EnrolledCourse.query.filter_by(course_id=course_id).all()
+            return True, EnrolledCourse.query.filter_by(course_id=c.id).all()
         else:
-            return EnrolledCourse.query.filter_by(course_id=course_id,
-                                                  role=role).all()
+            return True, EnrolledCourse.query.filter_by(course_id=c.id,
+                                                        role=role).all()
 
     @staticmethod
     def find_user_in_all_course(user_id: int,
-                                role: Role = None) -> List[EnrolledCourse]:
+                                role: Role = None) \
+            -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a user.\n
         There can be extra parameter provided which is role.\n
@@ -243,13 +271,13 @@ class EnrolledCourse(db.Model):
         role --> (Optional) the role to look for.\n
         """
         if not role:
-            return EnrolledCourse.query.filter_by(user_id=user_id).all()
+            return True, EnrolledCourse.query.filter_by(user_id=user_id).all()
         else:
-            return EnrolledCourse.query.filter_by(user_id=user_id,
-                                                  role=role).all()
+            return True, EnrolledCourse.query.filter_by(user_id=user_id,
+                                                        role=role).all()
 
     @staticmethod
-    def find_active_tutor_for(queue_id: int) -> List[User]:
+    def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
         """
         Find all the active tutor for a given queue object.\n
         Inputs:\n
@@ -257,8 +285,9 @@ class EnrolledCourse(db.Model):
         Returns:\n
         A list of active tutors User objects. Could have null entries\n
         """
-        course = Course.find_course_for(queue_id)
-
+        course = Course.get_course_by_queue_id(queue_id)
+        if not course:
+            return (False, 'Course not found', None)
         grader_enrolled_course = EnrolledCourse.query\
             .filter_by(roles=Role.GRADER)\
             .filter_by(course_id=course.id).all()
@@ -285,3 +314,17 @@ class EnrolledCourse(db.Model):
             return True
         else:
             return False
+
+    '''
+    Was in User model, but should not be needed anymore as same result can be
+    obtained by calling find_user_in_all_course directly. Keeping it here just
+    in case though.
+    '''
+    # @staticmethod
+    # def get_courses_for_user(self) -> List[EnrolledCourse]:
+    #    '''
+    #    Database query for getting all EnrolledCourses for our user.\n
+    #    Params: None\n
+    #    Returns: A list of EnrolledCourses (can be empty)
+    #    '''
+    #    return EnrolledCourse.find_user_in_all_course(self.id)
