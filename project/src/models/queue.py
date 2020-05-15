@@ -8,8 +8,7 @@ from ...setup import db
 
 from .user import User
 # from .user import Status as u_status
-# from .course import Course
-# from .course import Course
+from .course import Course
 from .ticket import Ticket, TicketTag, HelpType
 from .ticket import Status as t_status
 from .ticket_feedback import TicketFeedback
@@ -229,7 +228,7 @@ class Queue(db.Model):
         Returns:\n
         The string representation of the course it belongs to.\n
         """
-        course = Course.query.filter_by(course_id=self.course_id)
+        course = Course.get_course_by_queue_id(self.id)
         if not course:
             return repr(course)
         else:
@@ -632,7 +631,7 @@ class Queue(db.Model):
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
             return False, 'Queue Not Found'
-        course = Course.find_course_by_queue(queue_id)
+        course = Course.get_course_by_queue_id(queue_id)
         if not course:
             return False, 'Course Not Found'
         grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
@@ -665,7 +664,7 @@ class Queue(db.Model):
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
             return False, 'Queue Not Found'
-        course = Course.find_course_by_queue(queue)  # Prentending
+        course = Course.get_course_by_queue_id(queue_id)
         if not course:
             return False, 'course Not Found'
         grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
@@ -696,7 +695,7 @@ class Queue(db.Model):
         Return:\n
         Whether the operation successed or not.
         """
-        course_id = Course.find_course_by_queue(queue_id=queue_id)
+        course_id = Course.get_course_by_queue_id(queue_id=queue_id)
         e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                       course_id=course_id)
         if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
@@ -720,7 +719,7 @@ class Queue(db.Model):
         Return:\n
         Whether the operation successed or not.
         """
-        course_id = Course.find_course_by_queue(queue_id=queue_id)
+        course_id = Course.get_course_by_queue_id(queue_id=queue_id)
         e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                       course_id=course_id)
         if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
@@ -748,7 +747,7 @@ class Queue(db.Model):
             return (False, "User not found in any course", None)
         q_id_list = []
         for ec in ec_list:
-            q = Course.find_queue_for_course(ec.course_id)
+            q = Course.get_course_by_id(ec.course_id)
             q_id_list.append(q)
         q_list = []
         for q_id in q_id_list:
@@ -765,7 +764,7 @@ class Queue(db.Model):
         Returns:\n
         The queue for that course, if a queue does not exist, None is return.\n
         """
-        course = Course.find_course_by_id(course_id)
+        course = Course.get_course_by_id(course_id)
         q = Queue.query.filter(id=course.queue_id).first()
         if q:
             return True, q

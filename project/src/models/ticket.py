@@ -427,7 +427,7 @@ class Ticket(db.Model):
         """
         grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accpeted_ticket_for_grader(grader)
+        Ticket.defer_accepted_ticket_for_grader(grader)
 
         self.status = Status.ACCEPTED
         self.accepted_at = TimeUtil.get_current_time()
@@ -545,7 +545,7 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accpeted_ticket_for_grader(grader: User) -> None:
+    def defer_accepted_ticket_for_grader(grader: User) -> None:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n
