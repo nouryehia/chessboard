@@ -505,7 +505,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id) -> Optional(Ticket):
+    def get_ticket_by_id(ticket_id: int) -> Optional(Ticket):
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -513,7 +513,7 @@ class Ticket(db.Model):
         Return:\n
         The ticket object, None if the ticket_id is not found.\n
         """
-        return Ticket.query().filter_by(id=ticket_id)
+        return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
     def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:

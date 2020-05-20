@@ -15,13 +15,14 @@ CORS(ticket_api_bp, supports_credentials=True)
 def is_question():
     '''
     Route used to determine if a ticket is a question.\n
-    @author Nour
+    @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
+    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
 
-    return (jsonify({'reason': 'ticket is a question'}), 200
-            if ticket.is_question() else
-            jsonify({'reason': 'ticket is not a question'}), 400)
+    if ticket.is_question():
+        return jsonify({'reason': 'ticket is a question'}), 200
+
+    return jsonify({'reason': 'ticket is not a question'}), 400
 
 
 @ticket_api_bp.route('/is_checkoff', methods=['GET'])
@@ -29,13 +30,14 @@ def is_question():
 def is_checkoff():
     '''
     Route used to determine if a ticket is a checkoff.\n
-    @author Nour
+    @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
+    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
 
-    return (jsonify({'reason': 'ticket is a checkoff'}), 200
-            if ticket.is_checkoff() else
-            jsonify({'reason': 'ticket is not a checkoff'}), 400)
+    if ticket.is_checkoff():
+        return jsonify({'reason': 'ticket is a check off'}), 200
+
+    return jsonify({'reason': 'ticket is not a check off'}), 400
 
 
 @ticket_api_bp.route('/is_pending', methods=['GET'])
@@ -43,7 +45,7 @@ def is_checkoff():
 def is_pending():
     '''
     Route used to determine if a ticket is pending.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -57,7 +59,7 @@ def is_pending():
 def is_accepted():
     '''
     Route used to determine if a ticket is accepted.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -71,7 +73,7 @@ def is_accepted():
 def is_resolved():
     '''
     Route used to determine if a ticket is resolved.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -85,7 +87,7 @@ def is_resolved():
 def is_canceled():
     '''
     Route used to determine if a ticket is canceled.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -99,7 +101,7 @@ def is_canceled():
 def is_non_cse():
     '''
     Route used to determine if a ticket is not in the CSE building.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -113,7 +115,7 @@ def is_non_cse():
 def is_hallway():
     '''
     Route used to determine if a ticket is in the hallway.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -127,7 +129,7 @@ def is_hallway():
 def get_tags_list():
     '''
     Route used to get the tags on a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_tags_list())
@@ -138,7 +140,7 @@ def get_tags_list():
 def get_help_time_in_second():
     '''
     Route used to get the help time of a ticket (in seconds).\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_help_time_in_second())
@@ -149,7 +151,7 @@ def get_help_time_in_second():
 def get_title():
     '''
     Route used to get the get the title of a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_title())
@@ -160,7 +162,7 @@ def get_title():
 def get_description():
     '''
     Route used to get the description of a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_description())
@@ -171,7 +173,7 @@ def get_description():
 def get_room():
     '''
     Route used to get the room of a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_room())
@@ -182,7 +184,7 @@ def get_room():
 def get_workstation():
     '''
     Route used to get the workstation of a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_workstation())
@@ -193,7 +195,7 @@ def get_workstation():
 def get_position():
     '''
     Route used to get the position of a ticket in the current queue.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_position())
@@ -204,7 +206,7 @@ def get_position():
 def get_latest_feedback():
     '''
     Route used to get the latest feedback on a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_latest_feedback())
@@ -215,7 +217,7 @@ def get_latest_feedback():
 def get_ticket_events():
     '''
     Route used to get a ticket's events.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     return jsonify(ticket.get_ticket_events())
@@ -226,7 +228,7 @@ def get_ticket_events():
 def can_view_by():
     '''
     Route used to determine if a user can see a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     user = User.find_by_pid_email_fallback(None, request.json['email'])
@@ -241,7 +243,7 @@ def can_view_by():
 def can_edit_by():
     '''
     Route used to determine if a user can edit a ticket.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
     user = User.find_by_pid_email_fallback(None, request.json['email'])
@@ -257,7 +259,7 @@ def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
     passed in.\n
-    @author Nour
+    @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
 
@@ -287,7 +289,7 @@ def student_update():
 def find_all_tickets():
     '''
     Route used to get all the tickets currently on a queue.\n
-    @author Nour
+    @author nouryehia
     '''
     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
     status = (request.json['status'] if 'status' in request.json
@@ -301,7 +303,7 @@ def find_all_tickets():
 def find_all_tickets_for_grader():
     '''
     Route used to get all tickets handled by a grader.\n
-    @author Nour
+    @author nouryehia
     '''
     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
     grader = User.find_by_pid_email_fallback(None, request.json['email'])
@@ -314,7 +316,7 @@ def find_all_tickets_for_grader():
 def find_tickets_in_range():
     '''
     Route used to find all the tickets on a queue created between two dates.\n
-    @author Nour
+    @author nouryehia
     '''
     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
     start = request.json['start']
@@ -331,7 +333,7 @@ def find_tickets_in_range():
 def find_ticket_accepted_by_grader():
     '''
     Route used to find the last ticket accepted by a grader.\n
-    @author Nour
+    @author nouryehia
     '''
     grader = User.find_by_pid_email_fallback(None, request.json['email'])
     return jsonify(Ticket.find_ticket_accepted_by_grader(grader))
@@ -343,7 +345,7 @@ def find_resolved_tickets_in():
     '''
     Route used to find all resolved tickets in queue. Can query for the last
     hour, the last day, or a specific time interval.\n
-    @author Nour
+    @author nouryehia
     '''
     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
     recent_hour = (request.json['recent_hour'] if 'recent_hour' in request.json
@@ -365,7 +367,7 @@ def average_resolved_time():
     '''
     Route used to find the average time it took to resolve a list of tickets
     (in seconds).\n
-    @author Nour
+    @author nouryehia
     '''
     tickets = Ticket.get_ticket_by_id(request.json['tickets'])
     return jsonify(Ticket.average_resolved_time(tickets))
@@ -376,7 +378,7 @@ def average_resolved_time():
 def defer_accepted_ticket_for_grader():
     '''
     Route used to return tickets accepted by a grader to the queue. \n
-    @author Nour
+    @author nouryehia
     '''
     grader = User.find_by_pid_email_fallback(None, request.json['email'])
 
