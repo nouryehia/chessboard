@@ -604,7 +604,7 @@ class Queue(db.Model):
         Queue.add_to_db(queue)
 
     @staticmethod
-    def get_queue_by_id(queue_id: id) -> Optional(Queue):
+    def get_queue_by_id(queue_id: int) -> Optional(Queue):
         """
         Find the queue by the queue_id.\n
         Inputs:\n
