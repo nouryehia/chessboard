@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ...setup import db
-from typing import List
+from typing import List, Optional
 from .assignment import Assignment
 from .user import User
 from enum import Enum
@@ -105,7 +105,7 @@ class CheckoffSuite(db.Model):
         self.checkoffs.add(checkoff)
         db.session.commit()
 
-    def find_by_id(self, checkoff_id: int) -> CheckoffSuite:
+    def find_by_id(self, checkoff_id: int) -> Optional[CheckoffSuite]:
         """
         Finds a CheckoffSuite by its id in the database\n
         Params: \n
@@ -137,8 +137,7 @@ class CheckoffSuite(db.Model):
         """
         total = 0
         for checkoff in self.checkoffs:
-            if (CheckoffEvaluation.findCheckoff(checkoff.id, student_id)
-                    is not None):
+            if CheckoffEvaluation.find_checkoff(checkoff.id, student_id):
                 total += 1
         return total
 
@@ -154,9 +153,9 @@ class CheckoffSuite(db.Model):
         last_checkoff_evaluation = None
         for checkoff in self.checkoffs:
             checkoff_evaluation = CheckoffEvaluation \
-                                  .findNewestCheckoff(checkoff.id, student_id)
-            if checkoff_evaluation is not None:
-                if last_checkoff_evaluation is None:
+                                  .find_newest_checkoff(checkoff.id, student_id)
+            if checkoff_evaluation:
+                if last_checkoff_evaluation:
                     last_checkoff_evaluation = checkoff_evaluation
                 elif (last_checkoff_evaluation.checkoff_time ==
                         checkoff_evaluation.checkoff_time) < 0:
@@ -221,7 +220,7 @@ class CheckoffEvaluation(db.Model):
 
     @staticmethod
     def find_checkoff(checkoff_id: int,
-                      student_id: int) -> CheckoffEvaluation:
+                      student_id: int) -> Optional[CheckoffEvaluation]:
         """
         Finds checkoff evaluated for the student\n
         Params:\n
@@ -235,7 +234,7 @@ class CheckoffEvaluation(db.Model):
                        student_id=student_id).first()
 
     def find_newest_checkoff(self, checkoff_id: int,
-                             student_id: int) -> CheckoffEvaluation:
+                             student_id: int) -> Optional[CheckoffEvaluation]:
         """
         Find the newest checkoff evaluated for the student\n
         Params:\n
