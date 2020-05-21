@@ -809,3 +809,22 @@ class Queue(db.Model):
         """
         return Ticket.find_feedback_for_grader(queue_id=queue_id,
                                                student_id=student_id)
+
+    @staticmethod
+    def find_all_tickets(queue_id: int,
+                         status=[t_status.PENDING]) -> (bool, str,
+                                                        List[Ticket]):
+        """
+        Get all the pending tickets of a queue.\n
+        Inputs:\n
+        queue_id --> the id of the queue to search for.\n
+        status --> The ticket_status to look through, default is pending.\n
+        Returns:\n
+        status of the operation.\n
+        message with this operation.\n
+        result of this operation.\n
+        """
+        q = Queue.get_queue_by_id(queue_id)
+        if not q:
+            return False, "Queue not found", []
+        return True, "Success", Ticket.find_all_tickets(q.id, status=status)

@@ -1,19 +1,48 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from ..models.ticket import HelpType, TicketTag
 from ..models.queue import Queue, Status
+from ..models.enrolled_course import EnrolledCourse, Role
+from ..models.course import Course
 from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
-from ..models.user import User
 
 queue_api_bp = Blueprint('queue_api', __name__)
 CORS(queue_api_bp, supports_credentials=True)
 
 
+def user_in_course(queue_id: int, course_id: int) -> bool:
+    """
+    Checking whether the user is enrolled in the course.
+    """
+    course = Course.get_course_by_queue_id(queue_id)
+    c_u_id = current_user.id
+    if EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                          course_id=course.id):
+        return True
+    else:
+        return False
+
+
+def user_own_queue(queue_id: int, course_id: int) -> bool:
+    """
+    Checkin gwhetehr the user is the instructor of the course
+    that has this queue.
+    """
+    course = Course.get_course_by_queue_id(queue_id)
+    c_u_id = current_user.id
+    ec_entry = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                                  course_id=course.id)
+    if ec_entry:
+        if ec_entry.role == Role.INSTRUCTOR.value:
+            return True
+    return False
+
+
 @queue_api_bp.route('/find_queue', methods=['GET'])
-# @login_required
+@login_required
 def find_queue():
     """
     Return the queue object corresponding to an id.\n
@@ -23,6 +52,9 @@ def find_queue():
                 else None)
     if not queue_id:
         return jsonify({'reason': 'queue_id invalid'}), 400
+
+    if not user_in_course:
+        return jsonify({'reason': 'user not enrolled'}), 400
 
     queue = Queue.get_queue_by_id(queue_id)
 
@@ -34,7 +66,7 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-# @login_required
+@login_required
 def create_queue():
     """
     Create a queue for a course.\n
@@ -60,7 +92,7 @@ def create_queue():
 
 
 @queue_api_bp.route('/add_ticket', methods=['POST'])
-# @login_required
+@login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
@@ -210,22 +242,28 @@ def find_all_ticket_for_queue():
     """
     Find all the tickest for queue.
     """
-    q_id = request.json['queue_id']
+    q_id = int(request.json['queue_id'])
     s_type_list = []
     if 'status' in request.json:
         s_list = list(request.json['status'])
         for s in s_list:
             t_s = t_Status(s)
             s_type_list.append(t_s)
-        t_list = Queue.find_all_tickets(queue_id=q_id, status=s_type_list)
+        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id,
+                                                     status=s_type_list)
     else:
-        t_list = Queue.find_all_tickets(queue_id=q_id)
-
+        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id)
+    if not status:
+        return jsonify({'reason': msg}), 400
     ret = {}
     i = 0
     for t in t_list:
         i += 1
-        ret['ticket' + str(i)] = t.to_json()
+        view = t.can_view_by(current_user.id)
+        edit = t.can_edit_by(current_user.id)
+        ret['ticket' + str(i)] = {'ticket': t.to_json(),
+                                  'can_view': view,
+                                  'can_edit': edit}
     return jsonify({'reason': 'Success', 'result': ret}), 200
 
 

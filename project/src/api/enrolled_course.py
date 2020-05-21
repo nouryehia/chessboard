@@ -11,7 +11,7 @@ CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
-# @login_required
+@login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
@@ -140,3 +140,11 @@ def get_user_in_all_course():
 def find_active_tutor_for():
     queue_id = request.json['queue_id']
     return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))
+
+
+
+"""
+get_a list of user of a certain role
+return a list of user with their roles
+settter. 
+"""
