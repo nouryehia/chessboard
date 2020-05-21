@@ -116,8 +116,8 @@ class EnrolledCourse(db.Model):
         ret['course_id'] = self.course_id
         ret['section_id'] = self.section_id
         ret['id'] = self.id
-        ret['status'] = self.status.value
-        ret['role'] = self.role.value
+        ret['status'] = Status(self.status).name
+        ret['role'] = Role(self.role).name
         ret['last_login'] = self.last_login
         return ret
 
