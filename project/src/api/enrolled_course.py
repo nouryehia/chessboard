@@ -1,5 +1,5 @@
 from flask_cors import CORS
-from flask_login import login_required  # , current_user
+from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
 from ..models.user import User
 
@@ -11,6 +11,7 @@ CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
+# @login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
@@ -18,22 +19,23 @@ def enroll_user():
     @authoer Yixuan
     """
     user_id = request.json['user_id']
-    role = request.json['role'] if 'role' in request.json \
+    role = Role(request.json['role']).value if 'role' in request.json \
         else Role.STUDENT.value
     section_id = request.json['section_id']
     course_id = request.json['course_id']
 
     # Check the authroity of the operation
-    # c_u_id = current_user.id
-    # ecu = EnrolledCourse.find_user_in_course(user_id=user_id,
-    #                                          course_id=course_id)
-    # if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
-    #    return jsonify({'reason': 'Method is forbiden from you'}), 400
-
+    """
+    c_u_id = current_user.id
+    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                             course_id=course_id)
+    if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
+        return jsonify({'reason': 'Method is forbiden from you'}), 400
+    """
     if EnrolledCourse.enroll_user_to(user_id=user_id,
                                      course_id=course_id,
                                      section_id=section_id,
-                                     role=Role(role)):
+                                     role=role):
         return jsonify({'reason': 'user enrolled'}), 200
     else:
         return jsonify({'reason': 'user existed'}), 300
@@ -48,8 +50,8 @@ def delete_user_from_course():
     user_id = request.json['user_id']
     course_id = request.json['course_id']
     # Check the authroity of the operation
-    # c_u_id = current_user.id
-    ecu = EnrolledCourse.find_user_in_course(user_id=user_id,
+    c_u_id = current_user.id
+    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
                                              course_id=course_id)
     if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
         return jsonify({'reason': 'Method is forbiden from you'}), 400

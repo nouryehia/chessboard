@@ -73,7 +73,8 @@ class Course(db.Model):
         """
         repr
         """
-        return 'course ' + str(year) + ' ' + short_name + ' ' + quarter
+        return 'course ' + str(self.year) + ' ' \
+            + self.short_name + ' ' + self.quarter
 
     def switch_queue_status(self):
         """
@@ -133,39 +134,42 @@ class Course(db.Model):
         return instructors
     '''
 
-    def get_course_by_id(self, couse_id) -> Optional[Course]:
+    @staticmethod
+    def get_course_by_id(couse_id) -> Optional[Course]:
         """
         Returns a Course from a course id
         """
         return Course.query.filter_by(id=couse_id).first()
 
-    def get_course_by_queue_id(self, q_id) -> Optional[Course]:
+    @staticmethod
+    def get_course_by_queue_id(q_id) -> Optional[Course]:
         """
         Returns a Course from a queue id
         """
         return Course.query.filter_by(queue_id=q_id).first()
 
-    def get_queue_id_by_id(self, course_id) -> Optional[int]:
+    @staticmethod
+    def get_queue_id_by_id(course_id) -> Optional[int]:
         """
         Returns a queue_id from a course id
         """
         course = Course.query.filter_by(id=course_id).first()
-        
+
         return course.queue_id if course else None
 
     def quarter_year(self) -> str:
         """
         Returns the quarter and the year.
         """
-        if self.quarter is Quarter.FALL:
+        if self.quarter == Quarter.FALL.value:
             return "FA" + str(self.year)
-        elif self.quarter is Quarter.WINTER:
+        elif self.quarter == Quarter.WINTER.value:
             return "WI" + str(self.year)
-        elif self.quarter is Quarter.SPRING:
+        elif self.quarter == Quarter.SPRING.value:
             return "SP" + str(self.year)
-        elif self.quarter is Quarter.SS1:
+        elif self.quarter == Quarter.SS1.value:
             return "SS1" + str(self.year)
-        elif self.quarter is Quarter.SS2:
+        elif self.quarter == Quarter.SS2.value:
             return "SS2" + str(self.year)
 
     '''

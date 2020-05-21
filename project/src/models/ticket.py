@@ -93,7 +93,7 @@ class Ticket(db.Model):
                    default is the current time.\n
     closed_at --> The time that this ticket is closed. Nullable\n
     room --> The room that this student is in.\n
-    workstaton --> The workstation of the student.\n
+    workstation --> The workstation of the student.\n
     status --> The status of this ticket.\n
     title --> The title of this ticket.\n
     description --> The discription of the ticket created by student.\n
@@ -171,7 +171,7 @@ class Ticket(db.Model):
         ret['created_at'] = self.created_at
         ret['status'] = self.status
         ret['room'] = self.room
-        ret['workstaton'] = self.workstation
+        ret['workstation'] = self.workstation
         ret['title'] = self.title
         ret['description'] = self.description
         ret['grader_id'] = self.grader_id
@@ -427,7 +427,7 @@ class Ticket(db.Model):
         """
         grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accpeted_ticket_for_grader(grader)
+        Ticket.defer_accepted_ticket_for_grader(grader)
 
         self.status = Status.ACCEPTED
         self.accepted_at = TimeUtil.get_current_time()
@@ -505,7 +505,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id) -> Optional(Ticket):
+    def get_ticket_by_id(ticket_id: int) -> Optional(Ticket):
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -513,7 +513,7 @@ class Ticket(db.Model):
         Return:\n
         The ticket object, None if the ticket_id is not found.\n
         """
-        return Ticket.query().filter_by(id=ticket_id)
+        return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
     def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
@@ -545,7 +545,7 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accpeted_ticket_for_grader(grader: User) -> None:
+    def defer_accepted_ticket_for_grader(grader: User) -> None:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n

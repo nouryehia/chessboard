@@ -60,11 +60,11 @@ class EnrolledCourse(db.Model):
     """
     __tablename__ = 'EnrolledCourse'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('section.id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.section_id'),
                            nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('course.id'),
+    course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
 
@@ -213,7 +213,7 @@ class EnrolledCourse(db.Model):
         if ec:
             return False
         enroll_student = EnrolledCourse(user_id=user_id,
-                                        role=role.value,
+                                        role=role,
                                         section_id=section_id,
                                         status=Status.ACTIVE.value,
                                         course_id=course_id)
@@ -250,7 +250,7 @@ class EnrolledCourse(db.Model):
         course --> The Course object to look for.\n
         role --> (Optional) the role to look for.\n
         """
-        c = Course.find_course_by_id(course_id=course_id)
+        c = Course.get_course_by_id(course_id=course_id)
         if not c:
             return False, None
         if not role:
@@ -285,7 +285,7 @@ class EnrolledCourse(db.Model):
         Returns:\n
         A list of active tutors User objects. Could have null entries\n
         """
-        course = Course.find_course_for(queue_id)
+        course = Course.get_course_by_queue_id(queue_id)
         if not course:
             return (False, 'Course not found', None)
         grader_enrolled_course = EnrolledCourse.query\
