@@ -10,6 +10,16 @@ enrolled_course_api_bp = Blueprint('enrolled_course_api', __name__)
 CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
+def is_instructor_of_course(course_id: int) -> bool:
+    """
+    Check whether the current user is the instructor of a course.
+    """
+    c_u_id = current_user.id
+    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                             course_id=course_id)
+    return ecu.get_role() <= Role.INSTRUCTOR
+
+
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
 @login_required
 def enroll_user():
@@ -26,10 +36,7 @@ def enroll_user():
 
     # Check the authroity of the operation
     """
-    c_u_id = current_user.id
-    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
-                                             course_id=course_id)
-    if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
+    if not is_instructor_of_course(course_id)
         return jsonify({'reason': 'Method is forbiden from you'}), 400
     """
     if EnrolledCourse.enroll_user_to(user_id=user_id,
@@ -39,6 +46,27 @@ def enroll_user():
         return jsonify({'reason': 'user enrolled'}), 200
     else:
         return jsonify({'reason': 'user existed'}), 300
+
+
+@enrolled_course_api_bp.route('/change_role', methods=['POST'])
+@login_required
+def change_role():
+    """
+    Change the role of the enrolled user in a course.
+    """
+    # Check the authroity of the operation
+    """
+    if not is_instructor_of_course(course_id)
+        return jsonify({'reason': 'Method is forbiden from you'}), 400
+    """
+    uid = request.json['user_id']
+    cid = request.json['course_id']
+    role = Role(request.json['role'])
+    ec = EnrolledCourse.find_user_in_course(user_id=uid, course_id=cid)
+    if not ec:
+        return jsonify({'reason': "User not enrolled"}), 400
+    ec.change_role(role)
+    return jsonify({'reason': 'Role changed'}), 200
 
 
 @enrolled_course_api_bp.route('/delete_user_from_course', methods=['POST'])
@@ -76,19 +104,26 @@ def get_user_of_course():
 
 @enrolled_course_api_bp.route('/get_all_user_in_course', methods=['GET'])
 @login_required
-def get_all_user():
+def get_all_user_in_course():
     """
     Route to get all the users of that is in a given course.
     """
     course_id = request.json['course_id']
+    rs = request.json['roles'].split(";") if "roles" in request.json else None
+    roles = None
+    if rs:
+        roles = []
+        for r in rs:
+            roles.append(Role(int(r)).value)
+
     status, ec_list = EnrolledCourse.\
-        find_all_user_in_course(course_id=course_id)
+        find_all_user_in_course(course_id=course_id, role=roles)
     if status:
         ret = {}
         i = 0
         for ec in ec_list:
             i += 1
-            user = User.get_user_by_id(ec)
+            user = User.get_user_by_id(ec.user_id)
             scr = {}
             scr['user_info'] = user.to_json()
             scr['enrolled_user_info'] = ec.to_json()
@@ -98,7 +133,7 @@ def get_all_user():
         return jsonify({'reason': 'course not found'}), 400
 
 
-@enrolled_course_api_bp.route('/get_user_in_section', methods=['POST'])
+@enrolled_course_api_bp.route('/get_user_in_section', methods=['GET'])
 @login_required
 def get_user_in_section():
     """
@@ -131,6 +166,7 @@ def get_user_in_all_course():
     """
     user_id = request.json['user_id']
     role = request.json['role'] if 'role' in request else None
+    
     return jsonify(EnrolledCourse.find_user_in_all_course(user_id=user_id,
                                                           role=role))
 

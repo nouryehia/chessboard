@@ -362,7 +362,7 @@ class Ticket(db.Model):
             course = Course.get_course_by_queue_id(self.queue_id)
             ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
                                                           course_id=course.id)
-            if ec_entry.role == Role.STUDENT.value:
+            if ec_entry.role != Role.STUDENT.value:
                 return True
             else:
                 if self.student_id == ec_entry.id:

@@ -96,6 +96,8 @@ def create_queue():
 def add_ticket():
     """
     Add a ticket to the queue.\n
+    For the is_private field, pass in 0 or 1 to indicate true of false.\n
+    For the tag_list, pass in comma seperated list of numbers in string.\n
     """
     queue = Queue.get_queue_by_id(int(request.json['queue_id']))
     student_id = int(request.json['student_id'])
