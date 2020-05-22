@@ -634,7 +634,8 @@ class Ticket(db.Model):
                 order_by(Ticket.created_at.desc()).all()
         else:
             return Ticket.query.\
-                filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
+                filter_by(queue_id=queue_id).\
+                filter(Ticket.status.in_(status)).\
                 order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
@@ -653,7 +654,7 @@ class Ticket(db.Model):
         """
         return Ticket.query.\
             filter_by(queue_id=queue_id, student_id=student_id).\
-            filter_by(status.in_(status)).\
+            filter(Ticket.status.in_(status)).\
             order_by(Ticket.created_at).desc.all()
 
     @staticmethod

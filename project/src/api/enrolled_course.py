@@ -166,7 +166,7 @@ def get_user_in_all_course():
     """
     user_id = request.json['user_id']
     role = request.json['role'] if 'role' in request else None
-    
+
     return jsonify(EnrolledCourse.find_user_in_all_course(user_id=user_id,
                                                           role=role))
 
