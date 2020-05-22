@@ -519,10 +519,10 @@ class Ticket(db.Model):
         return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
-    def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader: User) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
-        There should only be one ticket that is accpeted by the grader.\n
+        There should only be one ticket that is accepted by the grader.\n
         Inputs:\n
         grader --> The User object of the grader to look up.\n
         Return:\n
@@ -559,6 +559,8 @@ class Ticket(db.Model):
         for ticket in ticket_list:
             if (ticket.status == Status.ACCEPTED):
                 ticket.mark_pending()
+
+        return True
 
     # Moved from ticket_event
 
