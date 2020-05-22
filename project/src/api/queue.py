@@ -103,11 +103,9 @@ def add_ticket():
     description = request.json['description']
     room = request.json['room']
     workstation = request.json['workstation']
-    is_private = (True if 'is_private' in request.json and
-                          (request.json['is_private'] == 'True' or
-                           request.json['is_private'] == 'true') else False)
+    is_private = request.json['is_private']  # pass in 1 or 0
     help_type = HelpType(int(request.json['help_type']))
-    tag_list_raw = request.json['tag_list']
+    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
     tag_list = []
     for tag in tag_list_raw:
         tag_list.append(TicketTag(int(tag)).value)
