@@ -191,7 +191,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a question.\n
         """
-        return self.help_type == HelpType.QUESTION
+        return self.help_type == HelpType.QUESTION.value
 
     def is_checkoff(self) -> bool:
         """
@@ -199,7 +199,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a checkoff.\n
         """
-        return self.help_type == HelpType.CHECKOFF
+        return self.help_type == HelpType.CHECKOFF.value
 
     def is_pending(self) -> bool:
         """
@@ -207,7 +207,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is pending.\n
         """
-        return self.status == Status.PENDING
+        return self.status == Status.PENDING.value
 
     def is_accepted(self) -> bool:
         """
@@ -215,7 +215,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is accepted.\n
         """
-        return self.status == Status.ACCEPTED
+        return self.status == Status.ACCEPTED.value
 
     def is_resolved(self) -> bool:
         """
@@ -223,7 +223,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is resolved.\n
         """
-        return self.status == Status.RESOLVED
+        return self.status == Status.RESOLVED.value
 
     def is_canceled(self) -> bool:
         """
@@ -231,7 +231,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is canceled.\n
         """
-        return self.status == Status.CANCELED
+        return self.status == Status.CANCELED.value
 
     def is_non_cse(self) -> bool:
         """
@@ -239,7 +239,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in CSE.\n
         """
-        return self.room == NON_CSE
+        return self.room == NON_CSE.value
 
     def is_hallway(self) -> bool:
         """
@@ -247,7 +247,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in the hallway.\n
         """
-        return self.room == HALLWAY
+        return self.room == HALLWAY.value
 
     def get_tags_list(self) -> List[TicketTag]:
         """
