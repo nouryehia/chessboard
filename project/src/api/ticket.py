@@ -42,8 +42,8 @@ def get_user_permissions():
 @login_required
 def student_update():
     '''
-    Route used to update a ticket. Only the fields being updated need to be
-    passed in.\n
+    Route used to update a ticket. Only the fields being updated need to be\n
+    passed in.
     @author nouryehia
     '''
     req = request.json
@@ -93,7 +93,7 @@ def find_ticket_accepted_by_grader():
 @login_required
 def defer_accepted_ticket_for_grader():
     '''
-    Route used to return tickets accepted by a grader to the queue. \n
+    Route used to return tickets accepted by a grader to the queue.\n
     @author nouryehia
     '''
     email = request.json['email'] if 'email' in request.json else None
@@ -109,6 +109,11 @@ def defer_accepted_ticket_for_grader():
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
 @login_required
 def find_all_tickets():
+    '''
+    Route used to find tickets on the queue (can be catgorized as pending or\n
+    accepted).\n
+    @author nouryehia
+    '''
     status = []
     pending = True if ('pending' in request.json and
                        (request.json['pending'] == 'true' or
@@ -130,9 +135,37 @@ def find_all_tickets():
     return jsonify({'result': ticket_infos}), 200
 
 
+@ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
+@login_required
+def find_tickets_in_range():
+    '''
+    Route used to find tickets in a specific range of time. A grader can be\n
+    passed in to only get tickets for that grader.\n
+    @author nouryehia
+    '''
+    queue_id = int(request.json['queue_id'])
+    start = request.json['start']
+    end = request.json['end']
+    grader_id = (int(request.json['grader_id']) if 'grader_id' in request.json
+                 else None)
+
+    tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
+
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json())
+
+    return jsonify({'result': ticket_infos}), 200
+
+
 @ticket_api_bp.route('/find_all_tickets_by_student', methods=['GET'])
 @login_required
 def find_all_tickets_by_student():
+    '''
+    Route used to find tickets on the queue by a student (can be catgorized\n
+    as pending or accepted).\n
+    @author nouryehia
+    '''
     status = []
     pending = True if ('pending' in request.json and
                        (request.json['pending'] == 'true' or
@@ -158,6 +191,10 @@ def find_all_tickets_by_student():
 @ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
 @login_required
 def find_all_tickets_for_grader():
+    '''
+    Route used to find tickets on a queue handled by a grader.\n
+    @author nouryehia
+    '''
     tickets = Ticket.find_all_tickets(int(request.json['queue_id']),
                                       int(request.json['grader_id']))
 
@@ -168,39 +205,28 @@ def find_all_tickets_for_grader():
     return jsonify({'result': ticket_infos}), 200
 
 
-# @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-# @login_required
-# def find_tickets_in_range():
-#     '''
-#     Route used to find all the tickets on a queue created between two dates.
-#     @author nouryehia
-#     '''
-#     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-#     start = request.json['start']
-#     end = request.json['end']
-#     grader = (User.find_by_pid_email_fallback(None, request.json['email'])
-#               if 'email' in request.json
-#               else None)
+@ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
+@login_required
+def find_resolved_tickets_in():
+    '''
+    Route used to resolved tickets on a queue.\n
+    @author nouryehia
+    '''
+    queue_id = int(request.json['queue_id'])
+    recent_hour = True if ('recent_hour' in request.json and
+                           (request.json['recent_hour'] == 'true' or
+                            request.json['recent_hour'] == 'True')) else False
+    day = True if ('day' in request.json and
+                   (request.json['day'] == 'true' or
+                    request.json['day'] == 'True')) else False
+    start = request.json['start'] if 'start' in request.json else None
+    end = request.json['end'] if 'end' in request.json else None
 
-#     return jsonify(Ticket.find_tickets_in_range(queue, start, end, grader))
+    tickets = Ticket.find_resolved_tickets_in(queue_id, recent_hour, day,
+                                              start, end)
 
-# @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-# @login_required
-# def find_resolved_tickets_in():
-#     '''
-#     Route used to find all resolved tickets in queue. Can query for the last
-#     hour, the last day, or a specific time interval.\n
-#     @author nouryehia
-#     '''
-#     queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-#   recent_hour = (request.json['recent_hour'] if 'recent_hour' in request.json
-#                    else False)
-#     day = (request.json['day'] if 'day' in request.json
-#            else False)
-#     start = (request.json['start'] if 'start' in request.json
-#              else None)
-#     end = (request.json['end'] if 'end' in request.json
-#            else None)
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json())
 
-#     return (jsonify(Ticket.find_resolved_tickets_in(queue, recent_hour, day,
-#                                                     start, end)))
+    return jsonify({'result': ticket_infos}), 200

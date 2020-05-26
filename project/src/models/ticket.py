@@ -710,7 +710,7 @@ class Ticket(db.Model):
                                  start: str = None,
                                  end: str = None) -> List[Ticket]:
         """
-        Get the tickets for the queue that were reolsved.\n
+        Get the tickets for the queue that were resolved.\n
         Inputs:\n
         queue --> the id of the queue to look at.\n
         recent --> If you want for the recent hour (1st priority).\n
