@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from ...setup import db
 from typing import List
-from .assignment import Assignment
 from .user import User
 from enum import Enum
 
@@ -29,17 +28,6 @@ class CheckoffSuite(db.Model):
     __tablename__ = 'CheckoffSuite'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.Integer(11), nullable=False)
-
-    def __init__(self,
-                 assignment: Assignment,
-                 checkoffs: List[Checkoff], **kwargs):
-        """
-        Constructor that adds extra non-database fields for a checkoff\n
-        suite\n
-        """
-        super(CheckoffSuite, self).__init__(**kwargs)
-        self.assignment = assignment
-        self.checkoffs = checkoffs
 
     def is_hidden(self) -> bool:
         """
@@ -102,19 +90,8 @@ class CheckoffSuite(db.Model):
         checkoff --> checkoff to add to the suite\n
         Return: None\n
         """
-        self.checkoffs.add(checkoff)
+        checkoff.suite_id = self.id
         db.session.commit()
-
-    def find_by_id(self, checkoff_id: int) -> CheckoffSuite:
-        """
-        Finds a CheckoffSuite by its id in the database\n
-        Params: \n
-        checkoff_id --> id of the checkoffSuite\n
-        Return:\n
-        CheckoffSuite corresponding to that id\n
-        """
-        return CheckoffSuite.query.filter_by(
-            id=checkoff_id, is_deleted=False).first()
 
     def get_max_score(self) -> int:
         """
@@ -123,7 +100,8 @@ class CheckoffSuite(db.Model):
         Return: Sum of all scores in the suite\n
         """
         total = 0
-        for checkoff in self.checkoffs:
+        checkoffs = Checkoff.find_all_checkoffs_for_suite(self.id)
+        for checkoff in checkoffs:
             total += checkoff.points
         return total
 
@@ -136,14 +114,14 @@ class CheckoffSuite(db.Model):
         Student's score in the checkoff suite\n
         """
         total = 0
-        for checkoff in self.checkoffs:
+        checkoffs = Checkoff.find_all_checkoffs_for_suite(self.id)
+        for checkoff in checkoffs:
             if (CheckoffEvaluation.findCheckoff(checkoff.id, student_id)
                     is not None):
                 total += 1
         return total
 
-    def get_newest_checkoff_evaluation_for_student(self,
-                                                   student_id: int) -> None:
+    def get_newest_checkoff_evaluation_for_student(self, student_id: int) -> None:
         """
         Returns newest checkoff that was evaluated for the student\n
         Params:\n
@@ -152,7 +130,8 @@ class CheckoffSuite(db.Model):
         Last checkoff that was evaluated for the student\n
         """
         last_checkoff_evaluation = None
-        for checkoff in self.checkoffs:
+        checkoffs = Checkoff.find_all_checkoffs_for_suite(self.id)
+        for checkoff in checkoffs:
             checkoff_evaluation = CheckoffEvaluation \
                                   .findNewestCheckoff(checkoff.id, student_id)
             if checkoff_evaluation is not None:
@@ -162,6 +141,26 @@ class CheckoffSuite(db.Model):
                         checkoff_evaluation.checkoff_time) < 0:
                     last_checkoff_evaluation = checkoff_evaluation
         return last_checkoff_evaluation
+
+    @staticmethod
+    def create_suite(status: int) -> CheckoffSuite:
+        cs = CheckoffSuite(status=status)
+        db.session.add(cs)
+        db.session.commit()
+
+        return cs
+
+    @staticmethod
+    def find_by_id(checkoff_id: int) -> CheckoffSuite:
+        """
+        Finds a CheckoffSuite by its id in the database\n
+        Params: \n
+        checkoff_id --> id of the CheckoffSuite\n
+        Return:\n
+        CheckoffSuite corresponding to that id\n
+        """
+        return CheckoffSuite.query.filter_by(
+            id=checkoff_id, is_deleted=False).first()
 
 
 class Checkoff(db.Model):
@@ -179,9 +178,42 @@ class Checkoff(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    suite_id = db.Column(db.Integer(11), nullable=False)
-    points = db.Column(db.Integer, db.ForeignKey(CheckoffSuite.id),
-                       nullable=False, default=1)
+    suite_id = db.Column(db.Integer, db.ForeignKey(CheckoffSuite.id),
+                         nullable=False)
+    points = db.Column(db.Integer(11), nullable=False)
+
+    @staticmethod
+    def create_checkoff(description: str, name: str, suite_id: int,
+                        points: int) -> Checkoff:
+        '''
+        Creates a new checkoff in the database\n
+        Params:\n
+        description --> Description of the checkoff\n
+        name --> Name of the checkoff\n
+        suite_id --> ID of checkoff's CheckoffSuite\n
+        points --> Points the checkoff is worth\n
+        Return:\n
+        Checkoff that was created in the database
+        author @sravyabalasa
+        '''
+        c = Checkoff(description=description, name=name, suite_id=suite_id,
+                     points=points)
+        db.session.add(c)
+        db.session.commit()
+
+        return c
+
+    @staticmethod
+    def find_all_checkoffs_for_suite(suite_id: int) -> List[Checkoff]:
+        """
+        Returns all checkoffs with this checkoff suite ID
+        Fields:
+        suite --> ID of the Checkoff Suite
+        Return:
+        List of Checkoffs in the same CheckoffSuite
+        @author sravyabalasa
+        """
+        return CheckoffSuite.query.filter_by(suite_id=suite_id).all()
 
 
 class CheckoffEvaluation(db.Model):
@@ -206,18 +238,26 @@ class CheckoffEvaluation(db.Model):
                            nullable=False)
 
     @staticmethod
-    def create_eval(assignment: Checkoff, grader: User,
-                    student: User) -> CheckoffEvaluation:
+    def create_eval(checkoff_id: int, grader_id: int,
+                    student_id: int) -> CheckoffEvaluation:
+        '''
+        TIME UTIL THINGS
+        '''
         """
         Creates a new checkoff evaluation\n
         Params:\n
-        assignment --> Checkoff assignment\n
-        grader --> Grader for the checkoff\n
-        student --> User who the checkoff belongs to\n
+        checkoff --> id of checkoff\n
+        grader --> id of grader for checkoff\n
+        student --> id of student\n
         Return:\n
         A new checkoff evaluation\n
         """
-        return CheckoffEvaluation(assignment, grader, student)
+        ce = CheckoffEvaluation(checkoff_id=checkoff_id, grader_id=grader_id,
+                                student_id=student_id)
+        db.session.add(ce)
+        db.session.commit()
+
+        return ce
 
     @staticmethod
     def find_checkoff(checkoff_id: int,
@@ -234,7 +274,8 @@ class CheckoffEvaluation(db.Model):
             .filter_by(checkoff_id=checkoff_id,
                        student_id=student_id).first()
 
-    def find_newest_checkoff(self, checkoff_id: int,
+    @staticmethod
+    def find_newest_checkoff(checkoff_id: int,
                              student_id: int) -> CheckoffEvaluation:
         """
         Find the newest checkoff evaluated for the student\n
@@ -246,4 +287,4 @@ class CheckoffEvaluation(db.Model):
         """
         return CheckoffEvaluation.query \
             .filter_by(checkoff_id=checkoff_id, student_id=student_id) \
-            .order_by(self.checkoff_time).desc().first()
+            .order_by(CheckoffEvaluation.checkoff_time).desc().first()
