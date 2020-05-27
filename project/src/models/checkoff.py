@@ -162,7 +162,7 @@ class CheckoffSuite(db.Model):
         CheckoffSuite corresponding to that id\n
         """
         return CheckoffSuite.query.filter_by(
-            id=checkoff_id, is_deleted=False).first()
+            id=checkoff_id).first()
 
 
 class Checkoff(db.Model):
@@ -206,7 +206,7 @@ class Checkoff(db.Model):
         return c
 
     @staticmethod
-    def find_all_checkoffs_in_suite(suite_id: int) -> Optional[List[Checkoff]]:
+    def find_all_checkoffs_in_suite(suite_id: int) -> List[Checkoff]:
         """
         Returns all checkoffs with this checkoff suite ID
         Fields:
