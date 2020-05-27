@@ -191,7 +191,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a question.\n
         """
-        return self.help_type == HelpType.QUESTION
+        return self.help_type == HelpType.QUESTION.value
 
     def is_checkoff(self) -> bool:
         """
@@ -199,7 +199,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a checkoff.\n
         """
-        return self.help_type == HelpType.CHECKOFF
+        return self.help_type == HelpType.CHECKOFF.value
 
     def is_pending(self) -> bool:
         """
@@ -207,7 +207,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is pending.\n
         """
-        return self.status == Status.PENDING
+        return self.status == Status.PENDING.value
 
     def is_accepted(self) -> bool:
         """
@@ -215,7 +215,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is accepted.\n
         """
-        return self.status == Status.ACCEPTED
+        return self.status == Status.ACCEPTED.value
 
     def is_resolved(self) -> bool:
         """
@@ -223,7 +223,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is resolved.\n
         """
-        return self.status == Status.RESOLVED
+        return self.status == Status.RESOLVED.value
 
     def is_canceled(self) -> bool:
         """
@@ -231,7 +231,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is canceled.\n
         """
-        return self.status == Status.CANCELED
+        return self.status == Status.CANCELED.value
 
     def is_non_cse(self) -> bool:
         """
@@ -239,7 +239,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in CSE.\n
         """
-        return self.room == NON_CSE
+        return self.room == NON_CSE.value
 
     def is_hallway(self) -> bool:
         """
@@ -247,7 +247,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in the hallway.\n
         """
-        return self.room == HALLWAY
+        return self.room == HALLWAY.value
 
     def get_tags_list(self) -> List[TicketTag]:
         """
@@ -519,10 +519,10 @@ class Ticket(db.Model):
         return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
-    def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader: User) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
-        There should only be one ticket that is accpeted by the grader.\n
+        There should only be one ticket that is accepted by the grader.\n
         Inputs:\n
         grader --> The User object of the grader to look up.\n
         Return:\n
@@ -559,6 +559,8 @@ class Ticket(db.Model):
         for ticket in ticket_list:
             if (ticket.status == Status.ACCEPTED):
                 ticket.mark_pending()
+
+        return True
 
     # Moved from ticket_event
 
@@ -709,7 +711,7 @@ class Ticket(db.Model):
                                  start: str = None,
                                  end: str = None) -> List[Ticket]:
         """
-        Get the tickets for the queue that were reolsved.\n
+        Get the tickets for the queue that were resolved.\n
         Inputs:\n
         queue --> the id of the queue to look at.\n
         recent --> If you want for the recent hour (1st priority).\n
