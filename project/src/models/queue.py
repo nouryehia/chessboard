@@ -94,39 +94,6 @@ class Queue(db.Model):
         """
         db.session.commit()
 
-    def add_ticket(self, student_id: int, title: str,
-                   description: str, room: str,
-                   workstation: str, is_private: bool,
-                   help_type: HelpType,
-                   tag_list: List[TicketTag]) -> Ticket:
-        """
-        Add a ticket.\n
-        Inputs:\n
-        student --> The student who submit the ticket.\n
-        title --> The title of the ticket.\n
-        description --> The description to the ticket.\n
-        room --> The room of this ticket is in.\n
-        workstation --> The workstaton ticket is at.\n
-        help_type --> The type of help needed.\n
-        tag_list --> The list of tags of the tickte.\n
-        Return:\n
-        The created ticket.\n
-        """
-        tag_one = tag_list[0]
-        tag_two = tag_list[1] if len(tag_list) > 1 else None
-        tag_three = tag_list[2] if len(tag_list) > 2 else None
-        new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
-                            closed_at=None,
-                            room=room, workstation=workstation,
-                            title=title, description=description,
-                            grader_id=None, queue_id=self.id,
-                            student_id=student_id, is_private=is_private,
-                            accepted_at=None, help_type=help_type.value,
-                            tag_one=tag_one, tag_two=tag_two,
-                            tag_three=tag_three, status=t_status.PENDING.value)
-        Ticket.add_to_db(new_ticket)
-        return new_ticket
-
     def update_ticket(self, student: User, title: str,
                       description: str, room: str,
                       workstation: str, is_private: bool,
