@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ...setup import db
-from typing import List
+from typing import List, Optional
 from .user import User
 from enum import Enum
 
@@ -93,6 +93,17 @@ class CheckoffSuite(db.Model):
         checkoff.suite_id = self.id
         db.session.commit()
 
+    def find_by_id(self, checkoff_id: int) -> Optional[CheckoffSuite]:
+        """
+        Finds a CheckoffSuite by its id in the database\n
+        Params: \n
+        checkoff_id --> id of the checkoffSuite\n
+        Return:\n
+        CheckoffSuite corresponding to that id\n
+        """
+        return CheckoffSuite.query.filter_by(
+            id=checkoff_id, is_deleted=False).first()
+
     def get_max_score(self) -> int:
         """
         Sums up the scores off all the checkoffs in suite\n
@@ -116,12 +127,12 @@ class CheckoffSuite(db.Model):
         total = 0
         checkoffs = Checkoff.find_all_checkoffs_for_suite(self.id)
         for checkoff in checkoffs:
-            if (CheckoffEvaluation.findCheckoff(checkoff.id, student_id)
+            if (CheckoffEvaluation.find_checkoff(checkoff.id, student_id)
                     is not None):
                 total += 1
         return total
 
-    def get_newest_checkoff_evaluation_for_student(self, student_id: int) -> None:
+    def get_newest_checkoff_eval_for_student(self, student_id: int) -> None:
         """
         Returns newest checkoff that was evaluated for the student\n
         Params:\n
@@ -133,9 +144,10 @@ class CheckoffSuite(db.Model):
         checkoffs = Checkoff.find_all_checkoffs_for_suite(self.id)
         for checkoff in checkoffs:
             checkoff_evaluation = CheckoffEvaluation \
-                                  .findNewestCheckoff(checkoff.id, student_id)
-            if checkoff_evaluation is not None:
-                if last_checkoff_evaluation is None:
+                                  .find_newest_checkoff(checkoff.id,
+                                                        student_id)
+            if checkoff_evaluation:
+                if last_checkoff_evaluation:
                     last_checkoff_evaluation = checkoff_evaluation
                 elif (last_checkoff_evaluation.checkoff_time ==
                         checkoff_evaluation.checkoff_time) < 0:
@@ -151,7 +163,7 @@ class CheckoffSuite(db.Model):
         return cs
 
     @staticmethod
-    def find_by_id(checkoff_id: int) -> CheckoffSuite:
+    def find_by_id(checkoff_id: int) -> Optional[CheckoffSuite]:
         """
         Finds a CheckoffSuite by its id in the database\n
         Params: \n
@@ -204,7 +216,7 @@ class Checkoff(db.Model):
         return c
 
     @staticmethod
-    def find_all_checkoffs_for_suite(suite_id: int) -> List[Checkoff]:
+    def find_all_checkoffs_in_suite(suite_id: int) -> Optional[List[Checkoff]]:
         """
         Returns all checkoffs with this checkoff suite ID
         Fields:
@@ -261,7 +273,7 @@ class CheckoffEvaluation(db.Model):
 
     @staticmethod
     def find_checkoff(checkoff_id: int,
-                      student_id: int) -> CheckoffEvaluation:
+                      student_id: int) -> Optional[CheckoffEvaluation]:
         """
         Finds checkoff evaluated for the student\n
         Params:\n
@@ -274,9 +286,8 @@ class CheckoffEvaluation(db.Model):
             .filter_by(checkoff_id=checkoff_id,
                        student_id=student_id).first()
 
-    @staticmethod
-    def find_newest_checkoff(checkoff_id: int,
-                             student_id: int) -> CheckoffEvaluation:
+    def find_newest_checkoff(self, checkoff_id: int,
+                             student_id: int) -> Optional[CheckoffEvaluation]:
         """
         Find the newest checkoff evaluated for the student\n
         Params:\n
