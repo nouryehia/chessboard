@@ -4,6 +4,7 @@ from ...setup import db
 from typing import List, Optional
 from .user import User
 from enum import Enum
+from ..utils.time import TimeUtil
 
 
 class Status(Enum):
@@ -93,17 +94,6 @@ class CheckoffSuite(db.Model):
         checkoff.suite_id = self.id
         db.session.commit()
 
-    def find_by_id(self, checkoff_id: int) -> Optional[CheckoffSuite]:
-        """
-        Finds a CheckoffSuite by its id in the database\n
-        Params: \n
-        checkoff_id --> id of the checkoffSuite\n
-        Return:\n
-        CheckoffSuite corresponding to that id\n
-        """
-        return CheckoffSuite.query.filter_by(
-            id=checkoff_id, is_deleted=False).first()
-
     def get_max_score(self) -> int:
         """
         Sums up the scores off all the checkoffs in suite\n
@@ -192,7 +182,7 @@ class Checkoff(db.Model):
     name = db.Column(db.String(255), nullable=False)
     suite_id = db.Column(db.Integer, db.ForeignKey(CheckoffSuite.id),
                          nullable=False)
-    points = db.Column(db.Integer(11), nullable=False)
+    points = db.Column(db.Integer, nullable=False)
 
     @staticmethod
     def create_checkoff(description: str, name: str, suite_id: int,
@@ -241,7 +231,8 @@ class CheckoffEvaluation(db.Model):
     @author sravyabalasa
     """
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    checkoff_time = db.Column(db.DateTime, nullable=False)
+    checkoff_time = db.Column(db.DateTime, nullable=True,
+                              default=TimeUtil.get_current_time())
     checkoff_id = db.Column(db.Integer, db.ForeignKey(Checkoff.id),
                             nullable=False)
     grader_id = db.Column(db.Integer, db.ForeignKey(User.id),
@@ -252,9 +243,6 @@ class CheckoffEvaluation(db.Model):
     @staticmethod
     def create_eval(checkoff_id: int, grader_id: int,
                     student_id: int) -> CheckoffEvaluation:
-        '''
-        TIME UTIL THINGS
-        '''
         """
         Creates a new checkoff evaluation\n
         Params:\n
@@ -286,7 +274,8 @@ class CheckoffEvaluation(db.Model):
             .filter_by(checkoff_id=checkoff_id,
                        student_id=student_id).first()
 
-    def find_newest_checkoff(self, checkoff_id: int,
+    @staticmethod
+    def find_newest_checkoff(checkoff_id: int,
                              student_id: int) -> Optional[CheckoffEvaluation]:
         """
         Find the newest checkoff evaluated for the student\n
