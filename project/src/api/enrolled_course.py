@@ -13,6 +13,7 @@ CORS(enrolled_course_api_bp, supports_credentials=True)
 def is_instructor_of_course(course_id: int) -> bool:
     """
     Check whether the current user is the instructor of a course.
+    @author: YixuanZ
     """
     c_u_id = current_user.id
     ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
@@ -26,7 +27,7 @@ def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
     When the role field of the request is empty, the default would be student.
-    @authoer Yixuan
+    @authoer YixuanZ
     """
     user_id = request.json['user_id']
     role = Role(request.json['role']).value if 'role' in request.json \
@@ -106,7 +107,9 @@ def get_user_of_course():
 @login_required
 def get_all_user_in_course():
     """
-    Route to get all the users of that is in a given course.
+    Route to get all the users of that is in a given course.\n
+    The roles is optional, when passing in, 
+    pass in the string representation of ; seperated int values.
     """
     course_id = request.json['course_id']
     rs = request.json['roles'].split(";") if "roles" in request.json else None
@@ -165,10 +168,27 @@ def get_user_in_all_course():
     all the courses will be returned regardless of the role.
     """
     user_id = request.json['user_id']
-    role = request.json['role'] if 'role' in request else None
+    rs = request.json['roles'].split(";") if "roles" in request.json else None
+    roles = None
+    if rs:
+        roles = []
+        for r in rs:
+            roles.append(Role(int(r)).value)
 
-    return jsonify(EnrolledCourse.find_user_in_all_course(user_id=user_id,
-                                                          role=role))
+    s, r = EnrolledCourse.find_user_in_all_course(user_id=user_id,
+                                                  role=roles)
+    if not s:
+        return jsonify({'reason': 'Failed'}), 400
+    i = 0
+    ret = {}
+    user = User.get_user_by_id(user_id)
+    ret['user_info'] = user.to_json()
+    for ec in r:
+        i += 1
+        scr = {}
+        scr['enrolled_user_info'] = ec.to_json()
+        ret['Course' + str(i)] = scr
+    return jsonify({'reason': 'success', 'result': ret}), 200
 
 
 @enrolled_course_api_bp.route('/find_active_tutor_for', methods=['GET'])
