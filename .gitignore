@@ -8,3 +8,4 @@ Dockerfile.prod
 .env.prod.db
 docker-compose.prod.yml
 venv/
+*.log

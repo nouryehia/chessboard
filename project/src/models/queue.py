@@ -1,28 +1,31 @@
 from __future__ import annotations
 from typing import List, Optional, Dict
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import timedelta
+from ..utils.time import TimeUtil
 
 from ...setup import db
 
-from .models.user import User
-from .models import user
-from .modesl.course import Course
-from .models import course as crs
-from .models.ticket import Ticket, TicketTag, HelpType
-from .models.ticket import Status as tStatus
-from .models.events.ticket_event import TicketEvent, EventType
-from .models.events.queue_login_event import QueueLoginEvent, ActionType
+from .user import User
+# from .user import Status as u_status
+from .course import Course
+from .ticket import Ticket, TicketTag, HelpType
+from .ticket import Status as t_status
+from .ticket_feedback import TicketFeedback
+from .events.ticket_event import TicketEvent, EventType
+from .events.queue_login_event import QueueLoginEvent, ActionType
 
-from .models.news_feed_post import NewsFeedPost
-from .models.enrolled_class import EnrolledClass
+from .news_feed_post import NewsFeedPost
+from .enrolled_course import EnrolledCourse
+from .enrolled_course import Status as EStatus
+from .enrolled_course import Role as ERole
 
 
 """
 Define Constant
 """
-DEFAULT_WAIT_TIME = timedelta(minutes=12)  # 12min
-MIN_WAIT_TIME = timedelta(minutes=5)  # 5min
+DEFAULT_WAIT_TIME = '0:12:00'  # 12min
+MIN_WAIT_TIME = '0:05:00'  # 5min
 
 
 class Status(Enum):
@@ -58,7 +61,7 @@ class Queue(db.Model):
     __tablename__ = 'Queue'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.CLOSED)
-    high_capacity_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    high_capacity_enable = db.Column(db.Boolean, nullable=False, default=True)
     high_capacity_threshold = db.Column(db.Integer, nullable=False,
                                         default=25)
     high_capacity_message = db.Column(db.Text, nullable=False,
@@ -70,7 +73,7 @@ class Queue(db.Model):
                                       default='The queue is currently very busy. \
                                               You may not be helped before \
                                               tutor hours end.')
-    ticket_cooldown = db.Column(db.Integer, nullable=False, default=10)
+    ticket_cool_down = db.Column(db.Integer, nullable=False, default=10)
 
     def __init__(self, **kwargs):
         """
@@ -91,7 +94,7 @@ class Queue(db.Model):
         """
         db.session.commit()
 
-    def add_ticket(self, student: User, title: str,
+    def add_ticket(self, student_id: int, title: str,
                    description: str, room: str,
                    workstation: str, is_private: bool,
                    help_type: HelpType,
@@ -112,14 +115,15 @@ class Queue(db.Model):
         tag_one = tag_list[0]
         tag_two = tag_list[1] if len(tag_list) > 1 else None
         tag_three = tag_list[2] if len(tag_list) > 2 else None
-        new_ticket = Ticket(created_at=datetime.now(), closed_at=None,
+        new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
+                            closed_at=None,
                             room=room, workstation=workstation,
                             title=title, description=description,
                             grader_id=None, queue_id=self.id,
-                            student_id=student.id, is_private=is_private,
-                            accepted_at=None, help_type=help_type,
+                            student_id=student_id, is_private=is_private,
+                            accepted_at=None, help_type=help_type.value,
                             tag_one=tag_one, tag_two=tag_two,
-                            tag_three=tag_three)
+                            tag_three=tag_three, status=t_status.PENDING.value)
         Ticket.add_to_db(new_ticket)
         return new_ticket
 
@@ -213,7 +217,7 @@ class Queue(db.Model):
         """
         Clear all the tickets in the queue.
         """
-        unresolved_tickets = Ticket.find_all_tickets(self, [tStatus.PENDING])
+        unresolved_tickets = Ticket.find_all_tickets(self, [t_status.PENDING])
 
         for ticket in unresolved_tickets:
             ticket.mark_canceled()
@@ -224,7 +228,7 @@ class Queue(db.Model):
         Returns:\n
         The string representation of the course it belongs to.\n
         """
-        course = Course.query().filter_by(course_id=self.course_id)
+        course = Course.get_course_by_queue_id(self.id)
         if not course:
             return repr(course)
         else:
@@ -232,18 +236,18 @@ class Queue(db.Model):
 
     def to_json(self) -> Dict[str, str]:
         '''
-        Function that takes a user object and returns it in dictionary.\n
+        Function that takes a queue object and returns it in dictionary.\n
         Params: none\n
         Returns: Dictionary of the user info
         '''
         ret = {}
         ret['queue_id'] = self.id
         ret['status'] = self.status
-        ret['highCapacityEnabled'] = self.highCapacityEnabled
+        ret['highCapacityEnabled'] = self.high_capacity_enable
         ret['high_capacity_message'] = self.high_capacity_message
         ret['high_capacity_threshold'] = self.high_capacity_threshold
         ret['high_capacity_warning'] = self.high_capacity_warning
-        ret['ticket_cooldown'] = self.ticket_cooldown
+        ret['ticket_cooldown'] = self.ticket_cool_down
         return ret
 
     # Get tickets / tickets related sttaus
@@ -253,7 +257,7 @@ class Queue(db.Model):
         Results:\n
         A list of tickets that is pending in this queue.\n
         """
-        return Ticket.find_all_tickets(self, status=[tStatus.PENDING])
+        return Ticket.find_all_tickets(self, status=[t_status.PENDING])
 
     def get_accepted_tickets(self) -> List[Ticket]:
         """
@@ -269,8 +273,8 @@ class Queue(db.Model):
         Results:\n
         A list of tickets that is either pending or accepeted.\n
         """
-        return Ticket.find_all_tickets(self, status=[tStatus.PENDING,
-                                                     tStatus.ACCEPTED])
+        return Ticket.find_all_tickets(self, status=[t_status.PENDING,
+                                                     t_status.ACCEPTED])
 
     def get_resolved_tickets(self) -> List[Ticket]:
         """
@@ -278,7 +282,7 @@ class Queue(db.Model):
         Results:\n
         A list of tickets that is resolved.\n
         """
-        return Ticket.find_all_tickets(self, status=[tStatus.RESOLVED])
+        return Ticket.find_all_tickets(self, status=[t_status.RESOLVED])
 
     def get_canceled_tickets(self) -> List[Ticket]:
         """
@@ -286,7 +290,7 @@ class Queue(db.Model):
         Results:\n
         A list of tickets that is canceled.\n
         """
-        return Ticket.find_all_tickets(self, status=[tStatus.CANCELED])
+        return Ticket.find_all_tickets(self, status=[t_status.CANCELED])
 
     def is_at_high_capacity(self) -> bool:
         """
@@ -341,7 +345,7 @@ class Queue(db.Model):
         The pending ticket of the student on this queue.\n
         """
         return Ticket.find_all_tickets_by_student(queue=self, student=student,
-                                                  status=[tStatus.PENDING])[0]
+                                                  status=[t_status.PENDING])[0]
 
     def get_accepted_ticket_for(self, student: User) -> Optional[Ticket]:
         """
@@ -352,8 +356,9 @@ class Queue(db.Model):
         Returns:\n
         The pending ticket of the student on this queue.\n
         """
-        return Ticket.find_all_tickets_by_student(queue=self, student=student,
-                                                  status=[tStatus.ACCEPTED])[0]
+        return Ticket.\
+            find_all_tickets_by_student(queue=self, student=student,
+                                        status=[t_status.ACCEPTED])[0]
 
     def get_unresolved_ticket_for(self, student: User) -> Optional[Ticket]:
         """
@@ -365,8 +370,8 @@ class Queue(db.Model):
         The pending ticket of the student on this queue.\n
         """
         return Ticket.find_all_tickets_by_student(queue=self, student=student,
-                                                  status=[tStatus.ACCEPTED,
-                                                          tStatus.PENDING])[0]
+                                                  status=[t_status.ACCEPTED,
+                                                          t_status.PENDING])[0]
 
     def get_resolved_ticket_for(self, student: User) -> List[Ticket]:
         """
@@ -377,7 +382,7 @@ class Queue(db.Model):
         A list of tickets of the student on this queue that are resolved.\n
         """
         return Ticket.find_all_tickets_by_student(queue=self, student=student,
-                                                  status=[tStatus.RESOLVED])
+                                                  status=[t_status.RESOLVED])
 
     def get_canceled_ticket_for(self, student: User) -> List[Ticket]:
         """
@@ -388,7 +393,7 @@ class Queue(db.Model):
         A list of tickets of the student on this queue that are resolved.\n
         """
         return Ticket.find_all_tickets_by_student(queue=self, student=student,
-                                                  status=[tStatus.CANCELED])
+                                                  status=[t_status.CANCELED])
 
     # Not implementing getLastResolvedTicketFor since it was only used
     # In tickets stats which is already handled.
@@ -456,7 +461,7 @@ class Queue(db.Model):
         A list of tickest that is resolved by the grader.\n
         """
         tickets = Ticket.find_all_tickets_for_grader(self, grader)
-        return list(filter(lambda x: x.status == tStatus.RESOLVED), tickets)
+        return list(filter(lambda x: x.status == t_status.RESOLVED), tickets)
 
     # Grader tickets bool query methods
     def has_ticket_accepted_by(self, grader: User) -> bool:
@@ -491,8 +496,8 @@ class Queue(db.Model):
 
     # Impelementing Queue Stats
     def average_help_time(self, day: bool = True, hour: bool = False,
-                          start: datetime = None,
-                          end: datetime = None) -> timedelta:
+                          start: str = None,
+                          end: str = None) -> timedelta:
         """
         Get the average help time within a time period for tickes in
         the queue.\n
@@ -529,13 +534,15 @@ class Queue(db.Model):
         """
         ave_resolve_time = self.average_help_time(hour=True)
         # pending_num = self.get_pending_tickets()
-        active_tutor_num = EnrolledClass.find_active_tutor_for(self)  # need ec
+        status, reason, active_tutors \
+            = EnrolledCourse.find_active_tutor_for(self.id)
+        active_tutor_num = len(active_tutors)
         # Use enrolled course methods to find the num of active tutor.
         accepted_tickets = self.get_accepted_tickets()
         next_avaliable = timedelta(seconds=0)
         if active_tutor_num > len(accepted_tickets):
             return next_avaliable
-        now = datetime.now()
+        now = TimeUtil.get_current_time()
         # Simplifing the algorithm for now (without using utils)
         for ticket in accepted_tickets:
             current_help_time = now - ticket.accepted_at
@@ -605,13 +612,13 @@ class Queue(db.Model):
         Returns:\n
         The queue object, return None if it is not in the database.\n
         """
-        return Queue.query().filter(id=queue_id).first()
+        return Queue.query.filter_by(id=queue_id).first()
 
     # None Memeber Queue Methods
     @staticmethod
     def grader_login(queue_id: int, grader_id: int,
                      action_type: ActionType =
-                     ActionType.MANUAL) -> bool:
+                     ActionType.MANUAL) -> (bool, str):
         """
         Login a grader when the grader login to he queue.\n
         Inputs:\n
@@ -623,14 +630,15 @@ class Queue(db.Model):
         """
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
-            return False
-        course = crs.find_course_by_queue(queue_id)
+            return False, 'Queue Not Found'
+        course = Course.get_course_by_queue_id(queue_id)
         if not course:
-            return False
-        grader = user.get_user_by_id(grader_id)
+            return False, 'Course Not Found'
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
         if not grader:
-            return False
-        grader.change_status(course, user.Status.AVALIABLE)
+            return False, 'User Not Found'
+        grader.change_status(course, grader.change_status(EStatus.ACTIVE))
         event = QueueLoginEvent(event_type=EventType.LOGIN,
                                 action_type=action_type,
                                 grader_id=grader_id,
@@ -638,11 +646,11 @@ class Queue(db.Model):
                                 )
         QueueLoginEvent.add_to_db(event)
         queue.open()
-        return True
+        return True, 'Success'
 
     @staticmethod
     def grader_logout(queue_id: int, grader_id: int,
-                      action_type: ActionType) -> bool:
+                      action_type: ActionType) -> [bool, str]:
         """
         Logout a grader when the grader logout from queue.\n
         Inputs:\n
@@ -651,42 +659,104 @@ class Queue(db.Model):
         action_type --> The type of action for logging out.\n
         Return:\n
         True or false indicates whether it the function runs successfully.
+        A string that tells what is the status.
         """
         queue = Queue.get_queue_by_id(queue_id)
         if not queue:
-            return False
-        grader = user.get_user_by_id(grader_id)
-        if not grader:
-            return False
-        course = crs.find_course_by_queue(queue)  # Prentending
+            return False, 'Queue Not Found'
+        course = Course.get_course_by_queue_id(queue_id)
         if not course:
-            return False
-        grader.change_status(course, user.Status.AVALIABLE)
+            return False, 'course Not Found'
+        grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=course.id)
+        if not grader:
+            return False, 'Course Not Found'
+        grader.change_status(course, grader.change_status(EStatus.INACTIVE))
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
                                 grader_id=grader.id,
                                 queue_id=queue.id
                                 )
         QueueLoginEvent.add_to_db(event)
-        queue.open()
-        return True
+        s, r, grader = EnrolledCourse.find_active_tutor_for(queue.id)
+        if len(grader) == 0:
+            queue.lock()
+        return True, 'Success'
 
     @staticmethod
-    def find_current_queue_for_user(user: User) -> List[Queue]:
+    def accept_ticket(queue_id: int, ticket_id: int,
+                      grader_id: int) -> (bool, str):
+        """
+        Accept a ticket.\n
+        Inputs:\n
+        queue_id --> The id of the course that we are in.\n
+        ticket_id --> The id of the ticket to be accepted.\n
+        grader_id --> The id of the grader to accept the ticket.\n
+        Return:\n
+        Whether the operation successed or not.
+        """
+        course_id = Course.get_course_by_queue_id(queue_id=queue_id)
+        e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                      course_id=course_id)
+        if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
+            return (False, 'You cant take the ticket')
+        if e_grader.get_status() != EStatus.ACTIVE:
+            return (False, 'The user is currently busy')
+        t = Ticket.get_ticket_by_id(ticket_id)
+        t.mark_accepted_by(e_grader.id)
+        e_grader.change_status(EStatus.BUSY)
+        return (True, 'Ticket Accepted')
+
+    @staticmethod
+    def resolve_ticket(queue_id: int, ticket_id: int,
+                       grader_id: int) -> (bool, str):
+        """
+        Reolve a ticket.\n
+        Inputs:\n
+        queue_id --> The id of the course that we are in.\n
+        ticket_id --> The id of the ticket to be accepted.\n
+        grader_id --> The id of the grader to accept the ticket.\n
+        Return:\n
+        Whether the operation successed or not.
+        """
+        course_id = Course.get_course_by_queue_id(queue_id=queue_id)
+        e_grader = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                      course_id=course_id)
+        if e_grader.get_role() not in [ERole.INSTRUCTOR, ERole.GRADER]:
+            return (False, 'You cant resolve the ticket')
+        t = Ticket.get_ticket_by_id(ticket_id)
+        accepter = EnrolledCourse.find_user_in_course(user_id=t.get_grader_id,
+                                                      course_id=course_id)
+        t.mark_resolved()
+        accepter.change_status(EStatus.ACTIVE)
+        return (True, 'Ticket Resolved')
+
+    @staticmethod
+    def find_current_queue_for_user(user_id: int) -> (bool, str, List[Queue]):
         """
         Find all the queues that this user is in currently.
         Inputs:\n
         user --> The User object to look for.
         Returns:\n
+        bool --> indicate whether it successed or not.
+        str --> the message
         A list of Queue that the user is in this quarter.
         """
-        # TODO
-        # Use the methods from enrolled class by using User methods to find
-        # the enrolled classes of that user and fetch the queues of class.
-        pass
+        ec_list = EnrolledCourse.find_user_in_all_course(user_id=user_id)
+        if not ec_list:
+            return (False, "User not found in any course", None)
+        q_id_list = []
+        for ec in ec_list:
+            q = Course.get_course_by_id(ec.course_id)
+            q_id_list.append(q)
+        q_list = []
+        for q_id in q_id_list:
+            q = Queue.query.filter_by(queue_id=q_id).first()
+            q_list.append(q)
+        return (True, "Success", q_list)
 
     @staticmethod
-    def find_queue_for_course(course: Course) -> Optional[Queue]:
+    def find_queue_for_course(course_id: int) -> (bool, Optional[Queue]):
         """
         Find the queue corresponding for a course.
         Inputs:\n
@@ -694,4 +764,48 @@ class Queue(db.Model):
         Returns:\n
         The queue for that course, if a queue does not exist, None is return.\n
         """
-        return Queue.query().filter(id=course.queue_id).first()
+        course = Course.get_course_by_id(course_id)
+        q = Queue.query.filter(id=course.queue_id).first()
+        if q:
+            return True, q
+        else:
+            return False, q
+
+    @staticmethod
+    def get_all_feedback_for_queue(queue_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticketfeedback for the queue.\n
+        Input:\n
+        queue_id --> The id of the queue
+        Returns:\n
+        A list of ticket feedback.
+        """
+        return Ticket.find_all_feedback_for_queue(queue_id)
+
+    @staticmethod
+    def get_feedback_for_grader(queue_id: int,
+                                grader_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticket feedbacks to the grader.\n
+        Inputs:\n
+        queue_id --> The id of teh queue
+        grader_id --> The id of the grader.
+        Returns:\n
+        A list of tickect feedbacks
+        """
+        return Ticket.find_feedback_for_grader(queue_id=queue_id,
+                                               grader_id=grader_id)
+
+    @staticmethod
+    def get_feedback_for_student(queue_id: int,
+                                 student_id: int) -> List[TicketFeedback]:
+        """
+        Get a list of ticket feedbacks to the grader.\n
+        Inputs:\n
+        queue_id --> The id of teh queue
+        grader_id --> The id of the grader.
+        Returns:\n
+        A list of tickect feedbacks
+        """
+        return Ticket.find_feedback_for_grader(queue_id=queue_id,
+                                               student_id=student_id)

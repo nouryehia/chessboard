@@ -1,9 +1,12 @@
+from __future__ import annotations
+from typing import List
+
 from enum import Enum
-from datetime import datetime
+from ...utils.time import TimeUtil
 
 from ....setup import db
-from ..model.user import User
-from ..model.queue import Queue
+from ..user import User
+# from ..queue import Queue
 
 
 class EventType(Enum):
@@ -40,10 +43,12 @@ class QueueLoginEvent(db.Model):
     queue_id --> The id of the queue that the events are related to.\n
     @author YixuanZhou
     """
+    __tablename__ = 'QueueLoginEvent'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     event_type = db.Column(db.Integer, nullable=False)
     action_type = db.Column(db.Integer, nullable=False)
-    timestamp = db.Colunm(db.Datetime, nullable=False, default=datetime.now())
+    timestamp = db.Column(db.DateTime, nullable=False,
+                          default=TimeUtil.get_current_time())
     grader_id = db.Column(db.Integer, db.ForeignKey('tutor.id'),
                           nullable=False)
     queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'), nullable=False)
@@ -77,8 +82,8 @@ class QueueLoginEvent(db.Model):
         """
         return self.action_type == ActionType.AUTOMATIC
 
-    def find_event_in_range(self, queue: Queue, start: datetime,
-                            end: datetime = datetime.now(),
+    def find_event_in_range(self, queue_id: int, start: str,
+                            end: str = TimeUtil.get_current_time(),
                             grader: User = None):
         """
         Get all the queue login events for a queue in a given range.\n
@@ -93,22 +98,32 @@ class QueueLoginEvent(db.Model):
         given queue for a given range of time.\n
         """
         if (grader is not None):
-            event_list = QueueLoginEvent.query().filter_by(queue_id=queue.id)\
+            event_list = QueueLoginEvent.query().filter_by(queue_id=queue_id)\
                         .order_by(QueueLoginEvent.timestamp).desc.all()
         else:
             event_list = QueueLoginEvent.query()\
-                         .filter_by(queue_id=queue.id,
+                         .filter_by(queue_id=queue_id,
                                     grader_id=grader.id)\
                          .order_by(QueueLoginEvent.timestamp).desc.all()
         return list(filter(lambda x: start <= x.closed_at <= end, event_list))
 
-# Static add method
-@staticmethod
-def add_to_db(qle: QueueLoginEvent):
-    """
-    Add the queue login event to the database.\n
-    Inputs:\n
-    qle --> the QueueLoginEvent object created.\n
-    """
-    db.session.add(qle)
-    db.session.commit()
+    # Static add method
+    @staticmethod
+    def get_event_timestamp(qle: QueueLoginEvent) -> str:
+        return qle.timestamp
+
+    @staticmethod
+    def add_to_db(qle: QueueLoginEvent):
+        """
+        Add the queue login event to the database.\n
+        Inputs:\n
+        qle --> the QueueLoginEvent object created.\n
+        """
+        db.session.add(qle)
+        db.session.commit()
+
+    @staticmethod
+    def find_login_time_for_user(grader: User) -> List[QueueLoginEvent]:
+        elist = QueueLoginEvent.query().filter_by(grader_id=grader.id).all()
+        sorted_elist = elist.sort(key=QueueLoginEvent.get_event_timestamp)
+        return sorted_elist

@@ -1,6 +1,8 @@
 from flask_cors import CORS
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
+from ..models.user import User
+
 
 from ..models.enrolled_course import Role, EnrolledCourse
 
@@ -9,6 +11,7 @@ CORS(enrolled_course_api_bp, supports_credentials=True)
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
+# @login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
@@ -16,15 +19,23 @@ def enroll_user():
     @authoer Yixuan
     """
     user_id = request.json['user_id']
-    role = request.json['role'] if 'role' in request.json \
+    role = Role(request.json['role']).value if 'role' in request.json \
         else Role.STUDENT.value
     section_id = request.json['section_id']
     course_id = request.json['course_id']
 
+    # Check the authroity of the operation
+    """
+    c_u_id = current_user.id
+    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                             course_id=course_id)
+    if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
+        return jsonify({'reason': 'Method is forbiden from you'}), 400
+    """
     if EnrolledCourse.enroll_user_to(user_id=user_id,
                                      course_id=course_id,
                                      section_id=section_id,
-                                     role=Role(role)):
+                                     role=role):
         return jsonify({'reason': 'user enrolled'}), 200
     else:
         return jsonify({'reason': 'user existed'}), 300
@@ -38,11 +49,17 @@ def delete_user_from_course():
     """
     user_id = request.json['user_id']
     course_id = request.json['course_id']
+    # Check the authroity of the operation
+    c_u_id = current_user.id
+    ecu = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                             course_id=course_id)
+    if ecu.get_role() not in [Role.INSTRUCTOR, Role.ROOT, Role.ADMIN]:
+        return jsonify({'reason': 'Method is forbiden from you'}), 400
     if EnrolledCourse.delete_enrolled_user_from_course(user_id=user_id,
                                                        course_id=course_id):
         return jsonify({'reason': 'user deleted'}), 200
     else:
-        return jsonify({'reason': 'user not found'}), 300
+        return jsonify({'reason': 'user not found'}), 400
 
 
 @enrolled_course_api_bp.route('/get_user_in_course', methods=['GET'])
@@ -64,7 +81,43 @@ def get_all_user():
     Route to get all the users of that is in a given course.
     """
     course_id = request.json['course_id']
-    return jsonify(EnrolledCourse.find_all_user_in_course(course_id=course_id))
+    status, ec_list = EnrolledCourse.\
+        find_all_user_in_course(course_id=course_id)
+    if status:
+        ret = {}
+        i = 0
+        for ec in ec_list:
+            i += 1
+            user = User.get_user_by_id(ec)
+            scr = {}
+            scr['user_info'] = user.to_json()
+            scr['enrolled_user_info'] = ec.to_json()
+            ret['user' + str(i)] = scr
+        return jsonify({'reason': 'success', 'result': ret}), 200
+    else:
+        return jsonify({'reason': 'course not found'}), 400
+
+
+@enrolled_course_api_bp.route('/get_user_in_section', methods=['POST'])
+@login_required
+def get_user_in_section():
+    """
+    The route to remote an user from a particular course.
+    """
+    sid = request.json['section_id']
+    cid = request.json['course_id']
+    ecs = EnrolledCourse.find_all_user_in_section(course_id=cid,
+                                                  section_id=sid)
+    i = 0
+    ret = {}
+    for ec in ecs:
+        user = User.get_user_by_id(id=ec.user_id)
+        i += 1
+        scr = {}
+        scr['user_info'] = user.to_json()
+        scr['enrolled_user_info'] = ec.to_json()
+        ret['User' + str(i)] = scr
+    return jsonify({'reason': 'success', 'result': ret}), 200
 
 
 @enrolled_course_api_bp.route('/get_user_in_all_course',

@@ -6,6 +6,7 @@ CREATE TABLE "Users" (
 	"password" varchar(255) NOT NULL,
 	"pid" varchar(10) UNIQUE,
 	"last_login" TIMESTAMP,
+	"urole" integer NOT NULL DEFAULT '1',
 	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -91,6 +92,7 @@ CREATE TABLE "Course" (
 	"cse" BOOLEAN NOT NULL DEFAULT 'true',
 	"lock_button" BOOLEAN DEFAULT 'true',
 	"queue_id" bigserial NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL DEFAULT 'false',
 	CONSTRAINT "Course_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -122,7 +124,7 @@ CREATE TABLE "Ticket" (
 	"status" integer NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" TEXT NOT NULL,
-	"grader_id" bigserial,
+	"grader_id" bigint,
 	"queue_id" bigserial NOT NULL,
 	"student_id" bigserial NOT NULL,
 	"is_private" BOOLEAN NOT NULL DEFAULT 'false',
@@ -256,7 +258,7 @@ ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk1" FOREIGN KEY ("queue_id") REFERE
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk2" FOREIGN KEY ("student_id") REFERENCES "EnrolledCourse"("id");
 
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk0" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
-ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("id");
+ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("section_id");
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk2" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
