@@ -28,7 +28,7 @@ class CheckoffSuite(db.Model):
     """
     __tablename__ = 'CheckoffSuite'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    status = db.Column(db.Integer(11), nullable=False)
+    status = db.Column(db.Integer, nullable=False)
 
     def is_hidden(self) -> bool:
         """
