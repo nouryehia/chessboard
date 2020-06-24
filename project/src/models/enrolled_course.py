@@ -260,8 +260,8 @@ class EnrolledCourse(db.Model):
                 filter(EnrolledCourse.role.in_(role)).all()
 
     @staticmethod
-    def find_user_in_all_course(user_id: int,
-                                role: List[Role] = None) \
+    def find_courses_user_in(user_id: int,
+                             role: List[Role] = None) \
             -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a user.\n
