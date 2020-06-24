@@ -2,7 +2,7 @@ from flask_cors import CORS
 from flask_login import login_required
 from flask import Blueprint, request, jsonify
 
-from ..models.ticket import Ticket
+from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.user import User
 
 
@@ -48,11 +48,26 @@ def student_update():
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
     title = req['title'] if 'title' in req else ticket.title
-    desc = req['description'] if 'description' in req else ticket.title
+    desc = req['description'] if 'description' in req else ticket.description
     room = req['room'] if 'room' in req else ticket.room
     ws = req['workstation'] if 'workstation' in req else ticket.workstation
-    help_type = req['help_type'] if 'help_type' in req else ticket.help_type
-    tags = request.json['tags'] if 'tags' in request.json else ticket.tags
+    help_type = (HelpType(int(request.json['help_type'])) if 'help_type' in req
+                 else ticket.help_type)
+
+    if 'is_private' in req:
+        private = (True if (req['is_private'] == 'true' or
+                            req['is_private'] == 'True')
+                   else False)
+    else:
+        private = ticket.is_private
+
+    if 'tag_list' in request.json:
+        raw_tags = request.json['tag_list'].split(';')
+        tags = []
+        for tag in raw_tags:
+            tags.append(TicketTag(int(tag)).value)
+    else:
+        tags = ticket.get_tags_list()
 
     if 'is_private' in req:
         private = (True if (req['is_private'] == 'true' or

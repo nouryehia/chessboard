@@ -157,7 +157,7 @@ class Ticket(db.Model):
         """
         Save the changes made to the object into the database.\n
         """
-        db.seesion.commit()
+        db.session.commit()
 
     def to_json(self) -> Dict[str, str]:
         '''
@@ -473,7 +473,7 @@ class Ticket(db.Model):
         self.room = room
         self.workstation = workstation
         self.is_private = is_private
-        self.help_type = help_type
+        self.help_type = help_type.value
 
         # Commit the updates for basica info
         self.save()
