@@ -5,7 +5,7 @@ from enum import Enum
 from ...utils.time import TimeUtil
 from ..user import User
 # from ..ticket import Ticket
-# from ..course import Course
+from ..course import Course
 
 
 class EventType(Enum):

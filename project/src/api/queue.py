@@ -6,7 +6,7 @@ from ..models.ticket import HelpType, TicketTag
 from ..models.queue import Queue, Status
 from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
-from ..models.user import User
+# from ..models.user import User
 
 queue_api_bp = Blueprint('queue_api', __name__)
 CORS(queue_api_bp, supports_credentials=True)
@@ -60,7 +60,7 @@ def create_queue():
 
 
 @queue_api_bp.route('/add_ticket', methods=['POST'])
-# @login_required
+@login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
@@ -71,8 +71,9 @@ def add_ticket():
     description = request.json['description']
     room = request.json['room']
     workstation = request.json['workstation']
-    is_private = request.json['is_private']
-    help_type = HelpType(request.json['help_type'])
+    is_private = (bool(request.json['is_private'])
+                  if 'is_private' in request.json else False)
+    help_type = HelpType(int(request.json['help_type']))
     tag_list_raw = request.json['tag_list'].split(';')
     tag_list = []
     for tag in tag_list_raw:

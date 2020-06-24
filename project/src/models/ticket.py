@@ -361,7 +361,7 @@ class Ticket(db.Model):
             return True
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.getrole(user.id, course.id) == Role.STAFF:
+            if User.get_role(user.id, course.id) == Role.STAFF:
                 return True
             else:
                 if self.student_id == user.id:
@@ -382,7 +382,7 @@ class Ticket(db.Model):
             return False
         else:
             course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.getrole(user.id, course.id) == Role.STAFF:
+            if User.get_role(user.id, course.id) == Role.STAFF:
                 return True
             else:
                 if self.student_id == user.id:
@@ -505,7 +505,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id) -> Optional(Ticket):
+    def get_ticket_by_id(ticket_id) -> Optional[User]:
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -513,7 +513,7 @@ class Ticket(db.Model):
         Return:\n
         The ticket object, None if the ticket_id is not found.\n
         """
-        return Ticket.query().filter_by(id=ticket_id)
+        return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
     def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
