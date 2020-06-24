@@ -9,9 +9,10 @@ from ..utils.time import TimeUtil
 from ...setup import db
 from .user import User
 from .enrolled_course import Role
-from .course import Course  # Pretending
+from .course import Course
 from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
+from .enrolled_course import EnrolledCourse
 
 """
 Note for implementation:
@@ -346,7 +347,7 @@ class Ticket(db.Model):
                 ticket_id=self.id).order_by(id).all()
 
     # Permission of the ticket that a user has
-    def can_view_by(self, user: User) -> bool:
+    def can_view_by(self, user_id: int) -> bool:
         """
         Determine if the ticket can be viewed by a given user.\n
         Inputs:\n
@@ -355,21 +356,21 @@ class Ticket(db.Model):
         Return:\n
         The bool for whether a user can view.\n
         """
-        if not user:
-            return False
-        elif not self.is_private:
+        if not self.is_private:
             return True
         else:
-            course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.get_role(user.id, course.id) == Role.STAFF:
+            course = Course.get_course_by_queue_id(self.queue_id)
+            ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                          course_id=course.id)
+            if ec_entry.role != Role.STUDENT.value:
                 return True
             else:
-                if self.student_id == user.id:
+                if self.student_id == ec_entry.id:
                     return True
                 else:
                     return False
 
-    def can_edit_by(self, user: User) -> bool:
+    def can_edit_by(self, user_id: int) -> bool:
         """
         Determine if the ticket can be edited by a given user.\n
         Inputs:\n
@@ -381,11 +382,13 @@ class Ticket(db.Model):
         if self.is_resolved():
             return False
         else:
-            course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.get_role(user.id, course.id) == Role.STAFF:
+            course = Course.get_course_by_queue_id(self.queue_id)
+            ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                          course_id=course.id)
+            if ec_entry.role != Role.STUDENT.value:
                 return True
             else:
-                if self.student_id == user.id:
+                if self.student_id == ec_entry.id:
                     return True
                 else:
                     return False

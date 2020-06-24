@@ -29,13 +29,10 @@ def get_user_permissions():
     @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
+    user_id = int(request.json['ticket_id'])
 
-    user = User.find_by_pid_email_fallback(pid, email)
-
-    return jsonify({'can_view': ticket.can_view_by(user),
-                    'can_edit': ticket.can_edit_by(user)}), 200
+    return jsonify({'can_view': ticket.can_view_by(user_id),
+                    'can_edit': ticket.can_edit_by(user_id)}), 200
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
