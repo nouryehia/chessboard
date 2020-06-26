@@ -112,7 +112,7 @@ def get_user_of_course():
 def get_all_user_in_course():
     """
     Route to get all the users of that is in a given course.\n
-    The roles is optional, when passing in, 
+    The roles is optional, when passing in,
     pass in the string representation of ; seperated int values.
     """
     course_id = request.json['course_id']

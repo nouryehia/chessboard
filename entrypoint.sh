@@ -10,6 +10,10 @@ if [ "$DATABASE" = "postgres" ]; then
   echo "PostgreSQL started"
 fi
 
-python runner.py
+if [ "$FLASK_ENV" = "development" ]; then
+  echo "Running the server locally..."
+  python runner.py
+fi
 
 exec "$@"
+

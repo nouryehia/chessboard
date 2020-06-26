@@ -8,10 +8,11 @@ from ..utils.time import TimeUtil
 
 from ...setup import db
 from .user import User
-from .course import Course  # Pretending
+from .enrolled_course import Role
+from .course import Course
 from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
-from .enrolled_course import EnrolledCourse, Role
+from .enrolled_course import EnrolledCourse
 
 """
 Note for implementation:
@@ -156,7 +157,7 @@ class Ticket(db.Model):
         """
         Save the changes made to the object into the database.\n
         """
-        db.seesion.commit()
+        db.session.commit()
 
     def to_json(self) -> Dict[str, str]:
         '''
@@ -421,27 +422,27 @@ class Ticket(db.Model):
         """
         Mark the ticket as pending status.\n
         """
-        self.status = Status.PENDING
+        self.status = Status.PENDING.value
+        self.grader_id = None
         self.save()
 
-    def mark_accepted_by(self, grader_id: int) -> None:
+    def mark_accepted_by(self, grader: User) -> None:
         """
         Mark the ticket as accepted by a tutor.\n
         """
-        grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_ticket_for_grader(grader)
+        Ticket.defer_accepted_tickets_for_grader(grader)
 
-        self.status = Status.ACCEPTED
+        self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = grader_id
+        self.grader_id = grader.id
         self.save()
 
     def mark_resolved(self) -> None:
         """
         Mark the ticket as resolved.\n
         """
-        self.status = Status.RESOLVED
+        self.status = Status.RESOLVED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -449,7 +450,7 @@ class Ticket(db.Model):
         """
         Mark the ticket as canceled.\n
         """
-        self.status = Status.CANCELED
+        self.status = Status.CANCELED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -473,7 +474,7 @@ class Ticket(db.Model):
         self.room = room
         self.workstation = workstation
         self.is_private = is_private
-        self.help_type = help_type
+        self.help_type = help_type.value
 
         # Commit the updates for basica info
         self.save()
@@ -543,7 +544,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id: int) -> Optional(Ticket):
+    def get_ticket_by_id(ticket_id) -> Optional[Ticket]:
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -553,11 +554,12 @@ class Ticket(db.Model):
         """
         return Ticket.query.filter_by(id=ticket_id).first()
 
+    # Ticket stats calultaions
     @staticmethod
     def find_ticket_accepted_by_grader(grader: User) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
-        There should only be one ticket that is accepted by the grader.\n
+        There should only be one ticket that is accpeted by the grader.\n
         Inputs:\n
         grader --> The User object of the grader to look up.\n
         Return:\n
@@ -583,7 +585,7 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accepted_ticket_for_grader(grader: User) -> None:
+    def defer_accepted_ticket_for_grader(grader: User) -> int:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n
@@ -591,11 +593,12 @@ class Ticket(db.Model):
         grader --> The grader to be multified.\n
         """
         ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
+        counter = 0
         for ticket in ticket_list:
-            if (ticket.status == Status.ACCEPTED):
+            if (ticket.status == Status.ACCEPTED.value):
+                counter += 1
                 ticket.mark_pending()
-
-        return True
+        return counter
 
     # Moved from ticket_event
 
@@ -668,12 +671,11 @@ class Ticket(db.Model):
         if status:
             return Ticket.query.\
                 filter_by(queue_id=queue_id).\
-                order_by(Ticket.created_at.desc()).all()
+                order_by(Ticket.created_at).desc.all()
         else:
             return Ticket.query.\
-                filter_by(queue_id=queue_id).\
-                filter(Ticket.status.in_(status)).\
-                order_by(Ticket.created_at.desc()).all()
+                filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
+                order_by(Ticket.created_at).desc.all()
 
     @staticmethod
     def find_all_tickets_by_student(queue_id: int,
@@ -691,7 +693,7 @@ class Ticket(db.Model):
         """
         return Ticket.query.\
             filter_by(queue_id=queue_id, student_id=student_id).\
-            filter(Ticket.status.in_(status)).\
+            filter_by(status.in_(status)).\
             order_by(Ticket.created_at).desc.all()
 
     @staticmethod

@@ -2,7 +2,7 @@ from flask_cors import CORS
 from flask_login import login_required
 from flask import Blueprint, request, jsonify
 
-from ..models.ticket import Ticket
+from ..models.ticket import Ticket, HelpType, TicketTag, Status
 from ..models.user import User
 
 
@@ -29,13 +29,10 @@ def get_user_permissions():
     @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
+    user_id = int(request.json['ticket_id'])
 
-    user = User.find_by_pid_email_fallback(pid, email)
-
-    return jsonify({'can_view': ticket.can_view_by(user),
-                    'can_edit': ticket.can_edit_by(user)}), 200
+    return jsonify({'can_view': ticket.can_view_by(user_id),
+                    'can_edit': ticket.can_edit_by(user_id)}), 200
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
@@ -51,11 +48,11 @@ def student_update():
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
     title = req['title'] if 'title' in req else ticket.title
-    desc = req['description'] if 'description' in req else ticket.title
+    desc = req['description'] if 'description' in req else ticket.description
     room = req['room'] if 'room' in req else ticket.room
     ws = req['workstation'] if 'workstation' in req else ticket.workstation
-    help_type = req['help_type'] if 'help_type' in req else ticket.help_type
-    tags = request.json['tags'] if 'tags' in request.json else ticket.tags
+    help_type = (HelpType(int(request.json['help_type'])) if 'help_type' in req
+                 else ticket.help_type)
 
     if 'is_private' in req:
         private = (True if (req['is_private'] == 'true' or
@@ -64,34 +61,67 @@ def student_update():
     else:
         private = ticket.is_private
 
+    if 'tag_list' in request.json:
+        raw_tags = request.json['tag_list'].split(';')
+        tags = []
+        for tag in raw_tags:
+            tags.append(TicketTag(int(tag)).value)
+    else:
+        tags = ticket.get_tags_list()
+
     if ticket.student_update(title, desc, room, ws, private, help_type, tags):
         return jsonify({'reason': 'ticket updated'}), 200
 
     return jsonify({'reason': 'ticket could not be updated'}), 400
 
 
-@ticket_api_bp.route('/find_ticket_accepted_by_grader', methods=['GET'])
+@ticket_api_bp.route('/get_status', methods=['GET'])
 @login_required
-def find_ticket_accepted_by_grader():
-    '''
-    Route used to find the last ticket accepted by a grader.\n
-    @author nouryehia
-    '''
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
-    grader = User.find_by_pid_email_fallback(pid, email)
+def get_status():
+    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
 
-    ticket = Ticket.find_ticket_accepted_by_grader(grader)
+    statuses = {Status.PENDING.value: 'pending',
+                Status.ACCEPTED.value: 'accepted',
+                Status.RESOLVED.value: 'resolved',
+                Status.CANCELED.value: 'canceled'}
 
-    if ticket is None:
-        return jsonify({'reason': 'Grader did not accept any tickets'}), 400
-
-    return jsonify(ticket.to_json()), 200
+    return jsonify({'status': statuses[t.status]}), 200
 
 
-@ticket_api_bp.route('/defer_accepted_ticket_for_grader', methods=['POST'])
+@ticket_api_bp.route('/update_status', methods=['POST'])
 @login_required
-def defer_accepted_ticket_for_grader():
+def update_status():
+    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+    status = request.json['status']
+    g_email = request.json['g_email'] if 'g_email' in request.json else None
+    g_pid = request.json['g_pid'] if 'g_pid' in request.json else None
+
+    if status == 'accepted' and g_email is None and g_pid is None:
+        return jsonify({'reason': 'grader credentials not provided'}), 400
+    else:
+        g = User.find_by_pid_email_fallback(g_pid, g_email)
+        t.mark_accepted_by(g)
+        return jsonify({'status': 'accepted',
+                        'grader_name': g.first_name + ' ' + g.last_name,
+                        'grader_pid': g.pid}), 200
+
+    actions = {'pending': t.mark_pending,
+               'resolved': t.mark_resolved,
+               'canceled': t.mark_canceled}
+
+    statuses = {Status.PENDING.value: 'pending',
+                Status.ACCEPTED.value: 'accepted',
+                Status.RESOLVED.value: 'resolved',
+                Status.CANCELED.value: 'canceled'}
+
+    actions[status]()
+
+    return jsonify({'status': statuses[t.status]}), 200
+
+
+@ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])
+@login_required
+def defer_accepted_tickets_for_grader():
     '''
     Route used to return tickets accepted by a grader to the queue.\n
     @author nouryehia
@@ -100,10 +130,9 @@ def defer_accepted_ticket_for_grader():
     pid = request.json['pid'] if 'pid' in request.json else None
     grader = User.find_by_pid_email_fallback(pid, email)
 
-    if Ticket.defer_accepted_ticket_for_grader(grader):
-        return jsonify({'reason': 'tickets deferred'}), 200
+    tickets = Ticket.defer_accepted_tickets_for_grader(grader)
 
-    return jsonify({'reason': 'tickets could not be deffered'}), 400
+    return jsonify({'reason': str(tickets) + ' tickets deferred'}), 400
 
 
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])

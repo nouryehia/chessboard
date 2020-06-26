@@ -776,6 +776,7 @@ class Queue(db.Model):
         """
         return Ticket.find_feedback_for_grader(queue_id=queue_id,
                                                student_id=student_id)
+<<<<<<< HEAD
 
     @staticmethod
     def find_all_tickets(queue_id: int,
@@ -795,3 +796,5 @@ class Queue(db.Model):
         if not q:
             return False, "Queue not found", []
         return True, "Success", Ticket.find_all_tickets(q.id, status=status)
+=======
+>>>>>>> origin/ticket_db
