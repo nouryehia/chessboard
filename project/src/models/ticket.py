@@ -421,27 +421,27 @@ class Ticket(db.Model):
         """
         Mark the ticket as pending status.\n
         """
-        self.status = Status.PENDING
+        self.status = Status.PENDING.value
+        self.grader_id = None
         self.save()
 
-    def mark_accepted_by(self, grader_id: int) -> None:
+    def mark_accepted_by(self, grader: User) -> None:
         """
         Mark the ticket as accepted by a tutor.\n
         """
-        grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_ticket_for_grader(grader)
+        Ticket.defer_accepted_tickets_for_grader(grader)
 
-        self.status = Status.ACCEPTED
+        self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = grader_id
+        self.grader_id = grader.id
         self.save()
 
     def mark_resolved(self) -> None:
         """
         Mark the ticket as resolved.\n
         """
-        self.status = Status.RESOLVED
+        self.status = Status.RESOLVED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -449,7 +449,7 @@ class Ticket(db.Model):
         """
         Mark the ticket as canceled.\n
         """
-        self.status = Status.CANCELED
+        self.status = Status.CANCELED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -519,7 +519,7 @@ class Ticket(db.Model):
         return Ticket.query.filter_by(id=ticket_id).first()
 
     @staticmethod
-    def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader: User) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
         There should only be one ticket that is accpeted by the grader.\n
@@ -548,7 +548,7 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accepted_ticket_for_grader(grader: User) -> None:
+    def defer_accepted_tickets_for_grader(grader: User) -> int:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n
@@ -556,9 +556,12 @@ class Ticket(db.Model):
         grader --> The grader to be multified.\n
         """
         ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
+        counter = 0
         for ticket in ticket_list:
-            if (ticket.status == Status.ACCEPTED):
+            if (ticket.status == Status.ACCEPTED.value):
+                counter += 1
                 ticket.mark_pending()
+        return counter
 
     # Moved from ticket_event
 
