@@ -4,7 +4,6 @@ from ....setup import db
 from enum import Enum
 from ...utils.time import TimeUtil
 from ..enrolled_course import EnrolledCourse, Role
-# from ..course import Course
 
 
 class EventType(Enum):
@@ -157,6 +156,25 @@ class TicketEvent(db.Model):
         db.session.commit()
 
     # Static add method
+    @staticmethod
+    def create_event(event_type: EventType, ticket_id: int,
+                     message: str, is_private: bool,
+                     user_id: int) -> TicketEvent:
+        """
+        Create a ticket event
+        event_type --> The type of this event
+        ticket_id --> The id of the ticket the event is to
+        message --> The message of this event
+        is_private --> Whether this event is private (should in sync to ticket)
+        user_id --> The id of the user to create this event.
+        """
+        evt = TicketEvent(event_type=event_type.value, ticket_id=ticket_id,
+                          message=message, is_private=is_private,
+                          user_id=user_id,
+                          timestamp=TimeUtil.get_current_time())
+        evt.add_to_db()
+        return evt
+
     @staticmethod
     def get_events_for_tickets(user_id: int, course_id: int,
                                ticket_id: int) -> dict:

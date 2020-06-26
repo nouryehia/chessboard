@@ -1,9 +1,11 @@
 from flask_cors import CORS
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag, Status
+from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.user import User
+from ..utils.time import TimeUtil
 
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
@@ -47,19 +49,23 @@ def student_update():
 
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
+    uid = req['user_id']
     title = req['title'] if 'title' in req else ticket.title
     desc = req['description'] if 'description' in req else ticket.description
     room = req['room'] if 'room' in req else ticket.room
     ws = req['workstation'] if 'workstation' in req else ticket.workstation
     help_type = (HelpType(int(request.json['help_type'])) if 'help_type' in req
                  else ticket.help_type)
-
     if 'is_private' in req:
-        private = (True if (req['is_private'] == 'true' or
-                            req['is_private'] == 'True')
-                   else False)
+        private = True if req['is_private'] == 1 else False
     else:
         private = ticket.is_private
+
+    # Creating Event
+    evt = TicketEvent(event_type=EventType.UPDATED, ticket_id=ticket.id,
+                      message=desc, is_private=private,
+                      user_id=uid, timestamp=TimeUtil.get_current_time())
+    evt.add_to_db()
 
     if 'tag_list' in request.json:
         raw_tags = request.json['tag_list'].split(';')
@@ -119,6 +125,46 @@ def update_status():
     return jsonify({'status': statuses[t.status]}), 200
 
 
+@ticket_api_bp.route('/add_ticket', methods=['POST'])
+@login_required
+def add_ticket():
+    """
+    Add a ticket to the queue.\n
+    For the is_private field, pass in 0 or 1 to indicate true of false.\n
+    For the tag_list, pass in comma seperated list of numbers in string.\n
+    """
+    queue_id = int(request.json['queue_id'])
+    student_id = int(request.json['student_id'])
+    title = request.json['title']
+    description = request.json['description']
+    room = request.json['room']
+    workstation = request.json['workstation']
+    is_private = int(request.json['is_private'])  # pass in 1 or 0
+    help_type = HelpType(int(request.json['help_type']))
+    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
+    tag_list = []
+    for tag in tag_list_raw:
+        tag_list.append(TicketTag(int(tag)).value)
+
+    # create a ticket
+    ticket = add_ticket(queue_id=queue_id, student_id=student_id, title=title,
+                        description=description, room=room,
+                        workstation=workstation, is_private=is_private,
+                        help_type=help_type,
+                        tag_list=tag_list)
+
+    # submit a ticket event
+    TicketEvent.create_event(event_type=EventType.CREATED,
+                             ticket_id=ticket.id,
+                             message=description,
+                             is_private=is_private,
+                             user_id=student_id,
+                             timestamp=TimeUtil.get_current_time())
+
+    return (jsonify({'reason': 'ticket added to queue',
+                     'result': ticket.to_json()}), 200)
+
+
 @ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])
 @login_required
 def defer_accepted_tickets_for_grader():
@@ -144,22 +190,20 @@ def find_all_tickets():
     @author nouryehia
     '''
     status = []
-    pending = True if ('pending' in request.json and
-                       (request.json['pending'] == 'true' or
-                        request.json['pending'] == 'True')) else False
-    accepted = True if ('accepted' in request.json and
-                        (request.json['accepted'] == 'true' or
-                         request.json['accepted'] == 'True')) else False
+    pending = int(request.json['pending']) if 'pending' in request.json else 0
+    accepted = int(request.json['accepted'])\
+        if 'accepted' in request.json else 0
     if pending:
         status.append(0)
     if accepted:
         status.append(1)
 
-    tickets = Ticket.find_all_tickets(int(request.json['queue_id']), status)
+    tickets = Ticket.find_all_tickets(queue_id=int(request.json['queue_id']),
+                                      status=status)
 
     ticket_infos = []
     for ticket in tickets:
-        ticket_infos.append(ticket.to_json())
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200
 
@@ -182,7 +226,7 @@ def find_tickets_in_range():
 
     ticket_infos = []
     for ticket in tickets:
-        ticket_infos.append(ticket.to_json())
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200
 
@@ -224,12 +268,12 @@ def find_all_tickets_for_grader():
     Route used to find tickets on a queue handled by a grader.\n
     @author nouryehia
     '''
-    tickets = Ticket.find_all_tickets(int(request.json['queue_id']),
-                                      int(request.json['grader_id']))
+    tickets = Ticket.find_all_tickets(queue_id=int(request.json['queue_id']),
+                                      grader_id=int(request.json['grader_id']))
 
     ticket_infos = []
     for ticket in tickets:
-        ticket_infos.append(ticket.to_json())
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200
 
@@ -242,12 +286,8 @@ def find_resolved_tickets_in():
     @author nouryehia
     '''
     queue_id = int(request.json['queue_id'])
-    recent_hour = True if ('recent_hour' in request.json and
-                           (request.json['recent_hour'] == 'true' or
-                            request.json['recent_hour'] == 'True')) else False
-    day = True if ('day' in request.json and
-                   (request.json['day'] == 'true' or
-                    request.json['day'] == 'True')) else False
+    recent_hour = 1 if 'recent_hour' in request.json else 0
+    day = int(request.json['day']) if 'day' in request.json else 0
     start = request.json['start'] if 'start' in request.json else None
     end = request.json['end'] if 'end' in request.json else None
 
@@ -256,6 +296,6 @@ def find_resolved_tickets_in():
 
     ticket_infos = []
     for ticket in tickets:
-        ticket_infos.append(ticket.to_json())
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200

@@ -159,31 +159,44 @@ class Ticket(db.Model):
         """
         db.session.commit()
 
-    def to_json(self) -> Dict[str, str]:
+    def to_json(self, user_id=int) -> Dict[str, str]:
         '''
-        Function that takes a ticket object and returns it in dictionary.\n
-        Params: none\n
+        Function that takes a ticket object and returns it in dictionary.
+        We will hid the informations for those who do not have permission.\n
+        Params: user_id --> The user for requesting this view\n
         Returns: Dictionary of the user info
         '''
+        result = {}
         ret = {}
-        ret['ticket_id'] = self.id
-        ret['queue_id'] = self.queue_id
-        ret['closed_at'] = self.closed_at
-        ret['created_at'] = self.created_at
-        ret['status'] = self.status
-        ret['room'] = self.room
-        ret['workstation'] = self.workstation
-        ret['title'] = self.title
-        ret['description'] = self.description
-        ret['grader_id'] = self.grader_id
-        ret['student_id'] = self.student_id
-        ret['is_private'] = self.is_private
-        ret['accepted_at'] = self.accepted_at
-        ret['help_type'] = self.help_type
-        ret['tag_one'] = self.tag_one
-        ret['tag_two'] = self.tag_two
-        ret['tag_three'] = self.tag_three
-        return ret
+        evts = {}
+        if self.can_edit_by(user_id=user_id):
+            ret['ticket_id'] = self.id
+            ret['queue_id'] = self.queue_id
+            ret['closed_at'] = self.closed_at
+            ret['created_at'] = self.created_at
+            ret['status'] = self.status
+            ret['room'] = self.room
+            ret['workstation'] = self.workstation
+            ret['title'] = self.title
+            ret['description'] = self.description
+            ret['grader_id'] = self.grader_id
+            ret['student_id'] = self.student_id
+            ret['is_private'] = self.is_private
+            ret['accepted_at'] = self.accepted_at
+            ret['help_type'] = self.help_type
+            ret['tag_one'] = self.tag_one
+            ret['tag_two'] = self.tag_two
+            ret['tag_three'] = self.tag_three
+            cid = Course.get_course_by_queue_id(self.queue_id).id
+            evts = TicketEvent.get_events_for_tickets(ticket_id=self.id,
+                                                      course_id=cid,
+                                                      user_id=user_id)
+        else:
+            ret['is_private'] = self.is_private
+
+        result['ticket_info'] = ret
+        result['ticket_events'] = evts
+        return result
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
@@ -544,7 +557,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id) -> Optional[Ticket]:
+    def get_ticket_by_id(ticket_id: int) -> Optional[Ticket]:
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -556,7 +569,7 @@ class Ticket(db.Model):
 
     # Ticket stats calultaions
     @staticmethod
-    def find_ticket_accepted_by_grader(grader: User) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader_id: int) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
         There should only be one ticket that is accpeted by the grader.\n
@@ -566,7 +579,7 @@ class Ticket(db.Model):
         The ticket that was accepted by the grader.\n
         """
         return Ticket.query.filter_by(status=Status.ACCEPTED,
-                                      grader_id=grader.id).first()
+                                      grader_id=grader_id).first()
 
     # Ticket stats calultaions
     @staticmethod
@@ -662,6 +675,7 @@ class Ticket(db.Model):
         Get a list of all the tickets for a queue with decending order
         by the time it was created.\n
         Input:\n
+        user_id --> The id of the user who make this request.\n
         queue --> The queue to search for.\n
         status --> Optional params for finding tickets with specific list
         status.\n
