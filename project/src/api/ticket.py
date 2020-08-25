@@ -123,7 +123,7 @@ def grader_update_status():
     if status == 'accepted':
         g = User.get_user_by_id(current_user.user_id)
         t.mark_accepted_by(g)
-        TicketEvent.create_event(event_type=EventType.ACCEPTED, EventType.
+        TicketEvent.create_event(event_type=EventType.ACCEPTED,
                                  ticket_id=t.id,
                                  message="accepted",
                                  is_private=t.is_private,
