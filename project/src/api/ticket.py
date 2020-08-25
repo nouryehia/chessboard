@@ -101,7 +101,7 @@ def get_status():
 
 @ticket_api_bp.route('/grader_update', methods=['POST'])
 @login_required
-def grader_update_status():
+def grader_update():
     """
     The api function used for graders to perfrom actions to ticket.\n
     Expect status for only accepted, defered, canceled, resolved.
