@@ -4,6 +4,9 @@ from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag, Status
 from ..models.events.ticket_event import TicketEvent, EventType
+from ..models.enrolled_course import EnrolledCourse as EC
+from ..models.enrolled_course import Role
+from ..models.course import Course
 from ..models.user import User
 from ..utils.time import TimeUtil
 
@@ -41,15 +44,15 @@ def get_user_permissions():
 @login_required
 def student_update():
     '''
-    Route used to update a ticket. Only the fields being updated need to be\n
-    passed in.
+    Route used to update a ticket. Only the fields being updated need to be
+    passed in. This is specifically used for student updates.
     @author nouryehia
+    @author YixuanZhou (updates)
     '''
     req = request.json
 
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
-    uid = req['user_id']
     title = req['title'] if 'title' in req else ticket.title
     desc = req['description'] if 'description' in req else ticket.description
     room = req['room'] if 'room' in req else ticket.room
@@ -61,11 +64,13 @@ def student_update():
     else:
         private = ticket.is_private
 
-    # Creating Event
-    evt = TicketEvent(event_type=EventType.UPDATED, ticket_id=ticket.id,
-                      message=desc, is_private=private,
-                      user_id=uid, timestamp=TimeUtil.get_current_time())
-    evt.add_to_db()
+    if ticket.student_id != current_user.user_id:
+        return jsonify({'reason': 'no permission'}), 400
+
+    TicketEvent.create_event(event_type=EventType.UPDATED, ticket_id=ticket.id,
+                             message=desc, is_private=private,
+                             user_id=current_user.user_id,
+                             timestamp=TimeUtil.get_current_time())
 
     if 'tag_list' in request.json:
         raw_tags = request.json['tag_list'].split(';')
@@ -94,20 +99,74 @@ def get_status():
     return jsonify({'status': statuses[t.status]}), 200
 
 
-@ticket_api_bp.route('/update_status', methods=['POST'])
+@ticket_api_bp.route('/grader_update', methods=['POST'])
 @login_required
-def update_status():
+def grader_update_status():
+    """
+    The api function used for graders to perfrom actions to ticket.\n
+    Expect status for only accepted, defered, canceled, resolved.
+    @author: YixuanZhou
+    """
     t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
-    g_email = request.json['g_email'] if 'g_email' in request.json else None
-    g_pid = request.json['g_pid'] if 'g_pid' in request.json else None
+    message = request.json['message']
+    # g_email = request.json['g_email'] if 'g_email' in request.json else None
+    # g_pid = request.json['g_pid'] if 'g_pid' in request.json else None
+    cid = Course.get_course_by_queue_id(t.queue_id)
 
-    if status == 'accepted' and g_email is None and g_pid is None:
-        return jsonify({'reason': 'grader credentials not provided'}), 400
-    else:
-        g = User.find_by_pid_email_fallback(g_pid, g_email)
+    # Checking for user permission
+    cu = EC.find_user_in_course(user_id=current_user.user_id, course_id=cid)
+    if cu.get_role() == Role.STUDENT.value and \
+       current_user.user_id != t.student_id:
+        return jsonify({'reason': "no permission"}), 400
+
+    if status == 'accepted':
+        g = User.get_user_by_id(current_user.user_id)
         t.mark_accepted_by(g)
+        TicketEvent.create_event(event_type=EventType.ACCEPTED, EventType.
+                                 ticket_id=t.id,
+                                 message="accepted",
+                                 is_private=t.is_private,
+                                 user_id=current_user.user_id,
+                                 timestamp=TimeUtil.get_current_time())
         return jsonify({'status': 'accepted',
+                        'grader_name': g.first_name + ' ' + g.last_name,
+                        'grader_pid': g.pid}), 200
+
+    elif status == 'canceled':
+        g = User.get_user_by_id(current_user.user_id)
+        t.mark_accepted_by(g)
+        TicketEvent.create_event(event_type=EventType.CANCELED,
+                                 ticket_id=t.id,
+                                 message="accepted",
+                                 is_private=t.is_private,
+                                 user_id=current_user.user_id,
+                                 timestamp=TimeUtil.get_current_time())
+        return jsonify({'status': 'canceled',
+                        'grader_name': g.first_name + ' ' + g.last_name,
+                        'grader_pid': g.pid}), 200
+
+    # We use this to put tickets back to the queue
+    elif status == 'defered':
+        t.mark_pending()
+        TicketEvent.create_event(event_type=EventType.DEFERRED,
+                                 ticket_id=t.id,
+                                 message="defered",
+                                 is_private=t.is_private,
+                                 user_id=current_user.user_id,
+                                 timestamp=TimeUtil.get_current_time())
+        return jsonify({'status': 'defered'}), 200
+
+    elif status == 'resolved':
+        g = User.get_user_by_id(current_user.user_id)
+        t.mark_accepted_by(g)
+        TicketEvent.create_event(event_type=EventType.RESOLVED,
+                                 ticket_id=t.id,
+                                 message="resolved",
+                                 is_private=t.is_private,
+                                 user_id=current_user.user_id,
+                                 timestamp=TimeUtil.get_current_time())
+        return jsonify({'status': 'resolved',
                         'grader_name': g.first_name + ' ' + g.last_name,
                         'grader_pid': g.pid}), 200
 
