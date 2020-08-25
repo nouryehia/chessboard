@@ -109,7 +109,7 @@ def grader_update_status():
     """
     t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
-    message = request.json['message']
+    # message = request.json['message']
     # g_email = request.json['g_email'] if 'g_email' in request.json else None
     # g_pid = request.json['g_pid'] if 'g_pid' in request.json else None
     cid = Course.get_course_by_queue_id(t.queue_id)
