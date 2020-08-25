@@ -108,7 +108,7 @@ def update_status():
     else:
         g = User.find_by_pid_email_fallback(g_pid, g_email)
         t.mark_accepted_by(g)
-        return jsonify({'status': 'accepted', 
+        return jsonify({'status': 'accepted',
                         'grader_name': g.first_name + ' ' + g.last_name,
                         'grader_pid': g.pid}), 200
 
