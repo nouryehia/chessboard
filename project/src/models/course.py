@@ -3,7 +3,7 @@ from typing import Optional
 from ...setup import db
 from enum import Enum
 # from .enrolled_course import EnrolledCourse
-from ..security.roles import CRole
+# from ..security.roles import CRole
 
 
 class Quarter(Enum):

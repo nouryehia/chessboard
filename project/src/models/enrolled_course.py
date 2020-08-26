@@ -77,9 +77,9 @@ class EnrolledCourse(db.Model):
         Returns:\n
         A string representation of the enrolled_course object.\n
         """
-        return "user_id: " + self.user_id + " role: " + self.role +\
-               " section_id " + self.section_id + " course_id " +\
-               self.course_id + " status: " + self.status
+        return "user_id: " + str(self.user_id) + " role: " + str(self.role) +\
+               " section_id " + str(self.section_id) + " course_id " +\
+               str(self.course_id) + " status: " + str(self.status)
 
     def __eq__(self, other):
         """
@@ -116,9 +116,8 @@ class EnrolledCourse(db.Model):
         ret['course_id'] = self.course_id
         ret['section_id'] = self.section_id
         ret['id'] = self.id
-        ret['status'] = self.status.value
-        ret['role'] = self.role.value
-        ret['last_login'] = self.last_login
+        ret['status'] = Status(self.status).name
+        ret['role'] = Role(self.role).name
         return ret
 
     def get_role(self) -> Role:
@@ -145,7 +144,7 @@ class EnrolledCourse(db.Model):
         Return:\n
         Whether the change is successed.
         """
-        self.role = role
+        self.role = role.value
         self.save()
         return True
 
@@ -157,7 +156,7 @@ class EnrolledCourse(db.Model):
         Return:\n
         Whetehr the change is successed.
         """
-        self.status = status
+        self.status = status.value
         self.save()
         return True
 
@@ -221,7 +220,7 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_user_in_course(user_id: int,
-                            course_id: int) -> List[EnrolledCourse]:
+                            course_id: int) -> EnrolledCourse:
         """
         Find a user which is in a specific course.\n
         Inputs:\n
@@ -241,7 +240,7 @@ class EnrolledCourse(db.Model):
 
     @staticmethod
     def find_all_user_in_course(course_id: int,
-                                role: Role = None) \
+                                role: List[Role] = None) \
             -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a course.\n
@@ -250,18 +249,19 @@ class EnrolledCourse(db.Model):
         course --> The Course object to look for.\n
         role --> (Optional) the role to look for.\n
         """
-        c = Course.get_course_by_id(course_id=course_id)
+        c = Course.get_course_by_id(course_id)
         if not c:
             return False, None
         if not role:
             return True, EnrolledCourse.query.filter_by(course_id=c.id).all()
         else:
-            return True, EnrolledCourse.query.filter_by(course_id=c.id,
-                                                        role=role).all()
+            return True, EnrolledCourse.\
+                query.filter_by(course_id=c.id).\
+                filter(EnrolledCourse.role.in_(role)).all()
 
     @staticmethod
-    def find_user_in_all_course(user_id: int,
-                                role: Role = None) \
+    def find_courses_user_in(user_id: int,
+                             role: List[Role] = None) \
             -> (bool, List[EnrolledCourse]):
         """
         Get a list of all the entries corresponding a user.\n
@@ -273,8 +273,9 @@ class EnrolledCourse(db.Model):
         if not role:
             return True, EnrolledCourse.query.filter_by(user_id=user_id).all()
         else:
-            return True, EnrolledCourse.query.filter_by(user_id=user_id,
-                                                        role=role).all()
+            return True, EnrolledCourse.query.\
+                filter_by(user_id=user_id).\
+                filter(EnrolledCourse.role.in_(role)).all()
 
     @staticmethod
     def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
