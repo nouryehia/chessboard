@@ -15,6 +15,45 @@ ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
 
+@ticket_api_bp.route('/add_ticket', methods=['POST'])
+@login_required
+def add_ticket():
+    """
+    Add a ticket to the queue.\n
+    For the is_private field, pass in 0 or 1 to indicate true of false.\n
+    For the tag_list, pass in comma seperated list of numbers in string.\n
+    @author YixuanZhou
+    """
+    queue_id = int(request.json['queue_id'])
+    student_id = int(request.json['student_id'])
+    title = request.json['title']
+    description = request.json['description']
+    room = request.json['room']
+    workstation = request.json['workstation']
+    is_private = int(request.json['is_private'])  # pass in 1 or 0
+    help_type = HelpType(int(request.json['help_type']))
+    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
+    tag_list = []
+    for tag in tag_list_raw:
+        tag_list.append(TicketTag(int(tag)).value)
+
+    # create a ticket
+    ticket = Ticket.add_ticket(queue_id=queue_id, student_id=student_id,
+                               title=title, description=description, room=room,
+                               workstation=workstation, is_private=is_private,
+                               help_type=help_type, tag_list=tag_list)
+
+    # submit a ticket event
+    TicketEvent.create_event(event_type=EventType.CREATED,
+                             ticket_id=ticket.id,
+                             message=description,
+                             is_private=is_private,
+                             user_id=student_id)
+
+    return (jsonify({'reason': 'ticket added to queue',
+                     'result': ticket.to_json()}), 200)
+
+
 @ticket_api_bp.route('/get_info', methods=['GET'])
 @login_required
 def get_info():
@@ -147,47 +186,6 @@ def grader_update():
     return jsonify({'status': status,
                     'grader_name': grader.first_name + ' ' + grader.last_name,
                     'grader_pid': grader.pid}), 200
-
-
-@ticket_api_bp.route('/add_ticket', methods=['POST'])
-@login_required
-def add_ticket():
-    """
-    Add a ticket to the queue.\n
-    For the is_private field, pass in 0 or 1 to indicate true of false.\n
-    For the tag_list, pass in comma seperated list of numbers in string.\n
-    @author YixuanZhou
-    """
-    queue_id = int(request.json['queue_id'])
-    student_id = int(request.json['student_id'])
-    title = request.json['title']
-    description = request.json['description']
-    room = request.json['room']
-    workstation = request.json['workstation']
-    is_private = int(request.json['is_private'])  # pass in 1 or 0
-    help_type = HelpType(int(request.json['help_type']))
-    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
-    tag_list = []
-    for tag in tag_list_raw:
-        tag_list.append(TicketTag(int(tag)).value)
-
-    # create a ticket
-    ticket = add_ticket(queue_id=queue_id, student_id=student_id, title=title,
-                        description=description, room=room,
-                        workstation=workstation, is_private=is_private,
-                        help_type=help_type,
-                        tag_list=tag_list)
-
-    # submit a ticket event
-    TicketEvent.create_event(event_type=EventType.CREATED,
-                             ticket_id=ticket.id,
-                             message=description,
-                             is_private=is_private,
-                             user_id=student_id,
-                             timestamp=TimeUtil.get_current_time())
-
-    return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json()}), 200)
 
 
 @ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])

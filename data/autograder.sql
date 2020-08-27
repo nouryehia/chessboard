@@ -184,7 +184,7 @@ CREATE TABLE "TicketEvent" (
 	"event_type" integer NOT NULL,
 	"ticket_id" bigserial NOT NULL,
 	"message" varchar(255) NOT NULL,
-	"is_private" bytea NOT NULL,
+	"is_private" BOOLEAN NOT NULL,
 	"user_id" bigserial NOT NULL,
 	"timestamp" TIMESTAMP NOT NULL,
 	CONSTRAINT "TicketEvent_pk" PRIMARY KEY ("id")
@@ -266,7 +266,7 @@ ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REF
 ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk0" FOREIGN KEY ("tutor_id") REFERENCES "Users"("id");
 
 ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
-ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
+ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("user_id") REFERENCES "EnrolledCourse"("id");
 
 ALTER TABLE "QueueCalendar" ADD CONSTRAINT "QueueCalendar_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
