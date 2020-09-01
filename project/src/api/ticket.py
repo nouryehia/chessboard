@@ -51,7 +51,7 @@ def add_ticket():
                              user_id=student_id)
 
     return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json()}), 200)
+                     'result': ticket.to_json(user_id=student_id)}), 200)
 
 
 @ticket_api_bp.route('/get_info', methods=['GET'])

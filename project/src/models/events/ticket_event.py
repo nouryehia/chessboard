@@ -134,12 +134,12 @@ class TicketEvent(db.Model):
         """
         ec = EnrolledCourse.find_user_in_course(user_id=user_id,
                                                 course_id=course_id)
-        origin_event = TicketEvent.query().filter_by(id=self.id).\
+        origin_event = TicketEvent.query.filter_by(id=self.id).\
             order_by(TicketEvent.timestamp.desc()).first()
 
         if not self.is_private:
             return True
-        elif ec.role > Role.STUDENT:
+        elif ec.role > Role.STUDENT.value:
             return True
         elif origin_event.user_id == user_id:
             return True
@@ -187,7 +187,7 @@ class TicketEvent(db.Model):
         Results:\n
         A dict of ticket events.
         """
-        event_list = TicketEvent.query().filter_by(id=ticket_id).\
+        event_list = TicketEvent.query.filter_by(id=ticket_id).\
             order_by(TicketEvent.timestamp.desc()).all()
         ret = {}
         i = 1
