@@ -287,20 +287,3 @@ def find_all_ticket_for_grader():
         i += 1
         ret['ticket' + str(i)] = t.to_json()
     return jsonify({'reason': 'Success', 'result': ret}), 200
-
-"""
-@queue_api_bp.route('/accept_ticket', methods=['POST'])
-@login_required
-def accept_ticket():
-    
-    User accept a ticket.
-    
-    q_id = request.json['queue_id']
-    g_id = request.json['grader_id']
-    t_id = request.json['ticket_id']
-    s, r = Queue.accept_ticket(queue_id=q_id, grader_id=g_id, ticket_id=t_id)
-    if s:
-        return jsonify({'reason': r}), 200
-    else:
-        return jsonify({'reason': r}), 400
-"""
