@@ -15,6 +15,45 @@ ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
 
+@ticket_api_bp.route('/add_ticket', methods=['POST'])
+@login_required
+def add_ticket():
+    """
+    Add a ticket to the queue.\n
+    For the is_private field, pass in 0 or 1 to indicate true of false.\n
+    For the tag_list, pass in comma seperated list of numbers in string.\n
+    @author YixuanZhou
+    """
+    queue_id = int(request.json['queue_id'])
+    student_id = int(request.json['student_id'])
+    title = request.json['title']
+    description = request.json['description']
+    room = request.json['room']
+    workstation = request.json['workstation']
+    is_private = int(request.json['is_private'])  # pass in 1 or 0
+    help_type = HelpType(int(request.json['help_type']))
+    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
+    tag_list = []
+    for tag in tag_list_raw:
+        tag_list.append(TicketTag(int(tag)).value)
+
+    # create a ticket
+    ticket = Ticket.add_ticket(queue_id=queue_id, student_id=student_id,
+                               title=title, description=description, room=room,
+                               workstation=workstation, is_private=is_private,
+                               help_type=help_type, tag_list=tag_list)
+
+    # submit a ticket event
+    TicketEvent.create_event(event_type=EventType.CREATED,
+                             ticket_id=ticket.id,
+                             message=description,
+                             is_private=is_private,
+                             user_id=student_id)
+
+    return (jsonify({'reason': 'ticket added to queue',
+                     'result': ticket.to_json(user_id=student_id)}), 200)
+
+
 @ticket_api_bp.route('/get_info', methods=['GET'])
 @login_required
 def get_info():
@@ -38,6 +77,19 @@ def get_user_permissions():
 
     return jsonify({'can_view': ticket.can_view_by(user_id),
                     'can_edit': ticket.can_edit_by(user_id)}), 200
+
+
+@ticket_api_bp.route('/get_status', methods=['GET'])
+@login_required
+def get_status():
+    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+
+    statuses = {Status.PENDING.value: 'pending',
+                Status.ACCEPTED.value: 'accepted',
+                Status.RESOLVED.value: 'resolved',
+                Status.CANCELED.value: 'canceled'}
+
+    return jsonify({'status': statuses[t.status]}), 200
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
@@ -86,142 +138,54 @@ def student_update():
     return jsonify({'reason': 'ticket could not be updated'}), 400
 
 
-@ticket_api_bp.route('/get_status', methods=['GET'])
-@login_required
-def get_status():
-    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-
-    statuses = {Status.PENDING.value: 'pending',
-                Status.ACCEPTED.value: 'accepted',
-                Status.RESOLVED.value: 'resolved',
-                Status.CANCELED.value: 'canceled'}
-
-    return jsonify({'status': statuses[t.status]}), 200
-
-
 @ticket_api_bp.route('/grader_update', methods=['POST'])
 @login_required
 def grader_update():
     """
     The api function used for graders to perfrom actions to ticket.\n
     Expect status for only accepted, defered, canceled, resolved.
-    @author: YixuanZhou
+    @author YixuanZhou
+    @author nouryehia (updates)
     """
-    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
     # message = request.json['message']
-    # g_email = request.json['g_email'] if 'g_email' in request.json else None
-    # g_pid = request.json['g_pid'] if 'g_pid' in request.json else None
-    cid = Course.get_course_by_queue_id(t.queue_id)
 
-    # Checking for user permission
-    cu = EC.find_user_in_course(user_id=current_user.user_id, course_id=cid)
-    if cu.get_role() == Role.STUDENT.value and \
-       current_user.user_id != t.student_id:
-        return jsonify({'reason': "no permission"}), 400
+    course_id = Course.get_course_by_queue_id(ticket.queue_id)
+
+    user = EC.find_user_in_course(user_id=current_user.user_id,
+                                  course_id=course_id)
+
+    if user.get_role() == Role.STUDENT.value and \
+       current_user.user_id != ticket.student_id:
+        return jsonify({'reason': "User does not have permissions"}), 400
+
+    actions = {'resolved': ticket.mark_resolved,
+               'canceled': ticket.mark_canceled,
+               'defered': ticket.mark_pending}
+
+    event_types = {'accepted': EventType.ACCEPTED,
+                   'resolved': EventType.RESOLVED,
+                   'canceled': EventType.CANCELED,
+                   'defered': EventType.DEFERRED}
+
+    grader = User.get_user_by_id(current_user.user_id)
 
     if status == 'accepted':
-        g = User.get_user_by_id(current_user.user_id)
-        t.mark_accepted_by(g)
-        TicketEvent.create_event(event_type=EventType.ACCEPTED,
-                                 ticket_id=t.id,
-                                 message="accepted",
-                                 is_private=t.is_private,
-                                 user_id=current_user.user_id,
-                                 timestamp=TimeUtil.get_current_time())
-        return jsonify({'status': 'accepted',
-                        'grader_name': g.first_name + ' ' + g.last_name,
-                        'grader_pid': g.pid}), 200
+        ticket.mark_accepted_by(grader)
+    else:
+        actions[status]()
 
-    elif status == 'canceled':
-        g = User.get_user_by_id(current_user.user_id)
-        t.mark_accepted_by(g)
-        TicketEvent.create_event(event_type=EventType.CANCELED,
-                                 ticket_id=t.id,
-                                 message="accepted",
-                                 is_private=t.is_private,
-                                 user_id=current_user.user_id,
-                                 timestamp=TimeUtil.get_current_time())
-        return jsonify({'status': 'canceled',
-                        'grader_name': g.first_name + ' ' + g.last_name,
-                        'grader_pid': g.pid}), 200
-
-    # We use this to put tickets back to the queue
-    elif status == 'defered':
-        t.mark_pending()
-        TicketEvent.create_event(event_type=EventType.DEFERRED,
-                                 ticket_id=t.id,
-                                 message="defered",
-                                 is_private=t.is_private,
-                                 user_id=current_user.user_id,
-                                 timestamp=TimeUtil.get_current_time())
-        return jsonify({'status': 'defered'}), 200
-
-    elif status == 'resolved':
-        g = User.get_user_by_id(current_user.user_id)
-        t.mark_accepted_by(g)
-        TicketEvent.create_event(event_type=EventType.RESOLVED,
-                                 ticket_id=t.id,
-                                 message="resolved",
-                                 is_private=t.is_private,
-                                 user_id=current_user.user_id,
-                                 timestamp=TimeUtil.get_current_time())
-        return jsonify({'status': 'resolved',
-                        'grader_name': g.first_name + ' ' + g.last_name,
-                        'grader_pid': g.pid}), 200
-
-    actions = {'pending': t.mark_pending,
-               'resolved': t.mark_resolved,
-               'canceled': t.mark_canceled}
-
-    statuses = {Status.PENDING.value: 'pending',
-                Status.ACCEPTED.value: 'accepted',
-                Status.RESOLVED.value: 'resolved',
-                Status.CANCELED.value: 'canceled'}
-
-    actions[status]()
-
-    return jsonify({'status': statuses[t.status]}), 200
-
-
-@ticket_api_bp.route('/add_ticket', methods=['POST'])
-@login_required
-def add_ticket():
-    """
-    Add a ticket to the queue.\n
-    For the is_private field, pass in 0 or 1 to indicate true of false.\n
-    For the tag_list, pass in comma seperated list of numbers in string.\n
-    """
-    queue_id = int(request.json['queue_id'])
-    student_id = int(request.json['student_id'])
-    title = request.json['title']
-    description = request.json['description']
-    room = request.json['room']
-    workstation = request.json['workstation']
-    is_private = int(request.json['is_private'])  # pass in 1 or 0
-    help_type = HelpType(int(request.json['help_type']))
-    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
-    tag_list = []
-    for tag in tag_list_raw:
-        tag_list.append(TicketTag(int(tag)).value)
-
-    # create a ticket
-    ticket = add_ticket(queue_id=queue_id, student_id=student_id, title=title,
-                        description=description, room=room,
-                        workstation=workstation, is_private=is_private,
-                        help_type=help_type,
-                        tag_list=tag_list)
-
-    # submit a ticket event
-    TicketEvent.create_event(event_type=EventType.CREATED,
+    TicketEvent.create_event(event_type=event_types[status],
                              ticket_id=ticket.id,
-                             message=description,
-                             is_private=is_private,
-                             user_id=student_id,
+                             message=status,
+                             is_private=ticket.is_private,
+                             user_id=current_user.user_id,
                              timestamp=TimeUtil.get_current_time())
 
-    return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json()}), 200)
+    return jsonify({'status': status,
+                    'grader_name': grader.first_name + ' ' + grader.last_name,
+                    'grader_pid': grader.pid}), 200
 
 
 @ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])

@@ -44,11 +44,11 @@ class TicketEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     # need to change a name in db, since type is a presereved word in python
     event_type = db.Column(db.Integer, nullable=False)
-    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'),
+    ticket_id = db.Column(db.Integer, db.ForeignKey('Ticket.id'),
                           nullable=False)
     message = db.Column(db.String(255), nullable=True)
     is_private = db.Column(db.Boolean, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+    user_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
                         nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
@@ -134,12 +134,12 @@ class TicketEvent(db.Model):
         """
         ec = EnrolledCourse.find_user_in_course(user_id=user_id,
                                                 course_id=course_id)
-        origin_event = TicketEvent.query().filter_by(id=self.id).\
+        origin_event = TicketEvent.query.filter_by(id=self.id).\
             order_by(TicketEvent.timestamp.desc()).first()
 
         if not self.is_private:
             return True
-        elif ec.role > Role.STUDENT:
+        elif ec.role > Role.STUDENT.value:
             return True
         elif origin_event.user_id == user_id:
             return True
@@ -152,7 +152,7 @@ class TicketEvent(db.Model):
         Inputs:\n
         te --> the ticket event object created.\n
         """
-        db.session.add()
+        db.session.add(self)
         db.session.commit()
 
     # Static add method
@@ -187,7 +187,7 @@ class TicketEvent(db.Model):
         Results:\n
         A dict of ticket events.
         """
-        event_list = TicketEvent.query().filter_by(id=ticket_id).\
+        event_list = TicketEvent.query.filter_by(id=ticket_id).\
             order_by(TicketEvent.timestamp.desc()).all()
         ret = {}
         i = 1
