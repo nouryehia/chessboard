@@ -17,7 +17,7 @@ from .src.api.section import section_api_bp as sapi
 app.register_blueprint(uapi, url_prefix="/api/users")
 app.register_blueprint(tapi, url_prefix="/api/ticket")
 app.register_blueprint(aapi, url_prefix="/api/assignment")
-app.register_blueprint(eapi, url_prefix="/api/enroll_course")
+app.register_blueprint(eapi, url_prefix="/api/enrolled_course")
 app.register_blueprint(qapi, url_prefix="/api/queue")
 app.register_blueprint(nfapi, url_prefix="/api/newsfeeds")
 app.register_blueprint(capi, url_prefix="/api/course")

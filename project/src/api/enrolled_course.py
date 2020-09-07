@@ -29,12 +29,11 @@ def enroll_user():
     When the role field of the request is empty, the default would be student.
     @authoer YixuanZ
     """
-    user_id = request.json['user_id']
-    role = Role(request.json['role']).value if 'role' in request.json \
+    user_id = int(request.json['user_id'])
+    role = Role[request.json['role']].value if 'role' in request.json \
         else Role.STUDENT.value
-    section_id = request.json['section_id']
-    course_id = request.json['course_id']
-
+    section_id = int(request.json['section_id'])
+    course_id = int(request.json['course_id'])
     # Check the authroity of the operation
     """
     if not is_instructor_of_course(course_id)
@@ -60,9 +59,9 @@ def change_role():
     if not is_instructor_of_course(course_id)
         return jsonify({'reason': 'Method is forbiden from you'}), 400
     """
-    uid = request.json['user_id']
-    cid = request.json['course_id']
-    role = Role(request.json['role'])
+    uid = int(request.json['user_id'])
+    cid = int(request.json['course_id'])
+    role = Role[request.json['role']].value
     ec = EnrolledCourse.find_user_in_course(user_id=uid, course_id=cid)
     if not ec:
         return jsonify({'reason': "User not enrolled"}), 400
@@ -76,8 +75,8 @@ def delete_user_from_course():
     """
     The route to remote an user from a particular course.
     """
-    user_id = request.json['user_id']
-    course_id = request.json['course_id']
+    user_id = int(request.json['user_id'])
+    course_id = int(request.json['course_id'])
     # Check the authroity of the operation
     """
     if not is_instructor_of_course(course_id):
@@ -96,8 +95,8 @@ def get_user_of_course():
     """
     Route to get a user from a specific course.
     """
-    user_id = request.json['user_id']
-    course_id = request.json['course_id']
+    user_id = int(request.json['user_id'])
+    course_id = int(request.json['course_id'])
     ec_info = EnrolledCourse.\
         find_user_in_course(user_id=user_id,
                             course_id=course_id).to_json()
@@ -115,13 +114,13 @@ def get_all_user_in_course():
     The roles is optional, when passing in,
     pass in the string representation of ; seperated int values.
     """
-    course_id = request.json['course_id']
+    course_id = int(request.json['course_id'])
     rs = request.json['roles'].split(";") if "roles" in request.json else None
     roles = None
     if rs:
         roles = []
         for r in rs:
-            roles.append(Role(int(r)).value)
+            roles.append(Role[r].value)
 
     status, ec_list = EnrolledCourse.\
         find_all_user_in_course(course_id=course_id, role=roles)
@@ -146,8 +145,8 @@ def get_user_in_section():
     """
     The route to remote an user from a particular course.
     """
-    sid = request.json['section_id']
-    cid = request.json['course_id']
+    sid = int(request.json['section_id'])
+    cid = int(request.json['course_id'])
     ecs = EnrolledCourse.find_all_user_in_section(course_id=cid,
                                                   section_id=sid)
     i = 0
@@ -171,7 +170,7 @@ def get_courses_user_in():
     There can be a role being specified, if not,
     all the courses will be returned regardless of the role.
     """
-    user_id = request.json['user_id']
+    user_id = int(request.json['user_id'])
     rs = request.json['roles'].split(";") if "roles" in request.json else None
     roles = None
     if rs:
@@ -179,10 +178,8 @@ def get_courses_user_in():
         for r in rs:
             roles.append(Role(int(r)).value)
 
-    s, r = EnrolledCourse.find_courses_user_in(user_id=user_id,
-                                               role=roles)
-    if not s:
-        return jsonify({'reason': 'Failed'}), 400
+    r = EnrolledCourse.find_courses_user_in(user_id=user_id,
+                                            role=roles)
     i = 0
     ret = {}
     user = User.get_user_by_id(user_id)
@@ -200,5 +197,5 @@ def get_courses_user_in():
 @enrolled_course_api_bp.route('/find_active_tutor_for', methods=['GET'])
 @login_required
 def find_active_tutor_for():
-    queue_id = request.json['queue_id']
+    queue_id = int(request.json['queue_id'])
     return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))

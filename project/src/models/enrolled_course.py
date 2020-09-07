@@ -262,7 +262,7 @@ class EnrolledCourse(db.Model):
     @staticmethod
     def find_courses_user_in(user_id: int,
                              role: List[Role] = None) \
-            -> (bool, List[EnrolledCourse]):
+            -> List[EnrolledCourse]:
         """
         Get a list of all the entries corresponding a user.\n
         There can be extra parameter provided which is role.\n
@@ -271,9 +271,9 @@ class EnrolledCourse(db.Model):
         role --> (Optional) the role to look for.\n
         """
         if not role:
-            return True, EnrolledCourse.query.filter_by(user_id=user_id).all()
+            return EnrolledCourse.query.filter_by(user_id=user_id).all()
         else:
-            return True, EnrolledCourse.query.\
+            return EnrolledCourse.query.\
                 filter_by(user_id=user_id).\
                 filter(EnrolledCourse.role.in_(role)).all()
 
