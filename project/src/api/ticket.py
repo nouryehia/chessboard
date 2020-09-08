@@ -21,7 +21,7 @@ def add_ticket():
     """
     Add a ticket to the queue.\n
     For the is_private field, pass in 0 or 1 to indicate true of false.\n
-    For the tag_list, pass in comma seperated list of numbers in string.\n
+    For the tag_list, pass in semi-colon seperated list of numbers in string.\n
     @author YixuanZhou
     """
     queue_id = int(request.json['queue_id'])
@@ -61,8 +61,10 @@ def get_info():
     Route used to get a ticket's info.\n
     @author nouryehia
     '''
+    user_id = int(request.json['user_id'])
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-    return jsonify(ticket.to_json()), 200
+
+    return jsonify(ticket.to_json(user_id=user_id)), 200
 
 
 @ticket_api_bp.route('/get_user_permissions', methods=['GET'])
@@ -73,7 +75,7 @@ def get_user_permissions():
     @author nouryehia
     '''
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-    user_id = int(request.json['ticket_id'])
+    user_id = int(request.json['user_id'])
 
     return jsonify({'can_view': ticket.can_view_by(user_id),
                     'can_edit': ticket.can_edit_by(user_id)}), 200
