@@ -1,5 +1,5 @@
 from flask_cors import CORS
-from flask_login import #login_required
+from flask_login import login_required
 from flask import Blueprint, request, jsonify
 
 from ..models.assignment import Assignment

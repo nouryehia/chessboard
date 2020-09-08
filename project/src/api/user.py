@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import #login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user
 
 
 from ..models.user import User

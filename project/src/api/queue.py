@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import #login_required, current_user
+from flask_login import login_required, current_user
 
 from ..models.queue import Queue, Status
 from ..models.enrolled_course import EnrolledCourse, Role
