@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required, current_user
+from flask_login import #login_required, current_user
 
 from ..models.queue import Queue, Status
 from ..models.enrolled_course import EnrolledCourse, Role
@@ -41,7 +41,7 @@ def user_own_queue(queue_id: int, course_id: int) -> bool:
 
 
 @queue_api_bp.route('/find_queue', methods=['GET'])
-@login_required
+#@login_required
 def find_queue():
     """
     Return the queue object corresponding to an id.\n
@@ -65,7 +65,7 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-@login_required
+#@login_required
 # @role_required(role=URole.ADMIN.value)
 def create_queue():
     """
@@ -92,7 +92,7 @@ def create_queue():
 
 
 @queue_api_bp.route('/login_grader', methods=['POST'])
-@login_required
+#@login_required
 def login_grader():
     """
     Login a certain grader.
@@ -110,7 +110,7 @@ def login_grader():
 
 
 @queue_api_bp.route('/logout_grader', methods=['POST'])
-@login_required
+#@login_required
 def logout_grader():
     """
     Logout a certain grader
@@ -128,7 +128,7 @@ def logout_grader():
 
 
 @queue_api_bp.route('/find_queue_for_user', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_for_user():
     """
     Find all the queues that this user is in.
@@ -148,7 +148,7 @@ def find_queue_for_user():
 
 
 @queue_api_bp.route('/lock_queue', methods=['POST'])
-@login_required
+#@login_required
 def lock_queue():
     """
     Lock the queue.
@@ -163,7 +163,7 @@ def lock_queue():
 
 
 @queue_api_bp.route('/find_queue_for_course', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_for_course():
     """
     Find the queue for a given course.
@@ -177,7 +177,7 @@ def find_queue_for_course():
 
 
 @queue_api_bp.route('/create_queue_calendar', methods=['POST'])
-@login_required
+#@login_required
 def create_queue_calendar():
     """
     Create the queue_calendar for the queue.
@@ -192,7 +192,7 @@ def create_queue_calendar():
 
 
 @queue_api_bp.route('/find_queue_calendar', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_calendar():
     """
     Find the active queue_clandars
@@ -211,7 +211,7 @@ def find_queue_calendar():
 
 
 @queue_api_bp.route('/find_all_tickets_for_queue', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_queue():
     """
     Find all the tickest for queue.
@@ -242,7 +242,7 @@ def find_all_ticket_for_queue():
 
 
 @queue_api_bp.route('/find_all_tickets_for_student', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_student():
     """
     Find all the tickest for queue.
@@ -266,7 +266,7 @@ def find_all_ticket_for_student():
 
 
 @queue_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_grader():
     """
     Find all the tickest for queue.

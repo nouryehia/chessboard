@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required
+from flask_login import #login_required
 
 from ..models.section import Section
 
@@ -9,7 +9,7 @@ CORS(section_api_bp, supports_credentials=True)
 
 
 @section_api_bp.route('/create_section', methods=['POST'])
-@login_required
+#@login_required
 def create_section():
     """
     Route used to create a section for a course.\n

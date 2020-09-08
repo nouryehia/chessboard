@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required, login_user, logout_user
+from flask_login import #login_required, login_user, logout_user
 
 
 from ..models.user import User
@@ -35,7 +35,7 @@ def login():
 
 
 @user_api_bp.route('/logout', methods=['POST'])
-@login_required
+#@login_required
 def logout():
     '''
     Route used to log out a user. Ends their session.\n
@@ -46,7 +46,7 @@ def logout():
 
 
 @user_api_bp.route('/reset_password', methods=['PUT'])
-@login_required
+#@login_required
 def reset_password():
     email = request.json['email'] if 'email' in request.json else None
     passwd = request.json['password'] if 'password' in request.json else None
@@ -136,7 +136,7 @@ def create_user():
 
 
 @user_api_bp.route('/get_all_users', methods=['GET'])
-@login_required
+#@login_required
 def get_all():
     '''
     Route used to get all users in the DB. Probably won't be used
@@ -150,7 +150,7 @@ def get_all():
 
 
 @user_api_bp.route('/get_user', methods=['GET'])
-@login_required
+#@login_required
 def get():
     '''
     Route used to get a particular user. We try to find by PID first,

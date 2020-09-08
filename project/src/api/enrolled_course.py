@@ -1,5 +1,5 @@
 from flask_cors import CORS
-from flask_login import login_required, current_user
+from flask_login import #login_required, current_user
 from flask import Blueprint, request, jsonify
 from ..models.user import User
 
@@ -22,7 +22,7 @@ def is_instructor_of_course(course_id: int) -> bool:
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
-@login_required
+#@login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
@@ -49,7 +49,7 @@ def enroll_user():
 
 
 @enrolled_course_api_bp.route('/change_role', methods=['POST'])
-@login_required
+#@login_required
 def change_role():
     """
     Change the role of the enrolled user in a course.
@@ -70,7 +70,7 @@ def change_role():
 
 
 @enrolled_course_api_bp.route('/delete_user_from_course', methods=['POST'])
-@login_required
+#@login_required
 def delete_user_from_course():
     """
     The route to remote an user from a particular course.
@@ -90,7 +90,7 @@ def delete_user_from_course():
 
 
 @enrolled_course_api_bp.route('/get_user_in_course', methods=['GET'])
-@login_required
+#@login_required
 def get_user_of_course():
     """
     Route to get a user from a specific course.
@@ -107,7 +107,7 @@ def get_user_of_course():
 
 
 @enrolled_course_api_bp.route('/get_all_user_in_course', methods=['GET'])
-@login_required
+#@login_required
 def get_all_user_in_course():
     """
     Route to get all the users of that is in a given course.\n
@@ -125,7 +125,7 @@ def get_all_user_in_course():
     status, ec_list = EnrolledCourse.\
         find_all_user_in_course(course_id=course_id, role=roles)
     if status:
-        ret = {}
+        ret = []
         i = 0
         for ec in ec_list:
             i += 1
@@ -133,14 +133,14 @@ def get_all_user_in_course():
             scr = {}
             scr['user_info'] = user.to_json()
             scr['enrolled_user_info'] = ec.to_json()
-            ret['user' + str(i)] = scr
+            ret.append(scr)
         return jsonify({'reason': 'success', 'result': ret}), 200
     else:
         return jsonify({'reason': 'course not found'}), 400
 
 
 @enrolled_course_api_bp.route('/get_user_in_section', methods=['GET'])
-@login_required
+#@login_required
 def get_user_in_section():
     """
     The route to remote an user from a particular course.
@@ -150,20 +150,20 @@ def get_user_in_section():
     ecs = EnrolledCourse.find_all_user_in_section(course_id=cid,
                                                   section_id=sid)
     i = 0
-    ret = {}
+    ret = []
     for ec in ecs:
         user = User.get_user_by_id(ec.user_id)
         i += 1
         scr = {}
         scr['user_info'] = user.to_json()
         scr['enrolled_user_info'] = ec.to_json()
-        ret['User' + str(i)] = scr
+        ret.append(scr)
     return jsonify({'reason': 'success', 'result': ret}), 200
 
 
 @enrolled_course_api_bp.route('/get_courses_user_in',
                               methods=['GET'])
-@login_required
+#@login_required
 def get_courses_user_in():
     """
     Route to get all the courses that a user is in.
@@ -184,18 +184,18 @@ def get_courses_user_in():
     ret = {}
     user = User.get_user_by_id(user_id)
     ret['user_info'] = user.to_json()
-    courses = {}
+    courses = []
     for ec in r:
         i += 1
         scr = {}
         scr['enrolled_user_info'] = ec.to_json()
-        courses['Course' + str(i)] = scr
+        courses.append(scr)
     ret['courses'] = courses
     return jsonify({'reason': 'success', 'result': ret}), 200
 
 
 @enrolled_course_api_bp.route('/find_active_tutor_for', methods=['GET'])
-@login_required
+#@login_required
 def find_active_tutor_for():
     queue_id = int(request.json['queue_id'])
     return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))

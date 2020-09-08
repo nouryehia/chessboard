@@ -1,5 +1,5 @@
 from flask_cors import CORS
-from flask_login import login_required, current_user
+from flask_login import #login_required, current_user
 from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag, Status
@@ -16,7 +16,7 @@ CORS(ticket_api_bp, supports_credentials=True)
 
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
-@login_required
+#@login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
@@ -55,7 +55,7 @@ def add_ticket():
 
 
 @ticket_api_bp.route('/get_info', methods=['GET'])
-@login_required
+#@login_required
 def get_info():
     '''
     Route used to get a ticket's info.\n
@@ -68,7 +68,7 @@ def get_info():
 
 
 @ticket_api_bp.route('/get_user_permissions', methods=['GET'])
-@login_required
+#@login_required
 def get_user_permissions():
     '''
     Route used to determine if a user can view or edit a ticket.\n
@@ -82,7 +82,7 @@ def get_user_permissions():
 
 
 @ticket_api_bp.route('/get_status', methods=['GET'])
-@login_required
+#@login_required
 def get_status():
     t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
 
@@ -95,7 +95,7 @@ def get_status():
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
-@login_required
+#@login_required
 def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
@@ -141,7 +141,7 @@ def student_update():
 
 
 @ticket_api_bp.route('/grader_update', methods=['POST'])
-@login_required
+#@login_required
 def grader_update():
     """
     The api function used for graders to perfrom actions to ticket.\n
@@ -191,7 +191,7 @@ def grader_update():
 
 
 @ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])
-@login_required
+#@login_required
 def defer_accepted_tickets_for_grader():
     '''
     Route used to return tickets accepted by a grader to the queue.\n
@@ -207,7 +207,7 @@ def defer_accepted_tickets_for_grader():
 
 
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
-@login_required
+#@login_required
 def find_all_tickets():
     '''
     Route used to find tickets on the queue (can be catgorized as pending or\n
@@ -234,7 +234,7 @@ def find_all_tickets():
 
 
 @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-@login_required
+#@login_required
 def find_tickets_in_range():
     '''
     Route used to find tickets in a specific range of time. A grader can be\n
@@ -257,7 +257,7 @@ def find_tickets_in_range():
 
 
 @ticket_api_bp.route('/find_all_tickets_by_student', methods=['GET'])
-@login_required
+#@login_required
 def find_all_tickets_by_student():
     '''
     Route used to find tickets on the queue by a student (can be catgorized\n
@@ -287,7 +287,7 @@ def find_all_tickets_by_student():
 
 
 @ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-@login_required
+#@login_required
 def find_all_tickets_for_grader():
     '''
     Route used to find tickets on a queue handled by a grader.\n
@@ -304,7 +304,7 @@ def find_all_tickets_for_grader():
 
 
 @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-@login_required
+#@login_required
 def find_resolved_tickets_in():
     '''
     Route used to resolved tickets on a queue.\n
