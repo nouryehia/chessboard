@@ -20,8 +20,8 @@ Route to enroll a user in to a specific section of a course.
 - **role (optional): string** --> The role of the enrolled user in the course, default is set to be student. Candidates: ROOT, ADMIN, INSTRUCTOR, GRADER, STUDENT.
 
 #### *Responses*
-- **{'reason': 'user enrolled}**, 200 when the request success.
-- **{'reason': 'user existed}**, 400 when the request failed due to a user is already enrolled.
+- **{'reason': 'user enrolled}, 200** when the request success.
+- **{'reason': 'user existed}, 400** when the request failed due to a user is already enrolled.
 
 
 ### **change_role (POST)**
@@ -34,7 +34,8 @@ Route to change the role of an already enrolled user in a specific course.
 - **role: string** --> The role of the enrolled user in the course. Candidates: ROOT, ADMIN, INSTRUCTOR, GRADER, STUDENT.
 
 #### *Responses*
-- **{'reason': 'Role changed'}, 200 when 
+- **{'reason': 'Role changed'}, 200** when role is successfully changed.
+- **{'reason': ' User not enrolled'}, 400** when the user is not enrolled in the course.
 
 
 ### **delete_user_from_course (POST)**
@@ -45,6 +46,10 @@ HARD delete a user from a course that one enrolled.
 - **user_id: int** --> The id of the user to be deleted.
 - **course_id: int** --> The course_id of the course to delete the user from.
 
+#### *Responses*
+- **{'reason': 'user deleted'}, 200** when the user is successfully deleted.
+- **{'reason': 'user not found'}, 400** when the user is not found in the course.
+
 ### **get_user_of_course (GET) **
 #### *Description*
 Get the enrolled_course information of a user in a course.
@@ -52,6 +57,29 @@ Get the enrolled_course information of a user in a course.
 #### *Parameters*
 - **user_id: int** --> The id of the user to be searched.
 - **course_id: int** --> The course_id of the course to be searched.
+
+#### *Responses*
+- **{'reason': 'success', 'result': ret}, 200** where **ret** consists of the following:
+```python
+ret = {
+    'user_info': {
+        'fname': 'The first name of the user'
+        'lname': 'The last name of the user'
+        'email': 'The email of the user'
+        'id': 'The id of the user'
+        'pid': 'The pid of the user'
+        'last_login': 'Time stamp of the last time this user logged in'
+    }
+    'enrolled_course_info': {
+        'user_id': 'The user_id of the enrolled_course entry'
+        'course_id': 'The course id of this enrolled_course entry'
+        'section_id': 'The section id of this enroleld_course entry'
+        'id': 'The id of this enrolled_course entry'
+        'status': 'The status of this enrolled_course entry (for tutor avalibilities)'
+        'role' : 'The role of this enrolled_course entry'
+    }
+}
+```
 
 ### **get_all_user_in_course (GET)**
 #### *Description*
@@ -61,6 +89,30 @@ Get all the users in a given course (with certain role).
 - **course_id: int** --> The course_id of the course to search for.
 - **roles: string** --> A colon seperated list of strings of all the roles to search for. Candidates: ROOT, ADMIN, INSTRUCTOR, GRADER, STUDENT.
 
+#### *Responses*
+- **{'reason': 'success', 'result': ret}, 200** where **ret** is
+```python
+ret = [{
+    'user_info': {
+        'fname': 'The first name of the user'
+        'lname': 'The last name of the user'
+        'email': 'The email of the user'
+        'id': 'The id of the user'
+        'pid': 'The pid of the user'
+        'last_login': 'Time stamp of the last time this user logged in'
+    }
+    'enrolled_user_info': {
+        'user_id': 'The user_id of the enrolled_course entry'
+        'course_id': 'The course id of this enrolled_course entry'
+        'section_id': 'The section id of this enroleld_course entry'
+        'id': 'The id of this enrolled_course entry'
+        'status': 'The status of this enrolled_course entry (for tutor avalibilities)'
+        'role' : 'The role of this enrolled_course entry'
+    }
+}]
+```
+- **{'reason': 'course not found'}, 400** when failed.
+
 ### **get_user_in_section (GET)**
 #### *Description*
 Get all the users in a given section.
@@ -68,6 +120,30 @@ Get all the users in a given section.
 #### *Parameters*
 - **course_id: int** --> The course_id of the course to search for.
 - **section_id: int** --> The section_id of the section to search for.
+
+#### *Responses*
+- **{'reason': 'success', 'result': ret}, 200** where **ret** is
+```python
+ret = [{
+    'user_info': {
+        'fname': 'The first name of the user'
+        'lname': 'The last name of the user'
+        'email': 'The email of the user'
+        'id': 'The id of the user'
+        'pid': 'The pid of the user'
+        'last_login': 'Time stamp of the last time this user logged in'
+    }
+    'enrolled_user_info': {
+        'user_id': 'The user_id of the enrolled_course entry'
+        'course_id': 'The course id of this enrolled_course entry'
+        'section_id': 'The section id of this enroleld_course entry'
+        'id': 'The id of this enrolled_course entry'
+        'status': 'The status of this enrolled_course entry (for tutor avalibilities)'
+        'role' : 'The role of this enrolled_course entry'
+    }
+}]
+```
+
 
 ### **get_courses_user_in (GET)**
 #### *Description*
@@ -77,6 +153,29 @@ Get all the courses a user is in.
 - **user_id: int** --> The id of the user to saerch for.
 - **roles: string** --> A colon seperated list of strings of all the roles to search for. Candidates: ROOT, ADMIN, INSTRUCTOR, GRADER, STUDENT.
 
+#### *Responses*
+- **'reason': 'success', 'result': ret}), 200** where **ret** is
+```python
+ret = {
+    'user_info': {
+        'fname': 'The first name of the user'
+        'lname': 'The last name of the user'
+        'email': 'The email of the user'
+        'id': 'The id of the user'
+        'pid': 'The pid of the user'
+        'last_login': 'Time stamp of the last time this user logged in'
+    }
+    'courses': [{
+        'user_id': 'The user_id of the enrolled_course entry'
+        'course_id': 'The course id of this enrolled_course entry'
+        'section_id': 'The section id of this enroleld_course entry'
+        'id': 'The id of this enrolled_course entry'
+        'status': 'The status of this enrolled_course entry (for tutor avalibilities)'
+        'role' : 'The role of this enrolled_course entry'
+    }]
+}
+
+```
 
 ### **find_active_tutor_for (GET)**
 #### *Description*
