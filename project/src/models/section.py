@@ -26,7 +26,7 @@ class Section (db.Model):
     __tablename__ = 'Section'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     section_name = db.Column(db.String(255), nullable=False)
-    section_id = db.Column(db.Integer, nullable=False)
+    section_id = db.Column(db.Integer, nullable=False, unique=True)
     course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
 

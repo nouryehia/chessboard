@@ -157,7 +157,7 @@ CREATE TABLE "EnrolledCourse" (
 CREATE TABLE "Section" (
 	"id" serial NOT NULL,
 	"section_name" varchar(255) NOT NULL,
-	"section_id" bigserial NOT NULL,
+	"section_id" bigserial NOT NULL UNIQUE,
 	"course_id" bigserial NOT NULL,
 	CONSTRAINT "Section_pk" PRIMARY KEY ("id")
 ) WITH (
@@ -274,3 +274,8 @@ ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk0" FOREIGN KEY ("owner
 ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
 ALTER TABLE "TicketFeedback" ADD CONSTRAINT "TicketFeedback_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
+
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
