@@ -170,8 +170,8 @@ def get_courses_user_in():
     There can be a role being specified, if not,
     all the courses will be returned regardless of the role.
     """
-    user_id = int(request.json['user_id'])
-    rs = request.json['roles'].split(";") if "roles" in request.json else None
+    user_id = int(request.args.get('user_id'))
+    rs = request.args.get('roles')
     roles = None
     if rs:
         roles = []
