@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, List
+from typing import Dict, List, Optional
 from ...setup import db
 from enum import Enum
 # from .enrolled_course import EnrolledCourse
@@ -62,6 +62,29 @@ class Course(db.Model):
         The constructor of the queue calendar object.\n
         """
         super(Course, self).__init__(**kwargs)
+
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a course object and returns it in dictionary
+        form. Used on the API layer.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['id'] = self.id
+        ret['description'] = self.description
+        ret['name'] = self.name
+        ret['quarter'] = self.quarter
+        ret['short_name'] = self.short_name
+        ret['url'] = self.url
+        ret['year'] = self.year
+        ret['active'] = self.active
+        ret['queue_enabled'] = self.queue_enabled
+        ret['cse'] = self.cse
+        ret['lock_button'] = self.lock_button
+        ret['queue_id'] = self.queue_id
+        ret['is_deleted'] = self.is_deleted
+        return ret
 
     def save(self):
         """
@@ -135,11 +158,11 @@ class Course(db.Model):
     '''
 
     @staticmethod
-    def get_course_by_id(couse_id) -> Optional[Course]:
+    def get_course_by_id(course_id) -> Optional[Course]:
         """
         Returns a Course from a course id
         """
-        return Course.query.filter_by(id=couse_id).first()
+        return Course.query.filter_by(id=course_id).first()
 
     @staticmethod
     def get_course_by_queue_id(q_id) -> Optional[Course]:
@@ -227,7 +250,6 @@ class Course(db.Model):
             return True
         else:
             return False
-
 
     @staticmethod
     def get_all_courses(quarter: int = None, year: int = None) -> List[Course]:
