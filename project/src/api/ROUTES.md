@@ -7,6 +7,57 @@
 
 # Doc for API Routes and Usages
 
+## ***Course***
+(Prefix = course)
+### **create_course (POST)**
+#### *Description*
+Route to create a course.
+
+#### *Parameters*
+- **description: str** --> The description for the course.
+- **name: str** --> The name for the course to be created.
+- **quarter: str** --> The quarter of the course. Candidates: FALL, WINTER, SPRING, SS1, SS2
+- **short_name: str** --> The short name of the course.
+- **url: str** --> The url of the course.
+- **year: int** --> The year of the course.
+- **active: bool** --> Whether the course is active or not.
+- **queue_enabled: bool** --> Whether the course has a queue enabled.
+- **cse: bool** --> Whether the course is in cse department.
+- **queue_id: int** --> The id of the queue belongs to the course.
+
+#### *Responses*
+- **{'reason': 'course created'}, 200** if the course is successfully created.
+- **{'reason': 'course existed'}, 400** if the course has existed already.
+
+### **delete_course (POST)**
+#### *Description*
+Route to delete a course.
+
+#### *Parameters*
+- **quarter: str** --> The quarter of the course. Candidates: FALL, WINTER, SPRING, SS1, SS2
+- **short_name: str** --> The short name of the course.
+- **year: int** --> The year of the course.
+- **active: bool** --> Whether the course is active or not.
+
+#### *Responses*
+- **{'reason': 'course deleted'}, 200** if the course is successfully deleted.
+- **{'reason': 'course non-existed'}, 400** if the course was not existed originally.
+
+### **find_course_by_id (GET)**
+#### *Description*
+Find a course based on its course id.
+
+#### *Parameters*
+- **id: str** --> The id of the course to search for.
+
+#### *Responses*
+- **{''reason': 'course not found'}, 400** if the course is not found.
+- **{'reason': 'course found' 'result': c}, 200** where **c** is
+```python
+c = {}
+```
+
+
 ## ***Enrolled_Course***
 (Prefix = enrolled_course)
 ### **enroll_user (POST)**

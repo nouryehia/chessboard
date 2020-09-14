@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List
 from ...setup import db
 from enum import Enum
 # from .enrolled_course import EnrolledCourse
@@ -227,3 +227,20 @@ class Course(db.Model):
             return True
         else:
             return False
+
+
+    @staticmethod
+    def get_all_courses(quarter: int = None, year: int = None) -> List[Course]:
+        """
+        Get all the courses listed in incresing order by time created.
+        Inputs:\n
+        quarter --> Optional parameter for time period default None.
+        year --> Optional parameter for time period must be specified when
+                 quarter is specified.
+        """
+        if quarter:
+            return Course.query.filter_by(quarter=quarter, year=year).all()
+        elif year:
+            return Course.query.filter_by(year=year).all()
+        else:
+            return Course.query.filter_by().all()
