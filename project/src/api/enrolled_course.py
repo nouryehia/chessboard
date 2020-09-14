@@ -1,13 +1,12 @@
 from flask_cors import CORS
 from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
+
 from ..models.user import User
-
-
 from ..models.enrolled_course import Role, EnrolledCourse
 
 enrolled_course_api_bp = Blueprint('enrolled_course_api', __name__)
-CORS(enrolled_course_api_bp, supports_credentials=True)
+CORS(enrolled_course_api_bp)
 
 
 def is_instructor_of_course(course_id: int) -> bool:
@@ -170,8 +169,8 @@ def get_courses_user_in():
     There can be a role being specified, if not,
     all the courses will be returned regardless of the role.
     """
-    user_id = int(request.json['user_id'])
-    rs = request.json['roles'].split(";") if "roles" in request.json else None
+    user_id = int(request.args.get('user_id'))
+    rs = request.args.get('roles').split(';')
     roles = None
     if rs:
         roles = []
