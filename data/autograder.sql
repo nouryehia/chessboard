@@ -157,7 +157,7 @@ CREATE TABLE "EnrolledCourse" (
 CREATE TABLE "Section" (
 	"id" serial NOT NULL,
 	"section_name" varchar(255) NOT NULL,
-	"section_id" bigserial NOT NULL,
+	"section_id" bigserial NOT NULL UNIQUE,
 	"course_id" bigserial NOT NULL,
 	CONSTRAINT "Section_pk" PRIMARY KEY ("id")
 ) WITH (
