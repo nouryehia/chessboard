@@ -28,11 +28,10 @@ def enroll_user():
     When the role field of the request is empty, the default would be student.
     @authoer YixuanZ
     """
-    user_id = int(request.json['user_id'])
-    role = Role[request.json['role']].value if 'role' in request.json \
-        else Role.STUDENT.value
-    section_id = int(request.json['section_id'])
-    course_id = int(request.json['course_id'])
+    user_id = request.args.get('user_id', type=int)
+    role = Role[request.args.get('role', default='STUDENT', type=str)].value
+    section_id = request.args.get('section_id', type=int)
+    course_id = request.args.get('course_id', type=int)
     # Check the authroity of the operation
     """
     if not is_instructor_of_course(course_id)

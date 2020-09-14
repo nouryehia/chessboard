@@ -16,7 +16,7 @@ def create_course():
     """
     description = request.args.get('description', type=str)
     name = request.args.get('name', type=str)
-    quarter = Quarter(request.args.get('quarter', type=str)).value
+    quarter = Quarter[request.args.get('quarter', type=str)].value
     short_name = request.args.get('short_name')
     url = request.args.get('url', type=str)
     year = request.args.get('year', type=int)
@@ -41,7 +41,7 @@ def delete_course():
     """
     @author : @mihaivaduva21
     """
-    quarter = Quarter(request.args.get('quarter', type=str)).value
+    quarter = Quarter[request.args.get('quarter', type=str)].value
     short_name = request.args.get('short_name', type=int)
     year = request.args.get('year', type=int)
 
@@ -70,7 +70,10 @@ def find_all_courses():
     """
     @author: YixuanZ
     """
-    q = Quarter(request.args.get('quarter', type=str)).value
+    try:
+        q = Quarter[request.args.get('quarter', type=str)].value
+    except KeyError:
+        q = None
     y = request.args.get('year', type=int)
     crs = Course.get_all_courses(quarter=q, year=y)
     crs = list(map(lambda x: x.to_json(), crs))
