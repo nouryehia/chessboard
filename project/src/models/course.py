@@ -74,7 +74,7 @@ class Course(db.Model):
         ret['id'] = self.id
         ret['description'] = self.description
         ret['name'] = self.name
-        ret['quarter'] = self.quarter
+        ret['quarter'] = Quarter(self.quarter).name
         ret['short_name'] = self.short_name
         ret['url'] = self.url
         ret['year'] = self.year
@@ -261,8 +261,9 @@ class Course(db.Model):
                  quarter is specified.
         """
         if quarter:
-            return Course.query.filter_by(quarter=quarter, year=year).all()
+            return Course.query.filter_by(quarter=quarter, year=year,
+                                          is_deleted=False).all()
         elif year:
-            return Course.query.filter_by(year=year).all()
+            return Course.query.filter_by(year=year, is_deleted=False).all()
         else:
-            return Course.query.filter_by().all()
+            return Course.query.filter_by(is_deleted=False).all()

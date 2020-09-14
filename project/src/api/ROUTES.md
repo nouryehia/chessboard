@@ -54,9 +54,21 @@ Find a course based on its course id.
 - **{''reason': 'course not found'}, 400** if the course is not found.
 - **{'reason': 'course found' 'result': c}, 200** where **c** is
 ```python
-c = {}
+c = {
+    'id': 'The id of the course'
+    'description': 'The description of the course'
+    'name': 'The name of the course'
+    'quarter': 'The quarter of the course'
+    'url': 'The url of the course'
+    'year': 'The year of the course'
+    'active': 'bool value indicate whether the course is currently active'
+    'queue_enabled': 'bool value indicate whether the course has a queue'
+    'cse': 'bool value indicate whether the course belongs to cse'
+    'lock_button': 'bool value indicate whether we need a lock button for queue'
+    'queue_id': 'The id of the queue'
+    'is_deleted': 'Whether the course has been deleted'
+}
 ```
-
 
 ## ***Enrolled_Course***
 (Prefix = enrolled_course)
