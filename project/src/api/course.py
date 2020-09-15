@@ -14,16 +14,17 @@ def create_course():
     @author : @mihaivaduva21
     Creates a course, only users with ADMIN role should call this.
     """
-    description = request.args.get('description', type=str)
-    name = request.args.get('name', type=str)
-    quarter = Quarter[request.args.get('quarter', type=str)].value
-    short_name = request.args.get('short_name')
-    url = request.args.get('url', type=str)
-    year = request.args.get('year', type=int)
-    active = request.args.get('active', default=False, type=bool)
-    queue_enabled = request.args.get('queue_enabled', default=False, type=bool)
-    cse = request.args.get('cse', default=False, type=bool)
-    queue_id = request.args.get('queue_id', type=int)
+    req = request.get_json()
+    description = req['description']
+    name = req['name']
+    quarter = Quarter[req['quarter']].value
+    short_name = req['short_name']
+    url = req['url'] if 'url' in req else None
+    year = req['year']
+    active = req['active']
+    queue_enabled = req['queue_enabled'] if 'queue_enable' in req else None
+    cse = req['cse'] if 'cse' in req else None
+    queue_id = req['queue_id'] if 'queue_id' in req else None
 
     if Course.create_course(description=description, name=name,
                             quarter=quarter, short_name=short_name, url=url,
@@ -65,7 +66,7 @@ def find_course_by_id():
         return jsonify({'reason': 'course found', 'result': c.to_json()}), 200
 
 
-@course_api_bp.route('/find_all_courses', method=['GET'])
+@course_api_bp.route('/find_all_courses', methods=['GET'])
 def find_all_courses():
     """
     @author: YixuanZ
