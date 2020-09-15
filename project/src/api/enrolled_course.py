@@ -8,6 +8,7 @@ from ..models.enrolled_course import Role, EnrolledCourse
 enrolled_course_api_bp = Blueprint('enrolled_course_api', __name__)
 CORS(enrolled_course_api_bp)
 
+# We should follow the GET --> args.get and POST --> json, need to test for CORS
 
 def is_instructor_of_course(course_id: int) -> bool:
     """
