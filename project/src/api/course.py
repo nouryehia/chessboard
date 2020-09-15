@@ -35,21 +35,6 @@ def create_course():
         return jsonify({'reason': 'course existed'}), 300
 
 
-@course_api_bp.route('/get_course', methods=['GET'])
-# @login_required
-def get_course():
-    """
-    @author: @sccontre
-    """
-
-    course_id = request.args.get('course_id')
-    course = Course.get_course_by_id(course_id=course_id)
-    if not course:
-        return jsonify({'reason': 'course not found'}), 400
-
-    return jsonify({'reason': 'success', 'result': course.to_json()}), 200
-
-
 @course_api_bp.route('/delete_course', methods=['POST'])
 # @role_required(role=URole.ADMIN.value)
 def delete_course():
@@ -70,7 +55,7 @@ def delete_course():
 @course_api_bp.route('/find_course_by_id', methods=['GET'])
 def find_course_by_id():
     """
-    @author: YixuanZ
+    @author: @sccontre
     """
     id = request.args.get('id', type=int)
     c = Course.get_course_by_id(id)
