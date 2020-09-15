@@ -42,9 +42,9 @@ def delete_course():
     """
     @author : @mihaivaduva21
     """
-    quarter = Quarter[request.args.get('quarter', type=str)].value
-    short_name = request.args.get('short_name', type=int)
-    year = request.args.get('year', type=int)
+    quarter = Quarter[str(request.json['quarter'])].value
+    short_name = str(request.json['short_name'])
+    year = int(request.json['year'])
 
     if Course.delete_course(quarter=quarter, short_name=short_name,
                             year=year) is True:
