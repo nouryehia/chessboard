@@ -77,4 +77,4 @@ def find_all_courses():
     y = request.args.get('year', type=int)
     crs = Course.get_all_courses(quarter=q, year=y)
     crs = list(map(lambda x: x.to_json(), crs))
-    return jsonify({'reason': 'course found', 'result': crs}), 200
+    return jsonify({'reason': 'successed', 'result': crs}), 200
