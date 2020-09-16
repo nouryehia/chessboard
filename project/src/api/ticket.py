@@ -61,7 +61,7 @@ def get_info():
     Route used to get a ticket's info.\n
     @author nouryehia
     '''
-    user_id = int(request.json['user_id'])
+    user_id = request.args.get('user_id', type=int)
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
 
     return jsonify(ticket.to_json(user_id=user_id)), 200
@@ -74,8 +74,8 @@ def get_user_permissions():
     Route used to determine if a user can view or edit a ticket.\n
     @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
-    user_id = int(request.json['user_id'])
+    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
+    user_id = request.args.get('user_id', type=int)
 
     return jsonify({'can_view': ticket.can_view_by(user_id),
                     'can_edit': ticket.can_edit_by(user_id)}), 200
@@ -84,14 +84,14 @@ def get_user_permissions():
 @ticket_api_bp.route('/get_status', methods=['GET'])
 #@login_required
 def get_status():
-    t = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+    t = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
 
     statuses = {Status.PENDING.value: 'pending',
                 Status.ACCEPTED.value: 'accepted',
                 Status.RESOLVED.value: 'resolved',
                 Status.CANCELED.value: 'canceled'}
 
-    return jsonify({'status': statuses[t.status]}), 200
+    return jsonify({'status': Status(t.status).name}), 200
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
@@ -103,7 +103,7 @@ def student_update():
     @author nouryehia
     @author YixuanZhou (updates)
     '''
-    req = request.json
+    req = request.to_json()
 
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
@@ -215,9 +215,8 @@ def find_all_tickets():
     @author nouryehia
     '''
     status = []
-    pending = int(request.json['pending']) if 'pending' in request.json else 0
-    accepted = int(request.json['accepted'])\
-        if 'accepted' in request.json else 0
+    pending = request.args.get('pending', default=0, type=int)
+    accepted = request.args.get('accepted', default=0, type=int)
     if pending:
         status.append(0)
     if accepted:
@@ -241,12 +240,10 @@ def find_tickets_in_range():
     passed in to only get tickets for that grader.\n
     @author nouryehia
     '''
-    queue_id = int(request.json['queue_id'])
-    start = request.json['start']
-    end = request.json['end']
-    grader_id = (int(request.json['grader_id']) if 'grader_id' in request.json
-                 else None)
-
+    queue_id = request.args.get('queue_id', type=int)
+    start = request.args.get('start', type=str)
+    end = request.args.get('end', type=str)
+    grader_id = (request.args.get('grader_id', type=int)
     tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
 
     ticket_infos = []
@@ -265,12 +262,8 @@ def find_all_tickets_by_student():
     @author nouryehia
     '''
     status = []
-    pending = True if ('pending' in request.json and
-                       (request.json['pending'] == 'true' or
-                        request.json['pending'] == 'True')) else False
-    accepted = True if ('accepted' in request.json and
-                        (request.json['accepted'] == 'true' or
-                         request.json['accepted'] == 'True')) else False
+    pending = request.args.get('pending', default=False, type=bool)
+    accepted = pending = request.args.get('accepted', default=False, type=bool)
     if pending:
         status.append(0)
     if accepted:
@@ -293,8 +286,9 @@ def find_all_tickets_for_grader():
     Route used to find tickets on a queue handled by a grader.\n
     @author nouryehia
     '''
-    tickets = Ticket.find_all_tickets(queue_id=int(request.json['queue_id']),
-                                      grader_id=int(request.json['grader_id']))
+    tickets = Ticket.find_all_tickets(
+        queue_id=request.args.get('queue_id', type=int),
+        grader_id=request.args.get('grader_id', type=int))
 
     ticket_infos = []
     for ticket in tickets:
@@ -310,11 +304,11 @@ def find_resolved_tickets_in():
     Route used to resolved tickets on a queue.\n
     @author nouryehia
     '''
-    queue_id = int(request.json['queue_id'])
-    recent_hour = 1 if 'recent_hour' in request.json else 0
-    day = int(request.json['day']) if 'day' in request.json else 0
-    start = request.json['start'] if 'start' in request.json else None
-    end = request.json['end'] if 'end' in request.json else None
+    queue_id = request.args.get('queue_id', type=int)
+    recent_hour = request.args.get('recent_hour', default=0, type=int)
+    day = request.args.get('day', default=0, type=int)
+    start = request.args.get('start', default=None, type=str)
+    end = request.args.get('end', default=None, type=str)
 
     tickets = Ticket.find_resolved_tickets_in(queue_id, recent_hour, day,
                                               start, end)
