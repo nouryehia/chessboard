@@ -243,7 +243,7 @@ def find_tickets_in_range():
     queue_id = request.args.get('queue_id', type=int)
     start = request.args.get('start', type=str)
     end = request.args.get('end', type=str)
-    grader_id = (request.args.get('grader_id', type=int)
+    grader_id = request.args.get('grader_id', type=int)
     tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
 
     ticket_infos = []
