@@ -20,10 +20,10 @@ def create_course():
     quarter = Quarter[req['quarter']].value
     short_name = req['short_name']
     url = req['url'] if 'url' in req else None
-    year = req['year']
-    active = req['active']
-    queue_enabled = req['queue_enabled'] if 'queue_enable' in req else None
-    cse = req['cse'] if 'cse' in req else None
+    year = int(req['year'])
+    active = bool(req['active'])
+    queue_enabled = bool(req['queue_enabled']) if 'queue_enable' in req else False
+    cse = bool(req['cse']) if 'cse' in req else False
     queue_id = req['queue_id'] if 'queue_id' in req else None
 
     if Course.create_course(description=description, name=name,

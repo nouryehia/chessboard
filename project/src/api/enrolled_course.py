@@ -10,6 +10,7 @@ CORS(enrolled_course_api_bp)
 
 # We should follow the GET --> args.get and POST --> json, need to test for CORS
 
+
 def is_instructor_of_course(course_id: int) -> bool:
     """
     Check whether the current user is the instructor of a course.
@@ -31,7 +32,7 @@ def enroll_user():
     """
     req = request.get_json()
     user_id = int(req['user_id'])
-    role = Role[req['role']].value
+    role = Role[req['role']].value if 'role' in req else Role['STUDENT'].value
     section_id = int(req['section_id'])
     course_id = int(req['course_id'])
     # Check the authroity of the operation
@@ -117,10 +118,11 @@ def get_all_user_in_course():
     pass in the string representation of ; seperated int values.
     """
     course_id = request.args.get('course_id', type=int)
-    rs = request.args.get('roles', type=str).split(';')
+    rs = request.args.get('roles', type=str)
     roles = None
     if rs:
         roles = []
+        rs = rs.split(';')
         for r in rs:
             roles.append(Role[r].value)
 
@@ -173,9 +175,10 @@ def get_courses_user_in():
     all the courses will be returned regardless of the role.
     """
     user_id = request.args.get('user_id', type=int)
-    rs = request.args.get('roles', type=str).split(';')
+    rs = request.args.get('roles', type=str)
     roles = None
     if rs:
+        rs = rs.split(';')
         roles = []
         for r in rs:
             roles.append(Role[r].value)
