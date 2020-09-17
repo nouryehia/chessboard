@@ -17,7 +17,7 @@ def create_course():
     req = request.get_json()
     description = req['description']
     name = req['name']
-    quarter = Quarter[req['quarter']].value
+    quarter = int(req['quarter'])
     short_name = req['short_name']
     url = req['url'] if 'url' in req else None
     year = int(req['year'])

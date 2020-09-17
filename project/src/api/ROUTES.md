@@ -265,7 +265,6 @@ ret = {
         'role' : 'The role of this enrolled_course entry'
     }]
 }
-
 ```
 
 ### **find_active_tutor_for (GET)**
@@ -296,6 +295,33 @@ Adds a ticket to the queue.
 - **help_type: string** help type. see ../models/ticket.py for help types
 - **tag_list: string** list of tags associated with tickets. pass in semi-colon separated list. see ../models/ticket.py for ticket tags
 
+#### *Responses*
+- **'reason': 'ticket added to queue', 'result': ret}), 200** where **ret** is
+```json
+ret = {
+    "ticket_events": events attached to this ticket (null if none),
+    "ticket_info": {
+        "accepted_at": when the ticket was accepted (null if pending),
+        "closed_at": when the ticket was closed (null if pending or open),
+        "created_at": when the ticketw as created,
+        "description": description of ticket,
+        "grader_id": id of grader on ticket (null if none),
+        "help_type": help type (see ../models/ticket.py),
+        "is_private": whether the ticket is private,
+        "queue_id": id of queue ticket is on,
+        "room": ticket room,
+        "status": ticket status (see ../models/ticket.py),
+        "student_id": id of student who made the ticket,
+        "tag_one": first ticket tag (see ../models/ticket.py),
+        "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+        "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+        "ticket_id": ticket id,
+        "title": title of ticket,
+        "workstation": workstation of ticket
+    }
+}
+```
+
 ### **get_info (GET)**
 
 #### *Description*
@@ -306,6 +332,32 @@ Get all of a ticket's properties in json format.
 
 - **user_id: int** id of user requesting to view ticket info
 - **ticket_id: int** id of ticket
+
+#### *Responses*
+```json
+{
+    "ticket_events": events attached to this ticket (null if none),
+    "ticket_info": {
+        "accepted_at": when the ticket was accepted (null if pending),
+        "closed_at": when the ticket was closed (null if pending or open),
+        "created_at": when the ticketw as created,
+        "description": description of ticket,
+        "grader_id": id of grader on ticket (null if none),
+        "help_type": help type (see ../models/ticket.py),
+        "is_private": whether the ticket is private,
+        "queue_id": id of queue ticket is on,
+        "room": ticket room,
+        "status": ticket status (see ../models/ticket.py),
+        "student_id": enrolled course id of student who made the ticket,
+        "tag_one": first ticket tag (see ../models/ticket.py),
+        "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+        "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+        "ticket_id": ticket id,
+        "title": title of ticket,
+        "workstation": workstation of ticket
+    }
+}
+```
 
 ### **get_user_permissions (GET)**
 
@@ -318,7 +370,49 @@ Determines if a user can view or edit a ticket
 - **user_id: int** id of user whose permissions are being checked
 - **ticket_id: int** id of ticket
 
+#### *Responses*
+```json
+{
+    "can_edit": whether the passed in user can edit the ticket,
+    "can_view": whether the passed in user can view the ticket
+}
+```
 
+### **student_update (POST)**
+
+#### *Description*
+
+Allows students to update tickets (surprising, I KNOW)
+
+#### *Parameters*
+
+- **ticket_id: int** id ticket to be updated
+- **title: string** (OPTIONAL) new title
+- **description: string** (OPTIONAL) new description
+- **room: string** (OPTIONAL) new room
+- **workstation: string** (OPTIONAL) new workstation
+- **help_type: int** (OPTIONAL) new help type
+- **is_private: int** (OPTIONAL) new privacy (0 or 1)
+
+#### *Responses*
+- Success:
+```json
+{
+    "reason": "ticket updated",
+}
+```
+- No permission:
+
+```json
+{
+    "reason": "Permission denied",
+}
+```
+- Other error:
+```json
+{
+    "reason": "ticket could not be updated",
+}
 
 
 

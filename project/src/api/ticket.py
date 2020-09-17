@@ -2,7 +2,7 @@ from flask_cors import CORS
 from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
 
-from ..models.ticket import Ticket, HelpType, TicketTag, Status
+from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.enrolled_course import EnrolledCourse as EC
 from ..models.enrolled_course import Role
@@ -16,7 +16,7 @@ CORS(ticket_api_bp, supports_credentials=True)
 
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
-#@login_required
+@login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
@@ -51,51 +51,38 @@ def add_ticket():
                              user_id=student_id)
 
     return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json(user_id=student_id)}), 200)
+                     'result': ticket.to_json(user_id=current_user.id)}), 200)
 
 
 @ticket_api_bp.route('/get_info', methods=['GET'])
-#@login_required
+@login_required
 def get_info():
     '''
     Route used to get a ticket's info.\n
     @author nouryehia
     '''
     user_id = request.args.get('user_id', type=int)
-    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
 
     return jsonify(ticket.to_json(user_id=user_id)), 200
 
 
 @ticket_api_bp.route('/get_user_permissions', methods=['GET'])
-#@login_required
+@login_required
 def get_user_permissions():
     '''
     Route used to determine if a user can view or edit a ticket.\n
     @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
     user_id = request.args.get('user_id', type=int)
+    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
 
     return jsonify({'can_view': ticket.can_view_by(user_id),
                     'can_edit': ticket.can_edit_by(user_id)}), 200
 
 
-@ticket_api_bp.route('/get_status', methods=['GET'])
-#@login_required
-def get_status():
-    t = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
-
-    statuses = {Status.PENDING.value: 'pending',
-                Status.ACCEPTED.value: 'accepted',
-                Status.RESOLVED.value: 'resolved',
-                Status.CANCELED.value: 'canceled'}
-
-    return jsonify({'status': Status(t.status).name}), 200
-
-
 @ticket_api_bp.route('/student_update', methods=['POST'])
-#@login_required
+@login_required
 def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
@@ -103,7 +90,7 @@ def student_update():
     @author nouryehia
     @author YixuanZhou (updates)
     '''
-    req = request.to_json()
+    req = request.json
 
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
@@ -118,13 +105,12 @@ def student_update():
     else:
         private = ticket.is_private
 
-    if ticket.student_id != current_user.user_id:
-        return jsonify({'reason': 'no permission'}), 400
+    if not ticket.can_edit_by(current_user.id):
+        return jsonify({'reason': 'Permission denied'}), 400
 
     TicketEvent.create_event(event_type=EventType.UPDATED, ticket_id=ticket.id,
                              message=desc, is_private=private,
-                             user_id=current_user.user_id,
-                             timestamp=TimeUtil.get_current_time())
+                             user_id=ticket.student_id)
 
     if 'tag_list' in request.json:
         raw_tags = request.json['tag_list'].split(';')
@@ -141,7 +127,7 @@ def student_update():
 
 
 @ticket_api_bp.route('/grader_update', methods=['POST'])
-#@login_required
+@login_required
 def grader_update():
     """
     The api function used for graders to perfrom actions to ticket.\n
@@ -151,7 +137,6 @@ def grader_update():
     """
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
-    # message = request.json['message']
 
     course_id = Course.get_course_by_queue_id(ticket.queue_id)
 
@@ -191,7 +176,7 @@ def grader_update():
 
 
 @ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])
-#@login_required
+@login_required
 def defer_accepted_tickets_for_grader():
     '''
     Route used to return tickets accepted by a grader to the queue.\n
@@ -207,7 +192,7 @@ def defer_accepted_tickets_for_grader():
 
 
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
-#@login_required
+@login_required
 def find_all_tickets():
     '''
     Route used to find tickets on the queue (can be catgorized as pending or\n
@@ -233,7 +218,7 @@ def find_all_tickets():
 
 
 @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-#@login_required
+@login_required
 def find_tickets_in_range():
     '''
     Route used to find tickets in a specific range of time. A grader can be\n
@@ -254,7 +239,7 @@ def find_tickets_in_range():
 
 
 @ticket_api_bp.route('/find_all_tickets_by_student', methods=['GET'])
-#@login_required
+@login_required
 def find_all_tickets_by_student():
     '''
     Route used to find tickets on the queue by a student (can be catgorized\n
@@ -280,7 +265,7 @@ def find_all_tickets_by_student():
 
 
 @ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-#@login_required
+@login_required
 def find_all_tickets_for_grader():
     '''
     Route used to find tickets on a queue handled by a grader.\n
@@ -298,7 +283,7 @@ def find_all_tickets_for_grader():
 
 
 @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-#@login_required
+@login_required
 def find_resolved_tickets_in():
     '''
     Route used to resolved tickets on a queue.\n
