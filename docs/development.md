@@ -2,7 +2,7 @@
 layout: default
 title: Chessboard
 ---
-# Joining the Team
+# Getting Started with Development
 *Coming soon!*
 
 ---
