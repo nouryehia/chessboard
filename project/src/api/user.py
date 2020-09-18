@@ -67,7 +67,7 @@ def reset_password():
             return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-            return jsonify({'reason': 'Invalid email or email not successfully sent'}), 400
+            return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
 
@@ -90,7 +90,7 @@ def forgot_password():
             return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-            return jsonify({'reason': 'Invalid email or email not successfully sent'}), 400
+            return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'User not found'}), 400
 
