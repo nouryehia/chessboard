@@ -48,13 +48,13 @@ def logout():
 @user_api_bp.route('/reset_password', methods=['PUT'])
 #@login_required
 def reset_password():
-    email = request.json['email'] if 'email' in request.json else None
+    id = request.json['id'] if 'id' in request.json else None
     passwd = request.json['password'] if 'password' in request.json else None
-    old_pass = request.json['old password'] if 'old password' in request.json \
+    old_pass = request.json['old_password'] if 'old_password' in request.json \
         else None
 
-    if User.check_password(email, old_pass):
-        user = User.find_by_pid_email_fallback(None, email)
+    user = User.get_user_by_id(id)
+    if User.check_password(user.email, old_pass):
         user.reset_password(passwd)
         log_util.reset_password(user.email)
         msg = 'Hi there!\nYou\'re getting this email because you' +\
@@ -64,9 +64,10 @@ def reset_password():
             '\n\nCheers,\nThe Autograder Team'
         if mailer.send(user.email, 'Password Reset', msg):
             log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+            return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-        return jsonify({'reason': 'request OK'}), 200
+            return jsonify({'reason': 'Invalid email or email not successfully sent'}), 400
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
 
@@ -86,9 +87,10 @@ def forgot_password():
 
         if mailer.send(user.email, 'Forgot Password', msg):
             log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+            return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-        return jsonify({'reason': 'request OK'}), 200
+            return jsonify({'reason': 'Invalid email or email not successfully sent'}), 400
     else:
         return jsonify({'reason': 'User not found'}), 400
 
@@ -166,3 +168,36 @@ def get():
     else:
         ret = {'reason': 'request OK', 'result': found.to_json()}
         return jsonify(ret), 200
+
+
+@user_api_bp.route('/update_user', methods=['PUT'])
+#@login_required
+def update_user():
+    '''
+    Update user's information at user's discretion\n
+    '''
+    id = request.json['id']
+    f_name = request.json['fname']
+
+    user = User.get_user_by_id(id)
+    user.update_user(f_name)
+
+    ret = {'reason': 'User successfully updated', 'result': user.to_json()}
+    return jsonify(ret), 200
+
+
+@user_api_bp.route('/check_password', methods=['POST'])
+#@login_required
+def check_password():
+    '''
+    Check if the user's password matches the given in the database\n
+    '''
+    email = request.json['email']
+    password = request.json['password']
+
+    match = User.check_password(email, password)
+
+    if match:
+        return jsonify({'reason': 'Passwords match'}), 200
+    else:
+        return jsonify({'reason': 'Passwords do not match'}), 400

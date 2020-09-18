@@ -12,7 +12,7 @@ fi
 
 if [ "$FLASK_ENV" = "development" ]; then
   echo "Running the server locally..."
-  python runner.py
+#  python runner.py
 fi
 
 exec "$@"
