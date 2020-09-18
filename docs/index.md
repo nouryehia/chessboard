@@ -12,5 +12,5 @@ It is a dockerized Flask application which serves as the API and DB level connec
 <a href="/chessboard/development.html">Go here</a> to find out about how you can set up your environments
 to be ready to develop!
 
-## Joining The TEam
+## Joining The Team
 <a href="/chessboard/joining.html">Go here</a> to find out how you can become a part of the Autograder team.
