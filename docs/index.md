@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Chessboard - Autograder's Backend
+title: Chessboard
 ---
 
 # Welcome to Chessboard
