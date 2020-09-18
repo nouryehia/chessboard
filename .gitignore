@@ -9,5 +9,3 @@ Dockerfile.prod
 docker-compose.prod.yml
 venv/
 *.log
-docs/*
-docs/
