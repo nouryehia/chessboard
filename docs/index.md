@@ -9,4 +9,8 @@ title: Chessboard
 It is a dockerized Flask application which serves as the API and DB level connector.
 
 ## Getting Started with Development
-*Coming soon!*
+<a href="/chessboard/development.html">Go here</a> to find out about how you can set up your environments
+to be ready to develop!
+
+## Joining The TEam
+<a href="/chessboard/joining.html">Go here</a> to find out how you can become a part of the Autograder team.
