@@ -1,4 +1,4 @@
-theme: jekyll-theme-cayman
+theme: jekyll-theme-tactile
 title: Chessboard Docs
 plugins:
   - jekyll-relative-links
