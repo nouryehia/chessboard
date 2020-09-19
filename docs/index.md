@@ -14,3 +14,4 @@ to be ready to develop!
 
 ## Joining The Team
 <a href="/chessboard/joining.html">Go here</a> to find out how you can become a part of the Autograder team.
+
