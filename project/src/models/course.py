@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Optional
+from typing import List, Optional
 from ...setup import db
 from enum import Enum
-# from .enrolled_course import EnrolledCourse
+from .enrolled_course import EnrolledCourse
+from .section import Section
 from ..security.roles import CRole
 
 
@@ -104,8 +105,7 @@ class Course(db.Model):
         self.cse = not self.cse
         self.save()
 
-    ''' Dependancies on Section
-    def get_sections(self):
+    def get_sections(self) -> List[Section]:
         """
         Get the sections of a course
         """
@@ -115,10 +115,16 @@ class Course(db.Model):
         """
         Get the students enrolled in a course
         """
-        sections = Section.query.with_entities(Section.id).filter_by(course_id=self.id).all()
+        sections = Section.query\
+                          .with_entities(Section.id)\
+                          .filter_by(course_id=self.id).all()
+        role = CRole.STUDENT.value
         students = []
         for section in sections:
-            students = students + EnrolledCourse.query.filter_by(section_id=section, role=CRole.STUDENT.value).all()
+            students = students + EnrolledCourse.query\
+                                                .filter_by(section_id=section,
+                                                           role=role)\
+                                                .all()
 
         return students
 
@@ -126,13 +132,18 @@ class Course(db.Model):
         """
         Get the instructors from a course
         """
-        sections = Section.query.with_entities(Section.id).filter_by(course_id=self.id).all()
+        sections = Section.query\
+                          .with_entities(Section.id)\
+                          .filter_by(course_id=self.id).all()
+        role = CRole.INSTRUCTOR.value
         instructors = []
         for section in sections:
-            instructors = instructors + EnrolledCourse.query.filter_by(section_id=section, role=CRole.INSTRUCTOR.value).all()
-
+            instructors = instructors\
+                          + EnrolledCourse.query\
+                                          .filter_by(section_id=section,
+                                                     role=role)\
+                                          .all()
         return instructors
-    '''
 
     @staticmethod
     def get_course_by_id(couse_id) -> Optional[Course]:
@@ -172,15 +183,8 @@ class Course(db.Model):
         elif self.quarter == Quarter.SS2.value:
             return "SS2" + str(self.year)
 
-    '''
-    def add_section(self, section_name):
-        """
-        Adds a section to the course.
-        """
-        Section.insert().values(section_name=section_name, course_id=self.id)
-    '''
-
-    def exists_course(quarter: int, short_name: str, year: int) -> Optional[Course]:
+    def exists_course(quarter: int, short_name: str, year: int)\
+            -> Optional[Course]:
         '''
         Function that tries to find a course by short name, quarter and year.
 
