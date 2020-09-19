@@ -382,7 +382,7 @@ Determines if a user can view or edit a ticket
 
 #### *Description*
 
-Allows students to update tickets (surprising, I KNOW)
+Allows students to update tickets
 
 #### *Parameters*
 
@@ -413,7 +413,33 @@ Allows students to update tickets (surprising, I KNOW)
 {
     "reason": "ticket could not be updated",
 }
+```
 
+### **grader_update (POST)**
 
+#### *Description*
 
+Allows graders to update tickets and change status
+
+#### *Parameters*
+
+- **ticket_id: int** id ticket to be updated
+- **status: string** new status ('resolved', 'canceled', or 'defered')
+
+#### *Responses*
+- Success:
+```json
+{
+    "status": new status,
+    "grader_name": name of grader,
+    "grader_pid": pid of grader
+}
+```
+- No permission:
+
+```json
+{
+    "reason": "Permission denied",
+}
+```
 

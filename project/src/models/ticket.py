@@ -444,11 +444,11 @@ class Ticket(db.Model):
         Mark the ticket as accepted by a tutor.\n
         """
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_tickets_for_grader(grader)
+        Ticket.defer_accepted_ticket_for_grader(grader)
 
         self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = grader.id
+        self.grader_id = grader.id # PROBLEM IS HERE. NEEDS TO BE ENROLLED COURSE
         self.save()
 
     def mark_resolved(self) -> None:

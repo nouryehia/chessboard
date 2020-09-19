@@ -96,8 +96,8 @@ class Course(db.Model):
         """
         repr
         """
-        return 'course ' + str(self.year) + ' ' \
-            + self.short_name + ' ' + self.quarter
+        return 'course ' + str(self.year) + ' ' + self.short_name + ' ' + \
+                str(self.quarter)
 
     def switch_queue_status(self):
         """

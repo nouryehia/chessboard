@@ -138,14 +138,15 @@ def grader_update():
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
 
-    course_id = Course.get_course_by_queue_id(ticket.queue_id)
+    # course_id = Course.get_course_by_queue_id(ticket.queue_id)
 
-    user = EC.find_user_in_course(user_id=current_user.user_id,
-                                  course_id=course_id)
+    # user = EC.find_user_in_course(user_id=current_user.id, 
+    #                               course_id=course_id)
 
-    if user.get_role() == Role.STUDENT.value and \
-       current_user.user_id != ticket.student_id:
-        return jsonify({'reason': "User does not have permissions"}), 400
+    # if user.get_role() == Role.STUDENT.value and \
+    #    current_user.user_id != ticket.student_id:
+    if not ticket.can_edit_by(current_user.id):
+        return jsonify({'reason': "Permision denied"}), 400
 
     actions = {'resolved': ticket.mark_resolved,
                'canceled': ticket.mark_canceled,
@@ -156,7 +157,7 @@ def grader_update():
                    'canceled': EventType.CANCELED,
                    'defered': EventType.DEFERRED}
 
-    grader = User.get_user_by_id(current_user.user_id)
+    grader = User.get_user_by_id(current_user.id)
 
     if status == 'accepted':
         ticket.mark_accepted_by(grader)
@@ -167,8 +168,7 @@ def grader_update():
                              ticket_id=ticket.id,
                              message=status,
                              is_private=ticket.is_private,
-                             user_id=current_user.user_id,
-                             timestamp=TimeUtil.get_current_time())
+                             user_id=ticket.student_id)
 
     return jsonify({'status': status,
                     'grader_name': grader.first_name + ' ' + grader.last_name,
