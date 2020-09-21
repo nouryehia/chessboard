@@ -75,3 +75,6 @@ Here are some final rules to follow:
 5. <a href="https://realpython.com/python-f-strings/" target="_blank">f strings</a> are good, use them.
 6. Use `@staticmethod` and `@classmethod` annotations accordingly. This is relevant for the `models` directory; read <a href="https://stackabuse.com/pythons-classmethod-and-staticmethod-explained/" target="_blank"> here</a> for more information.
 7. Don't be afraid to ask questions!
+
+---
+[go back](/chessboard)
