@@ -4,6 +4,9 @@ from .setup import app, login_manager
 
 from .src.models.user import User
 
+# ----------------------------------------------------------------
+# DO NOT EDIT ABOVE THE LINE
+
 # Import routes here
 from .src.api.user import user_api_bp as uapi
 from .src.api.ticket import ticket_api_bp as tapi
@@ -22,6 +25,9 @@ app.register_blueprint(qapi, url_prefix="/api/queue")
 app.register_blueprint(nfapi, url_prefix="/api/newsfeeds")
 app.register_blueprint(capi, url_prefix="/api/course")
 app.register_blueprint(sapi, url_prefix="/api/section")
+
+# DO NOT EDIT BELOW THE LINE
+# ----------------------------------------------------------------
 
 
 def load_user(user_id):

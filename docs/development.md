@@ -1,6 +1,5 @@
 ---
 layout: default
-title: Chessboard
 ---
 # Getting Started with Development
 
@@ -62,6 +61,45 @@ Check out [this link](https://www.jetbrains.com/help/pycharm/part-1-debugging-py
     ![](photos/pycharm_set_breakpoint.png) 
 
 Happy debugging!! :)
-   
+
+### Sidenote: VSCode
+If you prefer to use VSCode (and don't want the nice benefits of PyCharm), this is what you need to use
+to set up. It can be downloaded <a href="https://code.visualstudio.com" target="_blank">here</a>.
+Some useful plugins to install are Python and Docker, and you'll want to install `flake8` on pip3 (use `pip3 install flake8`).
+You also may want to install vscode-icons and Visual Studio Intellicode here as well.
+
+Flake8 is a linter which enforces strict style guidlines, so make sure to keep it happy and our code will look beautiful.
+If you use PyCharm, you should have `flake8` already installed and yelling at you.
+
+It's possible to configure VSCode to work with docker and debug as well, but I haven't done it before. If I ever decide to try and figure it out, I'll add instructions here.
+
+## Local Development
+If you're using PyCharm, hit the "debug" button (looks like a green bug). If not, open a terminal and run `docker-compose up --build`.
+This will hijack your terminal, so if you want to still use the same window add a `-d` flag to that command.
+
+To stop, if you're in PyCharm click the red stop sign. If not (and you ran with the `-d` flag) type `docker-compose down` to stop the image.
+If you run into problems, run `docker-compose down --volumes` followed by `docker rmi $(docker images -q) --force` to wipe everything clean and do a fresh install.
+
+Here are some more useful commands:
+* `docker exec -it <image name> <app name>` (example `docker exec -it autograder_db bash`)
+  * The `docker exec` command lets you execute a command on an image. This particular one lets you connect to the image so that you can do stuff like connect to the DB.
+* `psql -U postgres -W autograder` (run inside of the `autograder_db` image)
+  * This command lets you connect to the PostgreSQL monitor running inside of the Docker image. You'll need to type the password (check the env file).
+
+To run in production, ask someone on the team to share that knowledge with you. #IYKYK.
+
+<!--
+To run in production, pull the latest image from DockerHub and then run `docker-compose down --volumes` && `docker-compose -f docker-compose.prod.yml up --build -d` -->
+<!--
+If the container doesn't run, type `docker-compose -f docker-compose.prod.yml logs -f` -->
+<!-- 
+We use <a href="https://hub.docker.com" target="_blank">DockerHub</a> for prod image management, so be sure
+to make an account there. -->
+
+## Useful Links
+1. <a href="https://medium.com/@trstringer/debugging-a-python-flask-application-in-a-container-with-docker-compose-fa5be981ec9a" target="_blank">Debugging Flask Apps (for those who didn't set up PyCharm)</a>
+2. <a href="https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx/"
+target="_blank">Docker configurations</a>
+
 ---
 [Go back](/chessboard)
