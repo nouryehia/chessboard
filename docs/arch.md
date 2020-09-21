@@ -65,6 +65,7 @@ app is because if this isn't the case, the Flask app will have errors.
 
 ### Final Notes/Rules to Follow
 ![conglaturation](photos/conglaturation.jpeg)
+
 That's it! If you got this far, you now know the rough layout and setup of the app.
 Here are some final rules to follow:
 
