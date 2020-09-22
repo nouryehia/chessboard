@@ -443,3 +443,19 @@ Allows graders to update tickets and change status
 }
 ```
 
+### **defer_accepted_tickets_for_grader (POST)**
+
+#### *Description*
+
+Returns tickets accepted by a grader to the queue
+
+#### *Parameters*
+
+- None
+
+#### *Responses*
+```json
+{
+    "reason": "# tickets deferred", where # is the number of tickets deferred,
+}
+```
