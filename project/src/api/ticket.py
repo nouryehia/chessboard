@@ -14,14 +14,11 @@ from ..utils.time import TimeUtil
 ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
-
 # Routes for testing
 @ticket_api_bp.route('/show_all_evts', methods=['GET'])
 def get_all_evts():
     evts = TicketEvent.get_all_ticket_events()
     return jsonify({"evts": evts}), 200
-
-
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
 @login_required
@@ -33,9 +30,15 @@ def add_ticket():
     @author YixuanZhou
     """
     queue_id = int(request.json['queue_id'])
-    user_id = int(request.json['student_id'])
     cid = Course.get_course_by_queue_id(queue_id).id
-    student_id = EC.find_user_in_course(user_id=user_id, course_id=cid)
+
+    # REMOVE LINE BELOW ONCE LOGIN WORKS ON FRONTEND
+    student_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
+                                        course_id=cid).id
+
+    # UNCOMMENT LINE BELOW ONCE LOGIN WORKS ON FRONTEND
+    # student_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+
     title = request.json['title']
     description = request.json['description']
     room = request.json['room']
@@ -148,33 +151,21 @@ def grader_update():
     ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
     status = request.json['status']
 
-    # course_id = Course.get_course_by_queue_id(ticket.queue_id)
-
-    # user = EC.find_user_in_course(user_id=current_user.id, 
-    #                               course_id=course_id)
-
-    # if user.get_role() == Role.STUDENT.value and \
-    #    current_user.user_id != ticket.student_id:
     if not ticket.can_edit_by(current_user.id):
         return jsonify({'reason': "Permision denied"}), 400
 
-    actions = {'resolved': ticket.mark_resolved,
-               'canceled': ticket.mark_canceled,
-               'defered': ticket.mark_pending}
-
-    event_types = {'accepted': EventType.ACCEPTED,
-                   'resolved': EventType.RESOLVED,
-                   'canceled': EventType.CANCELED,
-                   'defered': EventType.DEFERRED}
+    actions = {'RESOLVED': ticket.mark_resolved,
+               'CANCELED': ticket.mark_canceled,
+               'DEFERRED': ticket.mark_pending}
 
     grader = User.get_user_by_id(current_user.id)
 
-    if status == 'accepted':
+    if status == 'ACCEPTED':
         ticket.mark_accepted_by(grader)
     else:
         actions[status]()
 
-    TicketEvent.create_event(event_type=event_types[status],
+    TicketEvent.create_event(event_type=EventType[status],
                              ticket_id=ticket.id,
                              message=status,
                              is_private=ticket.is_private,
@@ -192,11 +183,8 @@ def defer_accepted_tickets_for_grader():
     Route used to return tickets accepted by a grader to the queue.\n
     @author nouryehia
     '''
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
-    grader = User.find_by_pid_email_fallback(pid, email)
-
-    tickets = Ticket.defer_accepted_tickets_for_grader(grader)
+    grader = User.get_user_by_id(current_user.id)
+    tickets = Ticket.defer_accepted_ticket_for_grader(grader)
 
     return jsonify({'reason': str(tickets) + ' tickets deferred'}), 400
 

@@ -109,6 +109,7 @@ class Ticket(db.Model):
     tag_two --> The ticket tag for this ticket. Nullable.\n
     tag_three --> The ticket tag for this ticket. Nullable.\n
     @author YixuanZhou
+    @author nouryehia (updates)
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -169,7 +170,7 @@ class Ticket(db.Model):
         result = {}
         ret = {}
         evts = {}
-        if self.can_edit_by(user_id=user_id):
+        if self.can_view_by(user_id=user_id):
             ret['ticket_id'] = self.id
             ret['queue_id'] = self.queue_id
             ret['closed_at'] = self.closed_at
@@ -372,17 +373,18 @@ class Ticket(db.Model):
         """
         if not self.is_private:
             return True
-        else:
-            course = Course.get_course_by_queue_id(self.queue_id)
-            ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                                          course_id=course.id)
-            if ec_entry.role != Role.STUDENT.value:
-                return True
-            else:
-                if self.student_id == ec_entry.id:
-                    return True
-                else:
-                    return False
+        
+        course = Course.get_course_by_queue_id(self.queue_id)
+        ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                        course_id=course.id)
+        
+        if not ec_entry:
+            return False
+
+        if ec_entry.role != Role.STUDENT.value:
+            return True
+        
+        return self.student_id == ec_entry.id
 
     def can_edit_by(self, user_id: int) -> bool:
         """
@@ -395,17 +397,18 @@ class Ticket(db.Model):
         """
         if self.is_resolved():
             return False
-        else:
-            course = Course.get_course_by_queue_id(self.queue_id)
-            ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                                          course_id=course.id)
-            if ec_entry.role != Role.STUDENT.value:
-                return True
-            else:
-                if self.student_id == ec_entry.id:
-                    return True
-                else:
-                    return False
+        
+        course = Course.get_course_by_queue_id(self.queue_id)
+        ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                        course_id=course.id)
+        
+        if not ec_entry:
+            return False
+
+        if ec_entry.role != Role.STUDENT.value:
+            return True
+        
+        return self.student_id == ec_entry.id
 
     def update_ticket_tags(self, tag_list: List[TicketTag]) -> None:
         """
@@ -448,9 +451,9 @@ class Ticket(db.Model):
 
         self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = EnrolledCourse.\
-            find_user_in_course(user_id=grader.id,
-                                course_id=self.course_id).id
+        self.grader_id = EnrolledCourse.find_user_in_course(user_id=grader.id,
+            course_id=Course.get_course_by_queue_id(self.queue_id).id).id
+
         self.save()
 
     def mark_resolved(self) -> None:

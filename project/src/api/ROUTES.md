@@ -286,7 +286,7 @@ Adds a ticket to the queue.
 #### *Parameters*
 
 - **queue_id: int** id of queue ticket is on
-- **student_id: int** id of student who added the ticket
+- **student_id: int** (DEV ONLY) id of student who added the ticket
 - **title: string** title of ticket
 - **description: string** description of ticket
 - **room: string** room where ticket was added
@@ -424,7 +424,7 @@ Allows graders to update tickets and change status
 #### *Parameters*
 
 - **ticket_id: int** id ticket to be updated
-- **status: string** new status ('resolved', 'canceled', or 'defered')
+- **status: string** new status ('RESOLVED', 'CANCELED', or 'DEFERRED')
 
 #### *Responses*
 - Success:
