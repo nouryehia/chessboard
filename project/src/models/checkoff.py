@@ -46,6 +46,22 @@ class Checkoff(db.Model):
         '''
         db.session.commit()
 
+    def to_json(self):
+        '''
+        Function that takes a checkoff object and returns it in a dictionary
+        form. Used on the API layer.\n
+        Params: None\n
+        Returns: Dictionary of the checkoff object
+        '''
+        ret = {}
+        ret['id'] = self.id
+        ret['description'] = self.description
+        ret['name'] = self.name
+        ret['course_id'] = self.course_id
+        ret['points'] = self.points
+        ret['status'] = self.status
+        return ret
+
     #TODO: idk if any of the is_blank are really needed 
     def is_hidden(self) -> bool:
         """
@@ -74,7 +90,6 @@ class Checkoff(db.Model):
         """
         return self.status == Status.FINALIZED
 
-    #TODO: IDK if any of these are needed either if there's an object in the API
     def set_hidden(self) -> None:
         """
         Sets the checkoff to hidden\n
@@ -101,14 +116,6 @@ class Checkoff(db.Model):
         """
         self.status = Status.FINALIZED
         self.save()
-
-    def set_status(self, status) -> None:
-        '''
-        Sets the status of the checkoff\n
-        Params: None\n
-        Return: None\n
-        '''
-        self.status = status
 
     def update_checkoff(self, description: str, name: str, points: int) -> Checkoff:
         '''
@@ -225,6 +232,8 @@ class CheckoffEvaluation(db.Model):
         ce.save()
 
         return ce
+
+    #TODO: find latest ce for checkoff for all students? to show on that checkoff page? 
 
     @staticmethod
     def find_latest_ce_for_all_checkoffs_for_student(course_id: int, student_id: int) -> List[CheckoffEvaluation]:
