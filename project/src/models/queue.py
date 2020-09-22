@@ -585,7 +585,7 @@ class Queue(db.Model):
     @staticmethod
     def grader_login(queue_id: int, grader_id: int,
                      action_type: ActionType =
-                     ActionType.MANUAL) -> (bool, str):
+                     ActionType.MANUAL.value) -> (bool, str):
         """
         Login a grader when the grader login to he queue.\n
         Inputs:\n

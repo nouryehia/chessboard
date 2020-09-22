@@ -253,11 +253,13 @@ class EnrolledCourse(db.Model):
         if not c:
             return False, None
         if not role:
-            return True, EnrolledCourse.query.filter_by(course_id=c.id).all()
+            return True, EnrolledCourse.query.filter_by(course_id=course_id).\
+                order_by(EnrolledCourse.id.desc()).all()
         else:
             return True, EnrolledCourse.\
-                query.filter_by(course_id=c.id).\
-                filter(EnrolledCourse.role.in_(role)).all()
+                query.filter_by(course_id=course_id).\
+                filter(EnrolledCourse.role.in_(role)).\
+                order_by(EnrolledCourse.id.desc()).all()
 
     @staticmethod
     def find_courses_user_in(user_id: int,
@@ -275,7 +277,8 @@ class EnrolledCourse(db.Model):
         else:
             return EnrolledCourse.query.\
                 filter_by(user_id=user_id).\
-                filter(EnrolledCourse.role.in_(role)).all()
+                filter(EnrolledCourse.role.in_(role)).all().\
+                order_by(EnrolledCourse.id.desc()).all()
 
     @staticmethod
     def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):

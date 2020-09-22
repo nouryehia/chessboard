@@ -2,7 +2,7 @@ from flask_cors import CORS
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
-from ..models.queue import Queue, Status
+from ..models.queue import Queue, Status, ActionType
 from ..models.enrolled_course import EnrolledCourse, Role
 from ..models.course import Course
 from ..models.ticket import Status as t_Status
@@ -98,7 +98,7 @@ def login_grader():
     """
     q_id = int(request.json['queue_id'])
     g_id = int(request.json['grader_id'])
-    a_c = int(request.json['action_type'])  # need to change to string (name of the enum)
+    a_c = ActionType[request.json['action_type']].value  # need to change to string (name of the enum)
     result = Queue.grader_login(queue_id=q_id,
                                 grader_id=g_id,
                                 action_type=a_c)
@@ -253,7 +253,6 @@ def find_all_ticket_for_student():
                                                student_id=s_id,
                                                status=s_type_list)
     ret = {}
-    i = 0
     for t in t_list:
         ret.append(t.to_json())
     return jsonify({'reason': 'Success', 'result': ret}), 200

@@ -15,6 +15,14 @@ ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
 
+# Routes for testing
+@ticket_api_bp.route('/show_all_evts', methods=['GET'])
+def get_all_evts():
+    evts = TicketEvent.get_all_ticket_events()
+    return jsonify({"evts": evts}), 200
+
+
+
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
 @login_required
 def add_ticket():
@@ -25,7 +33,9 @@ def add_ticket():
     @author YixuanZhou
     """
     queue_id = int(request.json['queue_id'])
-    student_id = int(request.json['student_id'])
+    user_id = int(request.json['student_id'])
+    cid = Course.get_course_by_queue_id(queue_id).id
+    student_id = EC.find_user_in_course(user_id=user_id, course_id=cid)
     title = request.json['title']
     description = request.json['description']
     room = request.json['room']

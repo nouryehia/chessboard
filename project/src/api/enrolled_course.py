@@ -63,7 +63,7 @@ def change_role():
     req = request.get_json()
     uid = int(req['user_id'])
     cid = int(req['course_id'])
-    role = Role[req['role']].value
+    role = Role[req['role']]
     ec = EnrolledCourse.find_user_in_course(user_id=uid, course_id=cid)
     if not ec:
         return jsonify({'reason': "User not enrolled"}), 400
@@ -94,15 +94,17 @@ def delete_user_from_course():
 
 @enrolled_course_api_bp.route('/get_user_in_course', methods=['GET'])
 #@login_required
-def get_user_of_course():
+def get_user_in_course():
     """
     Route to get a user from a specific course.
     """
+    rags = request.args
     user_id = request.args.get('user_id', type=int)
     course_id = request.args.get('course_id', type=int)
-    ec_info = EnrolledCourse.\
+    ec = EnrolledCourse.\
         find_user_in_course(user_id=user_id,
-                            course_id=course_id).to_json()
+                            course_id=course_id)
+    ec_info = ec.to_json() if ec_info is not None else {}
     user = User.get_user_by_id(user_id)
     user_info = user.to_json()
     ret = {'user_info': user_info, 'enrolled_course_info': ec_info}
@@ -117,7 +119,8 @@ def get_all_user_in_course():
     The roles is optional, when passing in,
     pass in the string representation of ; seperated int values.
     """
-    course_id = request.args.get('course_id', type=int)
+    rags = request.args
+    course_id = request.args.get('course_id')
     rs = request.args.get('roles', type=str)
     roles = None
     if rs:

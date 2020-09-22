@@ -196,3 +196,11 @@ class TicketEvent(db.Model):
                 continue
             ret['event' + str(i)] = event.to_json()
             i += 1
+
+    @staticmethod
+    def get_all_ticket_events():
+        """
+        For testing use
+        """
+        evts = TicketEvent.query.all()
+        return evts

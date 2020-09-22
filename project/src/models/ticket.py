@@ -628,7 +628,7 @@ class Ticket(db.Model):
         A list of event related to this ticket.\n
         """
         return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-            .sort_by(TicketEvent.timestamp).desc.all()
+            .order_by(TicketEvent.timestamp.desc()).all()
 
     @staticmethod
     def find_all_events_for_tickets(tickets:
@@ -683,11 +683,11 @@ class Ticket(db.Model):
         if status:
             return Ticket.query.\
                 filter_by(queue_id=queue_id).\
-                order_by(Ticket.created_at).desc.all()
+                order_by(Ticket.created_at.desc()).all()
         else:
             return Ticket.query.\
                 filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
-                order_by(Ticket.created_at).desc.all()
+                order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
     def find_all_tickets_by_student(queue_id: int,
@@ -709,7 +709,7 @@ class Ticket(db.Model):
         return Ticket.query.\
             filter_by(queue_id=queue_id, student_id=ec.id).\
             filter_by(status.in_(status)).\
-            order_by(Ticket.created_at).desc.all()
+            order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
     def find_all_tickets_for_grader(queue_id: int,
@@ -728,7 +728,7 @@ class Ticket(db.Model):
                                                 course_id=cid)
         return Ticket.query.\
             filter_by(queue_id=queue_id, grader_id=ec.id).\
-            order_by(Ticket.created_at).desc.all()
+            order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
     def find_tickets_in_range(queue_id: int,
