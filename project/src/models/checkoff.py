@@ -23,20 +23,24 @@ class Checkoff(db.Model):
     Represents a checkoff in the DB with relevant description and points.\n
     Fields:\n
     id --> Checkoff ID. Unique, primary key\n
+    due --> When checkoff is due\n
     description --> Description of checkoff\n
     name --> Corresponding assignment\n
     course_id --> ID of course checkoff is in\n
     points --> Number of points checkoff is worth\n
     status --> Checkoff availability status\n
+    is_deleted --> Whether checkoff is deleted or not\n
     @author sravyabalasa
     """
     __tablename__ = 'Checkoff'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
+    due = db.Column(db.DateTime, nullable=True, default=TimeUtil.get_current_time())
     description = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey(Course.id), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Integer, nullable=False)
+    is_deleted = db.Column(db.Boolean, nullable=False)
 
     def save():
         '''
@@ -60,35 +64,9 @@ class Checkoff(db.Model):
         ret['course_id'] = self.course_id
         ret['points'] = self.points
         ret['status'] = self.status
+        ret['due'] = self.due
+        ret['is_deleted'] = self.is_deleted
         return ret
-
-    #TODO: idk if any of the is_blank are really needed 
-    def is_hidden(self) -> bool:
-        """
-        Returns if the checkoff is hidden\n
-        Params: None\n
-        Return:\n
-        Bool indicating if the checkoff is hidden\n
-        """
-        return self.status == Status.HIDDEN
-
-    def is_available(self) -> bool:
-        """
-        Returns if the checkoff is available\n
-        Params: None\n
-        Return:\n
-        Bool indicating if the checkoff is available\n
-        """
-        return self.status == Status.AVAILABLE
-
-    def is_finalized(self) -> bool:
-        """
-        Returns if the checkoff is finalized\n
-        Params: None\n
-        Return:\n
-        Bool indicating if the checkoff is finalized\n
-        """
-        return self.status == Status.FINALIZED
 
     def set_hidden(self) -> None:
         """
@@ -117,6 +95,16 @@ class Checkoff(db.Model):
         self.status = Status.FINALIZED
         self.save()
 
+    def soft_delete(self) -> None:
+        '''
+        Sets the checkoff to deleted and returns this checkoff.\n
+        Params: None\n
+        Returns: This assignment.
+        '''
+        self.is_deleted = True
+        self.save()
+        return self
+
     def update_checkoff(self, description: str, name: str, points: int) -> Checkoff:
         '''
         Updates a checkoff based on information entered by user\n
@@ -130,10 +118,8 @@ class Checkoff(db.Model):
         self.points = points
 
         #TODO: Update the checkoff evaluations as well?? With updated score if points change??
-
         self.save()
 
-    #TODO: Delete checkoff that deletes all the checkoff evalutations? query by is_deleted for both?
     @staticmethod
     def get_checkoff_by_id(checkoff_id: int) -> Checkoff:
         '''
@@ -143,11 +129,12 @@ class Checkoff(db.Model):
         Return:\n
         Checkoff corresponding to ID passed in
         '''
+        #TODO: Delete checkoff that deletes all the checkoff evalutations? query by is_deleted for both?
         return Checkoff.query.filter_by(id=checkoff_id).first()
 
     @staticmethod
     def create_checkoff(description: str, name: str, course_id: int,
-                        points: int) -> Checkoff:
+                        points: int, due: str) -> Checkoff:
         '''
         Creates a new checkoff in the database\n
         Params:\n
@@ -155,12 +142,13 @@ class Checkoff(db.Model):
         name --> Name of the checkoff\n
         course_id --> ID of course checkoff belongs to\n
         points --> Points the checkoff is worth\n
+        due --> When the checkoff is due\n
         Return:\n
         Checkoff that was created in the database
         author @sravyabalasa
         '''
         c = Checkoff(description=description, name=name, course_id=course_id,
-                     points=points)
+                     points=points, is_deleted=False, due=TimeUtil.convert_str_to_datetime(due))
         db.session.add(c)
         c.save()
 
@@ -176,7 +164,7 @@ class Checkoff(db.Model):
         List of Checkoffs in the course
         @author sravyabalasa
         """
-        return Checkoff.query.filter(course_id=course_id).all()
+        return Checkoff.query.filter(course_id=course_id, is_deleted=False).all()
 
 
 class CheckoffEvaluation(db.Model):
@@ -213,13 +201,14 @@ class CheckoffEvaluation(db.Model):
 
     @staticmethod
     def create_eval(checkoff_id: int, grader_id: int,
-                    student_id: int, score_fract: str) -> CheckoffEvaluation:
+                    student_id: int, score_fract: float) -> CheckoffEvaluation:
         """
         Creates a new checkoff evaluation\n
         Params:\n
         checkoff --> id of checkoff\n
         grader --> id of grader for checkoff\n
         student --> id of student\n
+        score_fract --> how much of the score they got (full, 1/2, none)
         Return:\n
         A new checkoff evaluation\n
         """
@@ -233,7 +222,23 @@ class CheckoffEvaluation(db.Model):
 
         return ce
 
-    #TODO: find latest ce for checkoff for all students? to show on that checkoff page? 
+    @staticmethod
+    def find_latest_ce_for_checkoff_for_all_students(course_id: int, checkoff_id: int) -> List[Tuple[User,CheckoffEvaluation]]:
+        '''
+        Finds latest checkoff evaluation for each student in a course
+        Params:\n
+        course_id --> ID of course to get students' checkoffs for\n
+        checkoff_id --> ID of checkoff to get latest evalution for\n
+        Return:\n
+        A list of tuples of Users, CheckoffEvaluations
+        '''
+        students = Course.get_course_by_id(course_id).get_students()
+
+        ce_map = []
+        for student in students:
+            ce = CheckoffEvaluation.find_latest_ce_for_checkoff_for_student(checkoff_id, student.id)
+            ce_map.append(student, ce)
+        return ce_map
 
     @staticmethod
     def find_latest_ce_for_all_checkoffs_for_student(course_id: int, student_id: int) -> List[CheckoffEvaluation]:
@@ -262,7 +267,7 @@ class CheckoffEvaluation(db.Model):
         checkoff_id --> ID of the checkoff assignment\n
         student_id --> ID of the student\n
         Return:\n
-        A list of CheckoffEvaluations for the student\n
+        A CheckoffEvaluation for the student\n
         """
         return CheckoffEvaluation.query \
             .filter_by(checkoff_id=checkoff_id,

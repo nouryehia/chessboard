@@ -16,25 +16,17 @@ CREATE TABLE "Users" (
 
 CREATE TABLE "Checkoff" (
 	"id" serial NOT NULL,
+	"due" TIMESTAMP NOT NULL, 
 	"description" varchar(255) NOT NULL,
 	"name" varchar(255) NOT NULL,
-	"suite_id" bigserial NOT NULL,
+	"course_id" bigserial NOT NULL,
 	"points" integer NOT NULL DEFAULT '1',
+	"status" integer NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL,
 	CONSTRAINT "Checkoff_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
 );
-
-
-
-CREATE TABLE "CheckoffSuite" (
-	"id" serial NOT NULL,
-	"status" integer NOT NULL,
-	CONSTRAINT "CheckoffSuite_pk" PRIMARY KEY ("id")
-) WITH (
-  OIDS=FALSE
-);
-
 
 
 CREATE TABLE "CheckoffEvaluation" (
@@ -43,13 +35,25 @@ CREATE TABLE "CheckoffEvaluation" (
 	"checkoff_id" bigserial NOT NULL,
 	"grader_id" bigserial NOT NULL,
 	"student_id" bigserial NOT NULL,
+	"score" integer NOT NULL,
 	CONSTRAINT "CheckoffEvaluation_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
 );
 
+/*
+CREATE TABLE "CheckoffSuite" (
+	"id" serial NOT NULL,
+	"status" integer NOT NULL,
+	CONSTRAINT "CheckoffSuite_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+*/
 
 
+
+/*
 CREATE TABLE "Assignment" (
 	"id" serial NOT NULL,
 	"due" TIMESTAMP NOT NULL,
@@ -62,8 +66,7 @@ CREATE TABLE "Assignment" (
 	CONSTRAINT "Assignment_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
-);
-
+); 
 
 
 CREATE TABLE "Category" (
@@ -75,7 +78,7 @@ CREATE TABLE "Category" (
 	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
-);
+); */
 
 
 
@@ -238,17 +241,17 @@ CREATE TABLE "TicketFeedback" (
 
 
 
-ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("suite_id") REFERENCES "CheckoffSuite"("id");
+ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk0" FOREIGN KEY ("checkoff_id") REFERENCES "Checkoff"("id");
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk1" FOREIGN KEY ("grader_id") REFERENCES "Users"("id");
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN KEY ("student_id") REFERENCES "Users"("id");
 
-ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
-ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
+--- ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
+--- ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
 
-ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
+--- ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 

@@ -36,7 +36,7 @@ def create_checkoff():
 @checkoff_api_bp.route('/update_checkoff', methods=['PUT'])
 def update_checkoff():
     '''
-    Route used to update an existiing checkoff in the database. Returns
+    Route used to update an existing checkoff in the database. Returns
     updated checkoff object.\n
     @author sravyabalasa
     '''
@@ -56,3 +56,67 @@ def update_checkoff():
 
     return jsonify({'reason': 'checkoff successfully updated',
                     'checkoff': checkoff.to_json()}), 200
+
+
+@checkoff_api_bp.route('/delete_checkoff', methods=['PUT'])
+def delete_checkoff():
+    '''
+    Route used to soft delete a checkoff in the database.\n
+    Returns deleted checkoff object.\n
+    @sravyabalasa
+    '''
+    id = request.json['id'] if 'id' in request.json else None
+
+    checkoff = Checkoff.get_checkoff_by_id(id)
+    checkoff.soft_delete()
+
+    return jsonify({'reason': 'checkoff successfully deleted',
+                    'checkoff': checkoff.to_json()}), 200
+
+
+@checkoff_api_bp.route('/submit_evaluation', methods=["POST"])
+def submit_evaluation():
+    '''
+    Creates checkoff evaluation for a student.\n
+    Returns created checkoff evaluation\n
+    @sravyabalasa
+    '''
+    checkoff_id = request.json['checkoff_id']
+    grader_id = request.json['grader_id']
+    student_id = request.json['student_id']
+    score_fract = request.json['score_fract']
+
+    ce = CheckoffEvaluation.create_eval(checkoff_id, grader_id, student_id, score_fract)
+
+    return jsonify({'reason': 'checkoff evaluation successfully created',
+                    'eval': ce.to_json()}), 200
+
+
+@checkoff_api_bp.route('/get_latest_ce_all_students_for_course', methods=["GET"])
+def get_evaluations_course():
+    '''
+    Returns latest checkoff evaluation for each student in course.\n
+    @sravyabalasa
+    '''
+    course_id = request.args.get('course_id')
+    checkoff_id = request.args.get('checkoff_id')
+
+    evals = CheckoffEvaluation.find_latest_ce_for_checkoff_for_all_students(course_id, checkoff_id)
+    ret = list(map(lambda eval: {'student': eval[0].to_json, 'eval': eval[1].to_json()}, evals))
+    return jsonify({'reason': 'checkoff evaluations queried',
+                    'evals': ret}), 200
+
+
+@checkoff_api_bp.route('/get_latest_ce_all_checkoffs_for_student', methods=["GET"])
+def get_evaluations_student():
+    '''
+    Returns latest checkoff evaluations for all checkoffs for student.\n
+    @sravyabalasa
+    '''
+    course_id = request.args.get('course_id')
+    student_id = request.args.get('student_id')
+
+    evals = CheckoffEvaluation.find_latest_ce_for_all_checkoffs_for_student(course_id, student_id)
+    ret = list(map(lambda eval: eval.to_json(), evals))
+    return jsonify({'reason': 'checkoff evaluations queried',
+                    'evals': ret}), 200
