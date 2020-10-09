@@ -373,17 +373,17 @@ class Ticket(db.Model):
         """
         if not self.is_private:
             return True
-        
+
         course = Course.get_course_by_queue_id(self.queue_id)
         ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                                        course_id=course.id)
-        
+                                                      course_id=course.id)
+
         if not ec_entry:
             return False
 
         if ec_entry.role != Role.STUDENT.value:
             return True
-        
+
         return self.student_id == ec_entry.id
 
     def can_edit_by(self, user_id: int) -> bool:
@@ -397,17 +397,17 @@ class Ticket(db.Model):
         """
         if self.is_resolved():
             return False
-        
+
         course = Course.get_course_by_queue_id(self.queue_id)
         ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                                        course_id=course.id)
-        
+                                                      course_id=course.id)
+
         if not ec_entry:
             return False
 
         if ec_entry.role != Role.STUDENT.value:
             return True
-        
+
         return self.student_id == ec_entry.id
 
     def update_ticket_tags(self, tag_list: List[TicketTag]) -> None:
@@ -447,12 +447,14 @@ class Ticket(db.Model):
         Mark the ticket as accepted by a tutor.\n
         """
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_ticket_for_grader(grader)
+        Ticket.defer_accepted_ticket_for_grader(grader, self.queue_id)
 
         self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = EnrolledCourse.find_user_in_course(user_id=grader.id,
-            course_id=Course.get_course_by_queue_id(self.queue_id).id).id
+        self.grader_id = EnrolledCourse.find_user_in_course(
+                         user_id=grader.id,
+                         course_id=Course.get_course_by_queue_id(
+                             self.queue_id).id).id
 
         self.save()
 
@@ -603,19 +605,25 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accepted_ticket_for_grader(grader: User) -> int:
+    def defer_accepted_ticket_for_grader(grader: User, queue_id: int) -> int:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n
         Inputs:\n
         grader --> The grader to be multified.\n
         """
-        ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
+        cid = Course.get_course_by_queue_id(queue_id).id
+        ec = EnrolledCourse.find_user_in_course(user_id=grader.id,
+                                                course_id=cid).id
+
+        ticket_list = Ticket.query.filter_by(grader_id=ec).all()
         counter = 0
+
         for ticket in ticket_list:
             if (ticket.status == Status.ACCEPTED.value):
                 counter += 1
                 ticket.mark_pending()
+
         return counter
 
     # Moved from ticket_event
@@ -688,8 +696,9 @@ class Ticket(db.Model):
                 filter_by(queue_id=queue_id).\
                 order_by(Ticket.created_at.desc()).all()
         else:
-            return Ticket.query.\
-                filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
+            return Ticket.\
+                query.filter_by(queue_id=queue_id).\
+                filter(Ticket.status.in_(status)).\
                 order_by(Ticket.created_at.desc()).all()
 
     @staticmethod

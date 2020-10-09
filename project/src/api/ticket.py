@@ -5,20 +5,22 @@ from flask import Blueprint, request, jsonify
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.enrolled_course import EnrolledCourse as EC
-from ..models.enrolled_course import Role
+# from ..models.enrolled_course import Role
 from ..models.course import Course
 from ..models.user import User
-from ..utils.time import TimeUtil
+# from ..utils.time import TimeUtil
 
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
-# Routes for testing
+
+# Route for testing
 @ticket_api_bp.route('/show_all_evts', methods=['GET'])
 def get_all_evts():
     evts = TicketEvent.get_all_ticket_events()
     return jsonify({"evts": evts}), 200
+
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
 @login_required
@@ -33,11 +35,11 @@ def add_ticket():
     cid = Course.get_course_by_queue_id(queue_id).id
 
     # REMOVE LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    student_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
-                                        course_id=cid).id
+    s_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
+                                  course_id=cid).id
 
     # UNCOMMENT LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    # student_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+    # s_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
 
     title = request.json['title']
     description = request.json['description']
@@ -51,7 +53,7 @@ def add_ticket():
         tag_list.append(TicketTag(int(tag)).value)
 
     # create a ticket
-    ticket = Ticket.add_ticket(queue_id=queue_id, student_id=student_id,
+    ticket = Ticket.add_ticket(queue_id=queue_id, student_id=s_id,
                                title=title, description=description, room=room,
                                workstation=workstation, is_private=is_private,
                                help_type=help_type, tag_list=tag_list)
@@ -61,7 +63,7 @@ def add_ticket():
                              ticket_id=ticket.id,
                              message=description,
                              is_private=is_private,
-                             user_id=student_id)
+                             user_id=s_id)
 
     return (jsonify({'reason': 'ticket added to queue',
                      'result': ticket.to_json(user_id=current_user.id)}), 200)
@@ -183,8 +185,9 @@ def defer_accepted_tickets_for_grader():
     Route used to return tickets accepted by a grader to the queue.\n
     @author nouryehia
     '''
+    queue_id = request.json['queue_id']
     grader = User.get_user_by_id(current_user.id)
-    tickets = Ticket.defer_accepted_ticket_for_grader(grader)
+    tickets = Ticket.defer_accepted_ticket_for_grader(grader, queue_id)
 
     return jsonify({'reason': str(tickets) + ' tickets deferred'}), 400
 
@@ -198,15 +201,16 @@ def find_all_tickets():
     @author nouryehia
     '''
     status = []
+    queue_id = request.args.get('queue_id', default=0, type=int)
     pending = request.args.get('pending', default=0, type=int)
     accepted = request.args.get('accepted', default=0, type=int)
+
     if pending:
         status.append(0)
     if accepted:
         status.append(1)
 
-    tickets = Ticket.find_all_tickets(queue_id=int(request.json['queue_id']),
-                                      status=status)
+    tickets = Ticket.find_all_tickets(queue_id=queue_id, status=status)
 
     ticket_infos = []
     for ticket in tickets:
