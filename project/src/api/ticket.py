@@ -185,7 +185,7 @@ def defer_accepted_tickets_for_grader():
     Route used to return tickets accepted by a grader to the queue.\n
     @author nouryehia
     '''
-    queue_id = request.json['queue_id']
+    queue_id = int(request.json['queue_id'])
     grader = User.get_user_by_id(current_user.id)
     tickets = Ticket.defer_accepted_ticket_for_grader(grader, queue_id)
 

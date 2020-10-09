@@ -451,7 +451,7 @@ Returns tickets accepted by a grader to the queue
 
 #### *Parameters*
 
-- None
+- **queue_id: int** id of queue ticket is on
 
 #### *Responses*
 ```json
