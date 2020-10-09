@@ -387,6 +387,7 @@ Allows students to update tickets
 #### *Parameters*
 
 - **ticket_id: int** id ticket to be updated
+- **cancel: int** (OPTIONAL) pass in 1 if student is canceling ticket.
 - **title: string** (OPTIONAL) new title
 - **description: string** (OPTIONAL) new description
 - **room: string** (OPTIONAL) new room

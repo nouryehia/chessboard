@@ -109,6 +109,10 @@ def student_update():
 
     ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
 
+    if 'cancel' in req and int(req['cancel']) == 1:
+        ticket.mark_canceled()
+        return jsonify({'reason': 'ticket canceled'}), 200
+
     title = req['title'] if 'title' in req else ticket.title
     desc = req['description'] if 'description' in req else ticket.description
     room = req['room'] if 'room' in req else ticket.room
