@@ -65,7 +65,7 @@ def get_ticket_counts_by_student(queue: Queue):
     Inputs:
     queue --> queue on which the instructor is accessing the stats
     Return:
-    dictionary of counts of tickets created by each student for thes given queue
+    dictionary of counts of tickets created by each student for the given queue
     """
     tickets = Ticket.find_all_tickets(queue)
     stats = {}
@@ -84,5 +84,3 @@ def get_ticket_counts_by_student(queue: Queue):
                     stats[name] = 1
 
     return stats
-
-
