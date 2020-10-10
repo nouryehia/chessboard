@@ -11,7 +11,7 @@ CORS(newsfeed_api_bp, supports_credentials=True)
 
 
 @newsfeed_api_bp.route('/get_posts', methods=['GET'])
-@login_required
+#@login_required
 def get_news_feed_posts():
 
     '''
@@ -30,7 +30,7 @@ def get_news_feed_posts():
 
 
 @newsfeed_api_bp.route('/add_post', methods=['POST'])
-@login_required
+#@login_required
 def add_newsfeed_post():
     
     '''
@@ -55,7 +55,7 @@ def add_newsfeed_post():
 
 
 @newsfeed_api_bp.route('/update_post', methods=['POST'])
-@login_required
+#@login_required
 def update_newsfeed_post():
 
     '''
@@ -90,7 +90,7 @@ def update_newsfeed_post():
 
 
 @newsfeed_api_bp.route('/archive_post', methods=['POST'])
-@login_required
+#@login_required
 def archive_newsfeed_post():
 
     '''
@@ -115,7 +115,7 @@ def archive_newsfeed_post():
 
 
 @newsfeed_api_bp.route('/unarchive_post', methods=['POST'])
-@login_required
+#@login_required
 def unarchive_newsfeed_post():
 
     '''
@@ -140,7 +140,7 @@ def unarchive_newsfeed_post():
 
 
 @newsfeed_api_bp.route('delete_post', methods=['POST'])
-@login_required
+#@login_required
 def delete_newsfeed_post():
 
     '''

@@ -16,15 +16,17 @@ from .src.api.queue import queue_api_bp as qapi
 from .src.api.news_feed import newsfeed_api_bp as nfapi
 from .src.api.course import course_api_bp as capi
 from .src.api.section import section_api_bp as sapi
+from .src.api.ticket_feedback import feedback_api_bp as tfapi
 
 app.register_blueprint(uapi, url_prefix="/api/users")
 app.register_blueprint(tapi, url_prefix="/api/ticket")
 app.register_blueprint(aapi, url_prefix="/api/assignment")
-app.register_blueprint(eapi, url_prefix="/api/enroll_course")
+app.register_blueprint(eapi, url_prefix="/api/enrolled_course")
 app.register_blueprint(qapi, url_prefix="/api/queue")
 app.register_blueprint(nfapi, url_prefix="/api/newsfeeds")
 app.register_blueprint(capi, url_prefix="/api/course")
 app.register_blueprint(sapi, url_prefix="/api/section")
+app.register_blueprint(tfapi, url_prefix="/api/ticketfeedback")
 
 # DO NOT EDIT BELOW THE LINE
 # ----------------------------------------------------------------

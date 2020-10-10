@@ -9,7 +9,7 @@ CORS(assignment_api_bp, supports_credentials=True)
 
 
 @assignment_api_bp.route('/create_assignment', methods=['POST'])
-@login_required
+#@login_required
 def create_assignment():
     '''
     Route used to create an assignment in the DB. Only accepts post requests.
@@ -31,7 +31,7 @@ def create_assignment():
 
 
 @assignment_api_bp.route('/get_assignments_for_course', methods=['GET'])
-@login_required
+#@login_required
 def get_assignments_for_course():
     '''
     Route used to retrieve all assignments for a specific course. Will
@@ -54,7 +54,7 @@ def get_assignments_for_course():
 
 
 @assignment_api_bp.route('/delete_assignment_for_course', methods=['PUT'])
-@login_required
+#@login_required
 def delete_assignment_for_course():
     '''
     Route that deletes a specific assignment for a couse. Needs the id of
@@ -80,7 +80,7 @@ def delete_assignment_for_course():
 
 
 @assignment_api_bp.route('/delete_all_for_course', methods=['PUT'])
-@login_required
+#@login_required
 def delete_all_for_course():
     '''
     Route that deletes all assignments for a couse. Needs the id
@@ -103,7 +103,7 @@ def delete_all_for_course():
 
 
 @assignment_api_bp.route('/restore_assignment_for_course', methods=['PUT'])
-@login_required
+#@login_required
 def restore_assignment_for_course():
     '''
     Route that restores a specific assignment for a course. Needs a course
@@ -129,7 +129,7 @@ def restore_assignment_for_course():
 
 
 @assignment_api_bp.route('/restore_all_for_course', methods=['PUT'])
-@login_required
+#@login_required
 def restore_all_for_course():
     '''
     Route that restores all assignments for a course. Needs a course

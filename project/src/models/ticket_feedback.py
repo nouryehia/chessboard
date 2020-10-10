@@ -6,6 +6,7 @@ from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
+from ..utils.time import TimeUtil
 # from .user import User  # Pretending
 # from .queue import Queue
 # from .ticket import Ticket, Status
@@ -45,7 +46,7 @@ class TicketFeedback(db.Model):
     feedback = db.Column(db.String(255), nullable=True)
     submitted_date = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
-    is_annoymous = db.Column(db.Boolean, nullable=False)
+    is_anonymous = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
         """
@@ -66,6 +67,19 @@ class TicketFeedback(db.Model):
         Save the object to the database.
         """
         db.session.commit()
+    
+    def to_json(self):
+        """
+        Return a json copy of the ticket feedback.
+        """
+        ret = {}
+        ret['id'] = self.id
+        ret['ticket_id'] = self.ticket_id
+        ret['rating'] = Rating(self.rating).name
+        ret['feedback'] = self.feedback
+        ret['is_anonymous'] = self.is_anonymous
+        ret['submitted_date'] = self.submitted_date
+        return ret
 
     # Static add method
     @staticmethod
@@ -90,3 +104,18 @@ class TicketFeedback(db.Model):
         ret = TicketFeedback.query.filter_by(ticket_id=ticket_id).all()
         ret = ret.sort(key=attrgetter('submitted_date'))
         return ret
+
+    @staticmethod
+    def add_feedback(ticket_id: int, rating: int, feedback: str, anonymous: bool) -> TicketFeedback:
+        """
+        Add a ticket feedback to the db
+        Inputs:\n
+        ticket_id --> The id of the ticket.
+        rating --> The rating of the feedback.
+        feedback --> The feedback text.
+        anonymous --> True of false.
+        """
+        fb = TicketFeedback(ticket_id=ticket_id, rating=rating, feedback=feedback,
+                            anonymous=anonymous, created_at = TimeUtil.get_current_time())
+        TicketFeedback.add_to_db(fb)
+        return fb

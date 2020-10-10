@@ -2,8 +2,10 @@ from flask_api import FlaskAPI
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask.cli import FlaskGroup
+from flask_cors import CORS
 
 app = FlaskAPI(__name__)
+CORS(app)
 app.config.from_object("project.config.Config")
 db = SQLAlchemy(app)
 db.init_app(app)

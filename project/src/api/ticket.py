@@ -1,385 +1,322 @@
 from flask_cors import CORS
-from flask_login import login_required
+from flask_login import login_required, current_user
 from flask import Blueprint, request, jsonify
 
-from ..models.ticket import Ticket
+from ..models.ticket import Ticket, HelpType, TicketTag
+from ..models.events.ticket_event import TicketEvent, EventType
+from ..models.enrolled_course import EnrolledCourse as EC
+# from ..models.enrolled_course import Role
+from ..models.course import Course
 from ..models.user import User
+# from ..utils.time import TimeUtil
 
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
 
 
-@ticket_api_bp.route('/is_question', methods=['GET'])
+# Route for testing
+@ticket_api_bp.route('/show_all_evts', methods=['GET'])
+def get_all_evts():
+    evts = TicketEvent.get_all_ticket_events()
+    evts_info = list(map(lambda x: x.to_json(), evts))
+    return jsonify({"evts": evts_info}), 200
+
+
+@ticket_api_bp.route('/add_ticket', methods=['POST'])
 @login_required
-def is_question():
+def add_ticket():
+    """
+    Add a ticket to the queue.\n
+    For the is_private field, pass in 0 or 1 to indicate true of false.\n
+    For the tag_list, pass in semi-colon seperated list of numbers in string.\n
+    @author YixuanZhou
+    """
+    queue_id = int(request.json['queue_id'])
+    cid = Course.get_course_by_queue_id(queue_id).id
+
+    # REMOVE LINE BELOW ONCE LOGIN WORKS ON FRONTEND
+    s_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
+                                  course_id=cid).id
+
+    # UNCOMMENT LINE BELOW ONCE LOGIN WORKS ON FRONTEND
+    # s_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+
+    title = request.json['title']
+    description = request.json['description']
+    room = request.json['room']
+    workstation = request.json['workstation']
+    is_private = int(request.json['is_private'])  # pass in 1 or 0
+    help_type = HelpType(int(request.json['help_type']))
+    tag_list_raw = request.json['tag_list'].split(';')  # Pass in ; sep ints.
+    tag_list = []
+    for tag in tag_list_raw:
+        tag_list.append(TicketTag(int(tag)).value)
+
+    # create a ticket
+    ticket = Ticket.add_ticket(queue_id=queue_id, student_id=s_id,
+                               title=title, description=description, room=room,
+                               workstation=workstation, is_private=is_private,
+                               help_type=help_type, tag_list=tag_list)
+
+    # submit a ticket event
+    TicketEvent.create_event(event_type=EventType.CREATED,
+                             ticket_id=ticket.id,
+                             message=description,
+                             is_private=is_private,
+                             user_id=s_id)
+
+    return (jsonify({'reason': 'ticket added to queue',
+                     'result': ticket.to_json(user_id=current_user.id)}), 200)
+
+
+@ticket_api_bp.route('/get_info', methods=['GET'])
+@login_required
+def get_info():
     '''
-    Route used to determine if a ticket is a question.\n
-    @author Nour
+    Route used to get a ticket's info.\n
+    @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
+    user_id = request.args.get('user_id', type=int)
+    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
 
-    return (jsonify({'reason': 'ticket is a question'}), 200
-            if ticket.is_question() else
-            jsonify({'reason': 'ticket is not a question'}), 400)
+    return jsonify(ticket.to_json(user_id=user_id)), 200
 
 
-@ticket_api_bp.route('/is_checkoff', methods=['GET'])
-# @login_required
-def is_checkoff():
+@ticket_api_bp.route('/get_user_permissions', methods=['GET'])
+@login_required
+def get_user_permissions():
     '''
-    Route used to determine if a ticket is a checkoff.\n
-    @author Nour
+    Route used to determine if a user can view or edit a ticket.\n
+    @author nouryehia
     '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
+    user_id = request.args.get('user_id', type=int)
+    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
 
-    return (jsonify({'reason': 'ticket is a checkoff'}), 200
-            if ticket.is_checkoff() else
-            jsonify({'reason': 'ticket is not a checkoff'}), 400)
-
-
-@ticket_api_bp.route('/is_pending', methods=['GET'])
-# @login_required
-def is_pending():
-    '''
-    Route used to determine if a ticket is pending.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is pending'}), 200
-            if ticket.is_pending() else
-            jsonify({'reason': 'ticket is not pending'}), 400)
-
-
-@ticket_api_bp.route('/is_accepted', methods=['GET'])
-# @login_required
-def is_accepted():
-    '''
-    Route used to determine if a ticket is accepted.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is pending'}), 200
-            if ticket.is_accepted() else
-            jsonify({'reason': 'ticket is not pending'}), 400)
-
-
-@ticket_api_bp.route('/is_resolved', methods=['GET'])
-# @login_required
-def is_resolved():
-    '''
-    Route used to determine if a ticket is resolved.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is resolved'}), 200
-            if ticket.is_resolved() else
-            jsonify({'reason': 'ticket is not resolved'}), 400)
-
-
-@ticket_api_bp.route('/is_canceled', methods=['GET'])
-# @login_required
-def is_canceled():
-    '''
-    Route used to determine if a ticket is canceled.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is canceled'}), 200
-            if ticket.is_canceled() else
-            jsonify({'reason': 'ticket is not canceled'}), 400)
-
-
-@ticket_api_bp.route('/is_non_cse', methods=['GET'])
-# @login_required
-def is_non_cse():
-    '''
-    Route used to determine if a ticket is not in the CSE building.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is not in CSE'}), 200
-            if ticket.is_non_cse() else
-            jsonify({'reason': 'ticket is in CSE'}), 400)
-
-
-@ticket_api_bp.route('/is_hallway', methods=['GET'])
-# @login_required
-def is_hallway():
-    '''
-    Route used to determine if a ticket is in the hallway.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-
-    return (jsonify({'reason': 'ticket is in hallway'}), 200
-            if ticket.is_hallway() else
-            jsonify({'reason': 'ticket is not in hallway'}), 400)
-
-
-@ticket_api_bp.route('/get_tags_list', methods=['GET'])
-# @login_required
-def get_tags_list():
-    '''
-    Route used to get the tags on a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_tags_list())
-
-
-@ticket_api_bp.route('/get_help_time_in_second', methods=['GET'])
-# @login_required
-def get_help_time_in_second():
-    '''
-    Route used to get the help time of a ticket (in seconds).\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_help_time_in_second())
-
-
-@ticket_api_bp.route('/get_title', methods=['GET'])
-# @login_required
-def get_title():
-    '''
-    Route used to get the get the title of a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_title())
-
-
-@ticket_api_bp.route('/get_description', methods=['GET'])
-# @login_required
-def get_description():
-    '''
-    Route used to get the description of a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_description())
-
-
-@ticket_api_bp.route('/get_room', methods=['GET'])
-# @login_required
-def get_room():
-    '''
-    Route used to get the room of a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_room())
-
-
-@ticket_api_bp.route('/get_workstation', methods=['GET'])
-# @login_required
-def get_workstation():
-    '''
-    Route used to get the workstation of a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_workstation())
-
-
-@ticket_api_bp.route('/get_position', methods=['GET'])
-# @login_required
-def get_position():
-    '''
-    Route used to get the position of a ticket in the current queue.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_position())
-
-
-@ticket_api_bp.route('/get_latest_feedback', methods=['GET'])
-# @login_required
-def get_latest_feedback():
-    '''
-    Route used to get the latest feedback on a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_latest_feedback())
-
-
-@ticket_api_bp.route('/get_ticket_events', methods=['GET'])
-# @login_required
-def get_ticket_events():
-    '''
-    Route used to get a ticket's events.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    return jsonify(ticket.get_ticket_events())
-
-
-@ticket_api_bp.route('/can_view_by', methods=['GET'])
-# @login_required
-def can_view_by():
-    '''
-    Route used to determine if a user can see a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    user = User.find_by_pid_email_fallback(None, request.json['email'])
-
-    return (jsonify({'reason': 'ticket can be viewed by user'}), 200
-            if ticket.can_view_by(user) else
-            jsonify({'reason': 'ticket cannot be viewed by user'}), 400)
-
-
-@ticket_api_bp.route('/can_edit_by', methods=['GET'])
-# @login_required
-def can_edit_by():
-    '''
-    Route used to determine if a user can edit a ticket.\n
-    @author Nour
-    '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
-    user = User.find_by_pid_email_fallback(None, request.json['email'])
-
-    return (jsonify({'reason': 'ticket can be edited by user'}), 200
-            if ticket.can_edit_by(user) else
-            jsonify({'reason': 'ticket cannot be edited by user'}), 400)
+    return jsonify({'can_view': ticket.can_view_by(user_id),
+                    'can_edit': ticket.can_edit_by(user_id)}), 200
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
-# @login_required
+@login_required
 def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
-    passed in.\n
-    @author Nour
+    passed in. This is specifically used for student updates.
+    @author nouryehia
+    @author YixuanZhou (updates)
     '''
-    ticket = Ticket.get_ticket_by_id(request.json['ticket_id'])
+    req = request.json
 
-    title = (request.json['title'] if 'title' in request.json
-             else ticket.title)
-    description = (request.json['description'] if 'description' in request.json
-                   else ticket.title)
-    room = (request.json['room'] if 'room' in request.json
-            else ticket.room)
-    workstation = (request.json['workstation'] if 'workstation' in request.json
-                   else ticket.workstation)
-    is_private = (request.json['is_private'] if 'is_private' in request.json
-                  else ticket.is_private)
-    help_type = (request.json['help_type'] if 'help_type' in request.json
+    ticket = Ticket.get_ticket_by_id(int(req['ticket_id']))
+
+    if 'cancel' in req and int(req['cancel']) == 1:
+        ticket.mark_canceled()
+        return jsonify({'reason': 'ticket canceled'}), 200
+
+    title = req['title'] if 'title' in req else ticket.title
+    desc = req['description'] if 'description' in req else ticket.description
+    room = req['room'] if 'room' in req else ticket.room
+    ws = req['workstation'] if 'workstation' in req else ticket.workstation
+    help_type = (HelpType(int(request.json['help_type'])) if 'help_type' in req
                  else ticket.help_type)
-    tags = (request.json['tags'] if 'tags' in request.json
-            else ticket.tags)
+    if 'is_private' in req:
+        private = True if req['is_private'] == 1 else False
+    else:
+        private = ticket.is_private
 
-    return (jsonify({'reason': 'ticket updated'}), 200
-            if ticket.student_update(title, description, room, workstation,
-                                     is_private, help_type, tags) else
-            jsonify({'reason': 'ticket could not be updated'}), 400)
+    if not ticket.can_edit_by(current_user.id):
+        return jsonify({'reason': 'Permission denied'}), 400
+
+    TicketEvent.create_event(event_type=EventType.UPDATED, ticket_id=ticket.id,
+                             message=desc, is_private=private,
+                             user_id=ticket.student_id)
+
+    if 'tag_list' in request.json:
+        raw_tags = request.json['tag_list'].split(';')
+        tags = []
+        for tag in raw_tags:
+            tags.append(TicketTag(int(tag)).value)
+    else:
+        tags = ticket.get_tags_list()
+
+    if ticket.student_update(title, desc, room, ws, private, help_type, tags):
+        return jsonify({'reason': 'ticket updated'}), 200
+
+    return jsonify({'reason': 'ticket could not be updated'}), 400
+
+
+@ticket_api_bp.route('/grader_update', methods=['POST'])
+# @login_required
+def grader_update():
+    """
+    The api function used for graders to perfrom actions to ticket.\n
+    Expect status for only accepted, defered, canceled, resolved.
+    @author YixuanZhou
+    @author nouryehia (updates)
+    """
+    ticket = Ticket.get_ticket_by_id(int(request.json['ticket_id']))
+    status = request.json['status']
+
+    if not ticket.can_edit_by(current_user.id):
+        return jsonify({'reason': "Permision denied"}), 400
+
+    actions = {'RESOLVED': ticket.mark_resolved,
+               'CANCELED': ticket.mark_canceled,
+               'DEFERRED': ticket.mark_pending}
+    cid = Course.get_course_by_queue_id(ticket.queue_id)
+    grader = User.get_user_by_id(current_user.id)
+    ec_grader = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+
+    # TODO: Uncomment this to add a check, keep it commented for testing.
+    # if ec_grader.get_role() == Role.STUDENT:
+    #    return jsonify({'reason': "Student try using grader permission"}), 400
+
+    if status == 'ACCEPTED':
+        ticket.mark_accepted_by(ec_grader)
+    else:
+        actions[status]()
+
+    TicketEvent.create_event(event_type=EventType[status],
+                             ticket_id=ticket.id,
+                             message=status,
+                             is_private=ticket.is_private,
+                             user_id=ticket.student_id)
+
+    return jsonify({'status': status,
+                    'grader_name': grader.first_name + ' ' + grader.last_name,
+                    'grader_pid': grader.pid}), 200
+
+
+@ticket_api_bp.route('/defer_accepted_tickets_for_grader', methods=['POST'])
+@login_required
+def defer_accepted_tickets_for_grader():
+    '''
+    Route used to return tickets accepted by a grader to the queue.\n
+    @author nouryehia
+    '''
+    queue_id = int(request.json['queue_id'])
+    grader = User.get_user_by_id(current_user.id)
+    tickets = Ticket.defer_accepted_ticket_for_grader(grader, queue_id)
+
+    return jsonify({'reason': str(tickets) + ' tickets deferred'}), 400
 
 
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
-# @login_required
+@login_required
 def find_all_tickets():
     '''
-    Route used to get all the tickets currently on a queue.\n
-    @author Nour
+    Route used to find tickets on the queue (can be catgorized as pending or\n
+    accepted).\n
+    @author nouryehia
     '''
-    queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-    status = (request.json['status'] if 'status' in request.json
-              else None)
+    status = []
+    queue_id = request.args.get('queue_id', default=0, type=int)
+    pending = request.args.get('pending', default=0, type=int)
+    accepted = request.args.get('accepted', default=0, type=int)
+    resolved = request.args.get('resolved', default=0, type=int)
+    canceled = request.args.get('canceled', default=0, type=int)
+    if pending:
+        status.append(0)
+    if accepted:
+        status.append(1)
+    if resolved:
+        status.append(2)
+    if canceled:
+        status.append(3)
 
-    return jsonify(Ticket.find_all_tickets(queue, status))
+    tickets = Ticket.find_all_tickets(queue_id=queue_id, status=status)
 
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
-@ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-# @login_required
-def find_all_tickets_for_grader():
-    '''
-    Route used to get all tickets handled by a grader.\n
-    @author Nour
-    '''
-    queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-    grader = User.find_by_pid_email_fallback(None, request.json['email'])
-
-    return jsonify(Ticket.find_all_tickets_for_grader(queue, grader))
+    return jsonify({'result': ticket_infos}), 200
 
 
 @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-# @login_required
+@login_required
 def find_tickets_in_range():
     '''
-    Route used to find all the tickets on a queue created between two dates.\n
-    @author Nour
+    Route used to find tickets in a specific range of time. A grader can be\n
+    passed in to only get tickets for that grader.\n
+    @author nouryehia
     '''
-    queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-    start = request.json['start']
-    end = request.json['end']
-    grader = (User.find_by_pid_email_fallback(None, request.json['email'])
-              if 'email' in request.json
-              else None)
+    queue_id = request.args.get('queue_id', type=int)
+    start = request.args.get('start', type=str)
+    end = request.args.get('end', type=str)
+    grader_id = request.args.get('grader_id', type=int)
+    tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
 
-    return jsonify(Ticket.find_tickets_in_range(queue, start, end, grader))
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
+
+    return jsonify({'result': ticket_infos}), 200
 
 
-@ticket_api_bp.route('/find_ticket_accepted_by_grader', methods=['GET'])
-# @login_required
-def find_ticket_accepted_by_grader():
+@ticket_api_bp.route('/find_all_tickets_by_student', methods=['GET'])
+@login_required
+def find_all_tickets_by_student():
     '''
-    Route used to find the last ticket accepted by a grader.\n
-    @author Nour
+    Route used to find tickets on the queue by a student (can be catgorized\n
+    as pending or accepted).\n
+    @author nouryehia
     '''
-    grader = User.find_by_pid_email_fallback(None, request.json['email'])
-    return jsonify(Ticket.find_ticket_accepted_by_grader(grader))
+    status = []
+    pending = request.args.get('pending', default=False, type=bool)
+    accepted = pending = request.args.get('accepted', default=False, type=bool)
+    if pending:
+        status.append(0)
+    if accepted:
+        status.append(1)
+
+    tickets = Ticket.find_all_tickets(int(request.json['queue_id']),
+                                      int(request.json['student_id']), status)
+
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json())
+
+    return jsonify({'result': ticket_infos}), 200
+
+
+@ticket_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
+@login_required
+def find_all_tickets_for_grader():
+    '''
+    Route used to find tickets on a queue handled by a grader.\n
+    @author nouryehia
+    '''
+    tickets = Ticket.find_all_tickets(
+        queue_id=request.args.get('queue_id', type=int),
+        grader_id=request.args.get('grader_id', type=int))
+
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
+
+    return jsonify({'result': ticket_infos}), 200
 
 
 @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-# @login_required
+@login_required
 def find_resolved_tickets_in():
     '''
-    Route used to find all resolved tickets in queue. Can query for the last
-    hour, the last day, or a specific time interval.\n
-    @author Nour
+    Route used to resolved tickets on a queue.\n
+    @author nouryehia
     '''
-    queue = Ticket.get_ticket_by_id(request.json['queue_id'])
-    recent_hour = (request.json['recent_hour'] if 'recent_hour' in request.json
-                   else False)
-    day = (request.json['day'] if 'day' in request.json
-           else False)
-    start = (request.json['start'] if 'start' in request.json
-             else None)
-    end = (request.json['end'] if 'end' in request.json
-           else None)
+    queue_id = request.args.get('queue_id', type=int)
+    recent_hour = request.args.get('recent_hour', default=0, type=int)
+    day = request.args.get('day', default=0, type=int)
+    start = request.args.get('start', default=None, type=str)
+    end = request.args.get('end', default=None, type=str)
 
-    return (jsonify(Ticket.find_resolved_tickets_in(queue, recent_hour, day,
-                                                    start, end)))
+    tickets = Ticket.find_resolved_tickets_in(queue_id, recent_hour, day,
+                                              start, end)
 
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
-@ticket_api_bp.route('/average_resolved_time', methods=['GET'])
-# @login_required
-def average_resolved_time():
-    '''
-    Route used to find the average time it took to resolve a list of tickets
-    (in seconds).\n
-    @author Nour
-    '''
-    tickets = Ticket.get_ticket_by_id(request.json['tickets'])
-    return jsonify(Ticket.average_resolved_time(tickets))
-
-
-@ticket_api_bp.route('/defer_accepted_ticket_for_grader', methods=['POST'])
-# @login_required
-def defer_accepted_ticket_for_grader():
-    '''
-    Route used to return tickets accepted by a grader to the queue. \n
-    @author Nour
-    '''
-    grader = User.find_by_pid_email_fallback(None, request.json['email'])
-
-    return (jsonify({'reason': 'ticket updated'}), 200
-            if Ticket.defer_accepted_ticket_for_grader(grader)
-            else jsonify({'reason': 'ticket could not be updated'}), 400)
+    return jsonify({'result': ticket_infos}), 200

@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import List, Optional
+from typing import Dict, List, Optional
 from ...setup import db
 from enum import Enum
-from .enrolled_course import EnrolledCourse
+# TODO: In the future, use Mihai's security stuffs.
+# from ..security.roles import CRole
 from .section import Section
-from ..security.roles import CRole
 
 
 class Quarter(Enum):
@@ -64,6 +64,29 @@ class Course(db.Model):
         """
         super(Course, self).__init__(**kwargs)
 
+    def to_json(self) -> Dict[str, str]:
+        '''
+        Function that takes a course object and returns it in dictionary
+        form. Used on the API layer.\n
+        Params: none\n
+        Returns: Dictionary of the user info
+        '''
+        ret = {}
+        ret['id'] = self.id
+        ret['description'] = self.description
+        ret['name'] = self.name
+        ret['quarter'] = Quarter(self.quarter).name
+        ret['short_name'] = self.short_name
+        ret['url'] = self.url
+        ret['year'] = self.year
+        ret['active'] = self.active
+        ret['queue_enabled'] = self.queue_enabled
+        ret['cse'] = self.cse
+        ret['lock_button'] = self.lock_button
+        ret['queue_id'] = self.queue_id
+        ret['is_deleted'] = self.is_deleted
+        return ret
+
     def save(self):
         """
         Save the object in the database.
@@ -74,8 +97,8 @@ class Course(db.Model):
         """
         repr
         """
-        return 'course ' + str(self.year) + ' ' \
-            + self.short_name + ' ' + self.quarter
+        return 'course ' + str(self.year) + ' ' + self.short_name + ' ' + \
+            str(self.quarter)
 
     def switch_queue_status(self):
         """
@@ -111,46 +134,14 @@ class Course(db.Model):
         """
         return Section.query.filter_by(course_id=self.id).all()
 
-    def get_students(self):
-        """
-        Get the students enrolled in a course
-        """
-        sections = Section.query\
-                          .with_entities(Section.id)\
-                          .filter_by(course_id=self.id).all()
-        role = CRole.STUDENT.value
-        students = []
-        for section in sections:
-            students = students + EnrolledCourse.query\
-                                                .filter_by(section_id=section,
-                                                           role=role)\
-                                                .all()
-
-        return students
-
-    def get_instructors(self):
-        """
-        Get the instructors from a course
-        """
-        sections = Section.query\
-                          .with_entities(Section.id)\
-                          .filter_by(course_id=self.id).all()
-        role = CRole.INSTRUCTOR.value
-        instructors = []
-        for section in sections:
-            instructors = instructors\
-                          + EnrolledCourse.query\
-                                          .filter_by(section_id=section,
-                                                     role=role)\
-                                          .all()
-        return instructors
+    # Get students / get instructors are already in enrolled course
 
     @staticmethod
-    def get_course_by_id(couse_id) -> Optional[Course]:
+    def get_course_by_id(course_id) -> Optional[Course]:
         """
         Returns a Course from a course id
         """
-        return Course.query.filter_by(id=couse_id).first()
+        return Course.query.filter_by(id=course_id).first()
 
     @staticmethod
     def get_course_by_queue_id(q_id) -> Optional[Course]:
@@ -231,3 +222,20 @@ class Course(db.Model):
             return True
         else:
             return False
+
+    @staticmethod
+    def get_all_courses(quarter: int = None, year: int = None) -> List[Course]:
+        """
+        Get all the courses listed in incresing order by time created.
+        Inputs:\n
+        quarter --> Optional parameter for time period default None.
+        year --> Optional parameter for time period must be specified when
+                 quarter is specified.
+        """
+        if quarter:
+            return Course.query.filter_by(quarter=quarter, year=year,
+                                          is_deleted=False).all()
+        elif year:
+            return Course.query.filter_by(year=year, is_deleted=False).all()
+        else:
+            return Course.query.filter_by(is_deleted=False).all()

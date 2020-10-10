@@ -9,9 +9,10 @@ from ..utils.time import TimeUtil
 from ...setup import db
 from .user import User
 from .enrolled_course import Role
-from .course import Course  # Pretending
+from .course import Course
 from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
+from .enrolled_course import EnrolledCourse
 
 """
 Note for implementation:
@@ -108,6 +109,7 @@ class Ticket(db.Model):
     tag_two --> The ticket tag for this ticket. Nullable.\n
     tag_three --> The ticket tag for this ticket. Nullable.\n
     @author YixuanZhou
+    @author nouryehia (updates)
     """
     __tablename__ = 'Ticket'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -156,33 +158,46 @@ class Ticket(db.Model):
         """
         Save the changes made to the object into the database.\n
         """
-        db.seesion.commit()
+        db.session.commit()
 
-    def to_json(self) -> Dict[str, str]:
+    def to_json(self, user_id=int) -> Dict[str, str]:
         '''
-        Function that takes a ticket object and returns it in dictionary.\n
-        Params: none\n
+        Function that takes a ticket object and returns it in dictionary.
+        We will hid the informations for those who do not have permission.\n
+        Params: user_id --> The user for requesting this view\n
         Returns: Dictionary of the user info
         '''
+        result = {}
         ret = {}
-        ret['ticket_id'] = self.id
-        ret['queue_id'] = self.queue_id
-        ret['closed_at'] = self.closed_at
-        ret['created_at'] = self.created_at
-        ret['status'] = self.status
-        ret['room'] = self.room
-        ret['workstation'] = self.workstation
-        ret['title'] = self.title
-        ret['description'] = self.description
-        ret['grader_id'] = self.grader_id
-        ret['student_id'] = self.student_id
-        ret['is_private'] = self.is_private
-        ret['accepted_at'] = self.accepted_at
-        ret['help_type'] = self.help_type
-        ret['tag_one'] = self.tag_one
-        ret['tag_two'] = self.tag_two
-        ret['tag_three'] = self.tag_three
-        return ret
+        evts = {}
+        if self.can_view_by(user_id=user_id):
+            ret['ticket_id'] = self.id
+            ret['queue_id'] = self.queue_id
+            ret['closed_at'] = self.closed_at
+            ret['created_at'] = self.created_at
+            ret['status'] = self.status
+            ret['room'] = self.room
+            ret['workstation'] = self.workstation
+            ret['title'] = self.title
+            ret['description'] = self.description
+            ret['ec_grader_id'] = self.grader_id
+            ret['ec_student_id'] = self.student_id
+            ret['is_private'] = self.is_private
+            ret['accepted_at'] = self.accepted_at
+            ret['help_type'] = self.help_type
+            ret['tag_one'] = self.tag_one
+            ret['tag_two'] = self.tag_two
+            ret['tag_three'] = self.tag_three
+            cid = Course.get_course_by_queue_id(self.queue_id).id
+            evts = TicketEvent.get_events_for_tickets(ticket_id=self.id,
+                                                      course_id=cid,
+                                                      user_id=user_id)
+        else:
+            ret['is_private'] = self.is_private
+
+        result['ticket_info'] = ret
+        result['ticket_events'] = evts
+        return result
 
     # All the getter methods / status checking methods:
     def is_question(self) -> bool:
@@ -191,7 +206,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a question.\n
         """
-        return self.help_type == HelpType.QUESTION
+        return self.help_type == HelpType.QUESTION.value
 
     def is_checkoff(self) -> bool:
         """
@@ -199,7 +214,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is a checkoff.\n
         """
-        return self.help_type == HelpType.CHECKOFF
+        return self.help_type == HelpType.CHECKOFF.value
 
     def is_pending(self) -> bool:
         """
@@ -207,7 +222,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is pending.\n
         """
-        return self.status == Status.PENDING
+        return self.status == Status.PENDING.value
 
     def is_accepted(self) -> bool:
         """
@@ -215,7 +230,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is accepted.\n
         """
-        return self.status == Status.ACCEPTED
+        return self.status == Status.ACCEPTED.value
 
     def is_resolved(self) -> bool:
         """
@@ -223,7 +238,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is resolved.\n
         """
-        return self.status == Status.RESOLVED
+        return self.status == Status.RESOLVED.value
 
     def is_canceled(self) -> bool:
         """
@@ -231,7 +246,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is canceled.\n
         """
-        return self.status == Status.CANCELED
+        return self.status == Status.CANCELED.value
 
     def is_non_cse(self) -> bool:
         """
@@ -239,7 +254,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in CSE.\n
         """
-        return self.room == NON_CSE
+        return self.room == NON_CSE.value
 
     def is_hallway(self) -> bool:
         """
@@ -247,7 +262,7 @@ class Ticket(db.Model):
         Return:\n
         A bool value determing if it is in the hallway.\n
         """
-        return self.room == HALLWAY
+        return self.room == HALLWAY.value
 
     def get_tags_list(self) -> List[TicketTag]:
         """
@@ -346,30 +361,31 @@ class Ticket(db.Model):
                 ticket_id=self.id).order_by(id).all()
 
     # Permission of the ticket that a user has
-    def can_view_by(self, user: User) -> bool:
+    def can_view_by(self, user_id: int) -> bool:
         """
         Determine if the ticket can be viewed by a given user.\n
         Inputs:\n
+        queue_id --> The queue the ticket beylongs to.\n
         user --> The User object of the user who is trying to view the
         ticket.\n
         Return:\n
         The bool for whether a user can view.\n
         """
-        if not user:
-            return False
-        elif not self.is_private:
+        if not self.is_private:
             return True
-        else:
-            course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.getrole(user.id, course.id) == Role.STAFF:
-                return True
-            else:
-                if self.student_id == user.id:
-                    return True
-                else:
-                    return False
 
-    def can_edit_by(self, user: User) -> bool:
+        course = Course.get_course_by_queue_id(self.queue_id)
+        ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                      course_id=course.id)
+        if not ec_entry:
+            return False
+
+        if ec_entry.role != Role.STUDENT.value:
+            return True
+
+        return self.student_id == ec_entry.id
+
+    def can_edit_by(self, user_id: int) -> bool:
         """
         Determine if the ticket can be edited by a given user.\n
         Inputs:\n
@@ -380,15 +396,18 @@ class Ticket(db.Model):
         """
         if self.is_resolved():
             return False
-        else:
-            course = Course.query.filter_by(queue_id=self.queue_id).first()
-            if User.getrole(user.id, course.id) == Role.STAFF:
-                return True
-            else:
-                if self.student_id == user.id:
-                    return True
-                else:
-                    return False
+
+        course = Course.get_course_by_queue_id(self.queue_id)
+        ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                      course_id=course.id)
+
+        if not ec_entry:
+            return False
+
+        if ec_entry.role != Role.STUDENT.value:
+            return True
+
+        return self.student_id == ec_entry.id
 
     def update_ticket_tags(self, tag_list: List[TicketTag]) -> None:
         """
@@ -418,27 +437,31 @@ class Ticket(db.Model):
         """
         Mark the ticket as pending status.\n
         """
-        self.status = Status.PENDING
+        self.status = Status.PENDING.value
+        self.grader_id = None
         self.save()
 
-    def mark_accepted_by(self, grader_id: int) -> None:
+    def mark_accepted_by(self, grader: User) -> None:
         """
         Mark the ticket as accepted by a tutor.\n
         """
-        grader = User.find_user_by_id(grader_id)
         # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_ticket_for_grader(grader)
+        Ticket.defer_accepted_ticket_for_grader(grader, self.queue_id)
 
-        self.status = Status.ACCEPTED
+        self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = grader_id
+        self.grader_id = EnrolledCourse.find_user_in_course(
+                         user_id=grader.id,
+                         course_id=Course.get_course_by_queue_id(
+                             self.queue_id).id).id
+
         self.save()
 
     def mark_resolved(self) -> None:
         """
         Mark the ticket as resolved.\n
         """
-        self.status = Status.RESOLVED
+        self.status = Status.RESOLVED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -446,7 +469,7 @@ class Ticket(db.Model):
         """
         Mark the ticket as canceled.\n
         """
-        self.status = Status.CANCELED
+        self.status = Status.CANCELED.value
         self.closed_at = TimeUtil.get_current_time()
         self.save()
 
@@ -470,7 +493,7 @@ class Ticket(db.Model):
         self.room = room
         self.workstation = workstation
         self.is_private = is_private
-        self.help_type = help_type
+        self.help_type = help_type.value
 
         # Commit the updates for basica info
         self.save()
@@ -495,6 +518,41 @@ class Ticket(db.Model):
 
     # Static add method
     @staticmethod
+    def add_ticket(queue_id: int, student_id: int, title: str,
+                   description: str, room: str,
+                   workstation: str, is_private: bool,
+                   help_type: HelpType,
+                   tag_list: List[TicketTag]) -> Ticket:
+        """
+        Add a ticket.\n
+        Inputs:\n
+        student --> The student who submit the ticket.\n
+        title --> The title of the ticket.\n
+        description --> The description to the ticket.\n
+        room --> The room of this ticket is in.\n
+        workstation --> The workstaton ticket is at.\n
+        help_type --> The type of help needed.\n
+        tag_list --> The list of tags of the tickte.\n
+        Return:\n
+        The created ticket.\n
+        @author: Yixuan
+        """
+        tag_one = tag_list[0]
+        tag_two = tag_list[1] if len(tag_list) > 1 else None
+        tag_three = tag_list[2] if len(tag_list) > 2 else None
+        new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
+                            closed_at=None,
+                            room=room, workstation=workstation,
+                            title=title, description=description,
+                            grader_id=None, queue_id=queue_id,
+                            student_id=student_id, is_private=is_private,
+                            accepted_at=None, help_type=help_type.value,
+                            tag_one=tag_one, tag_two=tag_two,
+                            tag_three=tag_three, status=Status.PENDING.value)
+        Ticket.add_to_db(new_ticket)
+        return new_ticket
+
+    @staticmethod
     def add_to_db(ticket: Ticket):
         """
         Add the ticket to the database.\n
@@ -505,7 +563,7 @@ class Ticket(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id) -> Optional(Ticket):
+    def get_ticket_by_id(ticket_id: int) -> Optional[Ticket]:
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -513,10 +571,11 @@ class Ticket(db.Model):
         Return:\n
         The ticket object, None if the ticket_id is not found.\n
         """
-        return Ticket.query().filter_by(id=ticket_id)
+        return Ticket.query.filter_by(id=ticket_id).first()
 
+    # Ticket stats calultaions
     @staticmethod
-    def find_ticket_accpeted_by_grader(grader: User) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader_id: int) -> Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
         There should only be one ticket that is accpeted by the grader.\n
@@ -526,7 +585,7 @@ class Ticket(db.Model):
         The ticket that was accepted by the grader.\n
         """
         return Ticket.query.filter_by(status=Status.ACCEPTED,
-                                      grader_id=grader.id).first()
+                                      grader_id=grader_id).first()
 
     # Ticket stats calultaions
     @staticmethod
@@ -545,17 +604,26 @@ class Ticket(db.Model):
         return sum_time // len(resolved_tickets)
 
     @staticmethod
-    def defer_accepted_ticket_for_grader(grader: User) -> None:
+    def defer_accepted_ticket_for_grader(grader: User, queue_id: int) -> int:
         """
         Set all the accepted ticket for a grader to pending incase multiple
         tickets is accepted by one grader.\n
         Inputs:\n
         grader --> The grader to be multified.\n
         """
-        ticket_list = Ticket.query.filter_by(grader_id=grader.id).all()
+        cid = Course.get_course_by_queue_id(queue_id).id
+        ec = EnrolledCourse.find_user_in_course(user_id=grader.id,
+                                                course_id=cid).id
+
+        ticket_list = Ticket.query.filter_by(grader_id=ec).all()
+        counter = 0
+
         for ticket in ticket_list:
-            if (ticket.status == Status.ACCEPTED):
+            if (ticket.status == Status.ACCEPTED.value):
+                counter += 1
                 ticket.mark_pending()
+
+        return counter
 
     # Moved from ticket_event
 
@@ -570,7 +638,7 @@ class Ticket(db.Model):
         A list of event related to this ticket.\n
         """
         return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-            .sort_by(TicketEvent.timestamp).desc.all()
+            .order_by(TicketEvent.timestamp.desc()).all()
 
     @staticmethod
     def find_all_events_for_tickets(tickets:
@@ -582,11 +650,8 @@ class Ticket(db.Model):
         Return:\n
         A list of event related to the tickets passed in.\n
         """
-        ticket_id_list = []
-        for ticket in tickets:
-            ticket_id_list.append(ticket.id)
         return TicketEvent.query().\
-            filter_by(Ticket.ticket_id.in_(ticket_id_list))
+            filter_by(Ticket.ticket_id.in_(tickets))
 
     # Moved from ticket_feedback
 
@@ -625,14 +690,17 @@ class Ticket(db.Model):
         Return:\n
         The list of the ticket of this queue ordered by create time.\n
         """
-        if status:
-            return Ticket.query.\
+        if not status:
+            ret = Ticket.query.\
                 filter_by(queue_id=queue_id).\
-                order_by(Ticket.created_at).desc.all()
+                order_by(Ticket.created_at.desc()).all()
+            return ret
         else:
-            return Ticket.query.\
-                filter_by(queue_id=queue_id).filter_by(status.in_(status)).\
-                order_by(Ticket.created_at).desc.all()
+            tickets = Ticket.query.\
+                filter_by(queue_id=queue_id).\
+                order_by(Ticket.created_at.desc()).all()
+            ret = list(filter(lambda x: x.status in status, tickets))
+            return ret
 
     @staticmethod
     def find_all_tickets_by_student(queue_id: int,
@@ -648,10 +716,13 @@ class Ticket(db.Model):
         Return:\n
         The list of the ticket of this queue ordered by create time.\n
         """
+        cid = Course.get_course_by_queue_id(queue_id)
+        ec = EnrolledCourse.find_user_in_course(user_id=student_id,
+                                                course_id=cid)
         return Ticket.query.\
-            filter_by(queue_id=queue_id, student_id=student_id).\
+            filter_by(queue_id=queue_id, student_id=ec.id).\
             filter_by(status.in_(status)).\
-            order_by(Ticket.created_at).desc.all()
+            order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
     def find_all_tickets_for_grader(queue_id: int,
@@ -665,9 +736,12 @@ class Ticket(db.Model):
         Return:\n
         The list of the ticket of this queue ordered by create time.\n
         """
+        cid = Course.get_course_by_queue_id(queue_id)
+        ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                course_id=cid)
         return Ticket.query.\
-            filter_by(queue_id=queue_id, grader_id=grader_id).\
-            order_by(Ticket.created_at).desc.all()
+            filter_by(queue_id=queue_id, grader_id=ec.id).\
+            order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
     def find_tickets_in_range(queue_id: int,
@@ -690,8 +764,11 @@ class Ticket(db.Model):
             ticket_list = Ticket.query.filter_by(queue=queue_id,
                                                  status=Status.RESOLVED).all()
         else:
+            cid = Course.get_course_by_queue_id(queue_id)
+            ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                    course_id=cid)
             ticket_list = Ticket.query.filter_by(queue_id=queue_id,
-                                                 grader_id=grader_id,
+                                                 grader_id=ec.id,
                                                  status=Status.RESOLVED).all()
         if not start:
             start = TimeUtil.get_time_before(hours=1)
@@ -705,7 +782,7 @@ class Ticket(db.Model):
                                  start: str = None,
                                  end: str = None) -> List[Ticket]:
         """
-        Get the tickets for the queue that were reolsved.\n
+        Get the tickets for the queue that were resolved.\n
         Inputs:\n
         queue --> the id of the queue to look at.\n
         recent --> If you want for the recent hour (1st priority).\n
@@ -747,17 +824,22 @@ class Ticket(db.Model):
         Return:\n
         A list of tickets.
         """
+        cid = Course.get_course_by_queue_id(queue_id)
         if student:
+            sid = EnrolledCourse.find_user_in_course(user_id=student.id,
+                                                     course_id=cid).id
             return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
-                filter_by(student_id=student.id).\
+                filter_by(student_id=sid).\
                 sort_by(id).offset(offset).limit(limit).all()
         elif grader is not None:
+            gid = EnrolledCourse.find_user_in_course(grader_id=grader.id,
+                                                     course_id=cid).id
             return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
-                filter_by(grader_id=grader.id).\
+                filter_by(grader_id=gid).\
                 sort_by(id).offset(offset).limit(limit).all()
         else:
             Ticket.query.filter_by(queue_id=queue_id).\
@@ -796,7 +878,7 @@ class Ticket(db.Model):
         tickets = Ticket.find_all_tickets_for_grader(queue_id, grader_id)
         feedbacks = []
         for t in tickets:
-            feedbacks += (TicketFeedback.get_ticket_feedback(t))
+            feedbacks.append(TicketFeedback.get_ticket_feedback(t))
         return feedbacks
 
     @staticmethod
@@ -814,5 +896,5 @@ class Ticket(db.Model):
         tickets = Ticket.find_all_tickets_for_student(queue_id, student_id)
         feedbacks = []
         for t in tickets:
-            feedbacks += (TicketFeedback.get_ticket_feedback(t))
+            feedbacks.append(TicketFeedback.get_ticket_feedback(t))
         return feedbacks

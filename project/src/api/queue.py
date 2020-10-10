@@ -1,28 +1,58 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 
-from ..models.ticket import HelpType, TicketTag
-from ..models.queue import Queue, Status
+from ..models.queue import Queue, Status, ActionType
+from ..models.enrolled_course import EnrolledCourse, Role
+from ..models.course import Course
 from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
-from ..models.user import User
 
 queue_api_bp = Blueprint('queue_api', __name__)
 CORS(queue_api_bp, supports_credentials=True)
 
 
+def user_in_course(queue_id: int, course_id: int) -> bool:
+    """
+    Checking whether the user is enrolled in the course.
+    """
+    course = Course.get_course_by_queue_id(queue_id)
+    c_u_id = current_user.id
+    if EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                          course_id=course.id):
+        return True
+    else:
+        return False
+
+
+def user_own_queue(queue_id: int, course_id: int) -> bool:
+    """
+    Checkin gwhetehr the user is the instructor of the course
+    that has this queue.
+    """
+    course = Course.get_course_by_queue_id(queue_id)
+    c_u_id = current_user.id
+    ec_entry = EnrolledCourse.find_user_in_course(user_id=c_u_id,
+                                                  course_id=course.id)
+    if ec_entry:
+        if ec_entry.role == Role.INSTRUCTOR.value:
+            return True
+    return False
+
+
 @queue_api_bp.route('/find_queue', methods=['GET'])
-@login_required
+#@login_required
 def find_queue():
     """
     Return the queue object corresponding to an id.\n
     @authoer: YixuanZhou
     """
-    queue_id = (int(request.json['queue_id']) if 'queue_id' in request.json
-                else None)
+    queue_id = request.args.get('queue_id', type=int)
     if not queue_id:
         return jsonify({'reason': 'queue_id invalid'}), 400
+
+    if not user_in_course:
+        return jsonify({'reason': 'user not enrolled'}), 400
 
     queue = Queue.get_queue_by_id(queue_id)
 
@@ -34,7 +64,8 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-@login_required
+#@login_required
+# @role_required(role=URole.ADMIN.value)
 def create_queue():
     """
     Create a queue for a course.\n
@@ -59,41 +90,15 @@ def create_queue():
     return jsonify({'reason': 'queue created'}), 200
 
 
-@queue_api_bp.route('/add_ticket', methods=['POST'])
-# @login_required
-def add_ticket():
-    """
-    Add a ticket to the queue.\n
-    """
-    queue = Queue.get_queue_by_id(int(request.json['queue_id']))
-    student_id = int(request.json['student_id'])
-    title = request.json['title']
-    description = request.json['description']
-    room = request.json['room']
-    workstation = request.json['workstation']
-    is_private = request.json['is_private']
-    help_type = HelpType(request.json['help_type'])
-    tag_list_raw = request.json['tag_list'].split(';')
-    tag_list = []
-    for tag in tag_list_raw:
-        tag_list.append(TicketTag(int(tag)).value)
-
-    ticket = (queue.add_ticket(student_id, title, description, room,
-                               workstation, is_private, help_type, tag_list))
-
-    return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json()}), 200)
-
-
 @queue_api_bp.route('/login_grader', methods=['POST'])
-@login_required
+#@login_required
 def login_grader():
     """
     Login a certain grader.
     """
-    q_id = request.json['queue_id']
-    g_id = request.json['grader_id']
-    a_c = request.json['action_type']
+    q_id = int(request.json['queue_id'])
+    g_id = int(request.json['grader_id'])
+    a_c = ActionType[request.json['action_type']].value  # need to change to string (name of the enum)
     result = Queue.grader_login(queue_id=q_id,
                                 grader_id=g_id,
                                 action_type=a_c)
@@ -104,7 +109,7 @@ def login_grader():
 
 
 @queue_api_bp.route('/logout_grader', methods=['POST'])
-@login_required
+#@login_required
 def logout_grader():
     """
     Logout a certain grader
@@ -122,12 +127,12 @@ def logout_grader():
 
 
 @queue_api_bp.route('/find_queue_for_user', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_for_user():
     """
     Find all the queues that this user is in.
     """
-    uid = request.json['user_id']
+    uid = request.args.get('user_id', type=int)
     status, mess, q_list = Queue.\
         find_current_queue_for_user(user_id=uid)
     if status:
@@ -142,7 +147,7 @@ def find_queue_for_user():
 
 
 @queue_api_bp.route('/lock_queue', methods=['POST'])
-@login_required
+#@login_required
 def lock_queue():
     """
     Lock the queue.
@@ -157,12 +162,12 @@ def lock_queue():
 
 
 @queue_api_bp.route('/find_queue_for_course', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_for_course():
     """
     Find the queue for a given course.
     """
-    c_id = request.json['course_id']
+    c_id = request.args.get('course_id', type=int)
     sta, q = Queue.find_queue_for_course(course_id=c_id)
     if sta:
         return jsonify({'reason': 'success', 'result': q}), 200
@@ -171,7 +176,7 @@ def find_queue_for_course():
 
 
 @queue_api_bp.route('/create_queue_calendar', methods=['POST'])
-@login_required
+#@login_required
 def create_queue_calendar():
     """
     Create the queue_calendar for the queue.
@@ -186,59 +191,61 @@ def create_queue_calendar():
 
 
 @queue_api_bp.route('/find_queue_calendar', methods=['GET'])
-@login_required
+#@login_required
 def find_queue_calendar():
     """
     Find the active queue_clandars
     """
-    q_id = request.json['queue_id']
+    q_id = request.args.get('queue_id', type=int)
     c_list = QueueCalendar.find_all_calendar_for_queue(queue_id=q_id)
     if not c_list:
         return jsonify({'reason': 'queue not found, queue \
         has no calander'}), 400
-    ret = {}
-    i = 0
+    ret = []
     for c in c_list:
-        i += 1
-        ret['queue_calander' + str(i)] = c.to_json()
+        ret.append(c.to_json())
     return jsonify({'reason': 'Success', 'result': ret}), 200
 
 
 @queue_api_bp.route('/find_all_tickets_for_queue', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_queue():
     """
     Find all the tickest for queue.
     """
-    q_id = request.json['queue_id']
+    q_id = request.args.get('queue_id', type=int)
     s_type_list = []
     if 'status' in request.json:
         s_list = list(request.json['status'])
         for s in s_list:
             t_s = t_Status(s)
             s_type_list.append(t_s)
-        t_list = Queue.find_all_tickets(queue_id=q_id, status=s_type_list)
+        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id,
+                                                     status=s_type_list)
     else:
-        t_list = Queue.find_all_tickets(queue_id=q_id)
-
-    ret = {}
-    i = 0
+        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id)
+    if not status:
+        return jsonify({'reason': msg}), 400
+    ret = []
     for t in t_list:
-        i += 1
-        ret['ticket' + str(i)] = t.to_json()
+        view = t.can_view_by(current_user.id)
+        edit = t.can_edit_by(current_user.id)
+        ret.append({'ticket': t.to_json(),
+                    'can_view': view,
+                    'can_edit': edit})
     return jsonify({'reason': 'Success', 'result': ret}), 200
 
 
 @queue_api_bp.route('/find_all_tickets_for_student', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_student():
     """
     Find all the tickest for queue.
     """
-    q_id = request.json['queue_id']
-    s_id = request.json['student_id']
+    q_id = request.args.get('queue_id', type=int)
+    s_id = request.args.get('student_id', type=int)
     s_type_list = []
-    s_list = list(request.json['status'])
+    s_list = list(request.args.get('status'))
     for s in s_list:
         t_s = t_Status(s)
         s_type_list.append(t_s)
@@ -246,21 +253,19 @@ def find_all_ticket_for_student():
                                                student_id=s_id,
                                                status=s_type_list)
     ret = {}
-    i = 0
     for t in t_list:
-        i += 1
-        ret['ticket' + str(i)] = t.to_json()
+        ret.append(t.to_json())
     return jsonify({'reason': 'Success', 'result': ret}), 200
 
 
 @queue_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-@login_required
+#@login_required
 def find_all_ticket_for_grader():
     """
     Find all the tickest for queue.
     """
-    q_id = request.json['queue_id']
-    g_id = request.json['grader_id']
+    q_id = request.args.get('queue_id')
+    g_id = request.args.get('grader_id')
     s_type_list = []
     s_list = list(request.json['status'])
     for s in s_list:
@@ -269,25 +274,7 @@ def find_all_ticket_for_grader():
     t_list = Queue.find_all_tickets_by_student(queue_id=q_id,
                                                student_id=g_id,
                                                status=s_type_list)
-    ret = {}
-    i = 0
+    ret = []
     for t in t_list:
-        i += 1
-        ret['ticket' + str(i)] = t.to_json()
+        ret.append(t.to_json())
     return jsonify({'reason': 'Success', 'result': ret}), 200
-
-
-@queue_api_bp.route('/accept_ticket', methods=['POST'])
-@login_required
-def accept_ticket():
-    """
-    User accept a ticket.
-    """
-    q_id = request.json['queue_id']
-    g_id = request.json['grader_id']
-    t_id = request.json['ticket_id']
-    s, r = Queue.accept_ticket(queue_id=q_id, grader_id=g_id, ticket_id=t_id)
-    if s:
-        return jsonify({'reason': r}), 200
-    else:
-        return jsonify({'reason': r}), 400
