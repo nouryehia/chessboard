@@ -23,6 +23,7 @@ class User(db.Model, UserMixin):
     password --> Hashed password of the user.\n
     pid --> PID of the user object. Unique.\n
     last_login --> Date of the last login of the current user.\n
+    role --> Role of the user.\n
     @author: npcompletenate
     """
     __tablename__ = 'Users'

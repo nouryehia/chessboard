@@ -3,7 +3,7 @@ from __future__ import annotations
 from ...setup import db
 from typing import List, Optional
 from .user import User
-from .course import Course
+from .enrolled_course import EnrolledCourse
 from enum import Enum
 from ..utils.time import TimeUtil
 
@@ -37,7 +37,7 @@ class Checkoff(db.Model):
     due = db.Column(db.DateTime, nullable=True, default=TimeUtil.get_current_time())
     description = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey(Course.id), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('Course.id'), nullable=False)
     points = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Integer, nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False)
@@ -183,11 +183,11 @@ class CheckoffEvaluation(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     checkoff_time = db.Column(db.DateTime, nullable=True,
                               default=TimeUtil.get_current_time())
-    checkoff_id = db.Column(db.Integer, db.ForeignKey(Checkoff.id),
+    checkoff_id = db.Column(db.Integer, db.ForeignKey('Checkoff.id'),
                             nullable=False)
-    grader_id = db.Column(db.Integer, db.ForeignKey(User.id),
+    grader_id = db.Column(db.Integer, db.ForeignKey('User.id'),
                           nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey(User.id),
+    student_id = db.Column(db.Integer, db.ForeignKey('User.id'),
                            nullable=False)
     score = db.Column(db.Integer, nullable=False)
 
@@ -232,7 +232,7 @@ class CheckoffEvaluation(db.Model):
         Return:\n
         A list of tuples of Users, CheckoffEvaluations
         '''
-        students = Course.get_course_by_id(course_id).get_students()
+        students = EnrolledCourse.find_all_user_in_course(course_id, 4)
 
         ce_map = []
         for student in students:

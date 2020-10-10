@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import List, Optional
 from ...setup import db
 from enum import Enum
-from .enrolled_course import EnrolledCourse
-from .section import Section
+# from .enrolled_course import EnrolledCourse
+# from .section import Section
 from ..security.roles import CRole
 
 
@@ -55,7 +55,7 @@ class Course(db.Model):
     queue_enabled = db.Column(db.Boolean, nullable=False, default=False)
     cse = db.Column(db.Boolean, nullable=False, default=True)
     lock_button = db.Column(db.Boolean, nullable=False, default=False)
-    queue_id = db.Column(db.Integer, nullable=False)
+    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'), nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, **kwargs):
@@ -105,6 +105,7 @@ class Course(db.Model):
         self.cse = not self.cse
         self.save()
 
+    '''
     def get_sections(self) -> List[Section]:
         """
         Get the sections of a course
@@ -144,7 +145,7 @@ class Course(db.Model):
                                                      role=role)\
                                           .all()
         return instructors
-
+    '''
     @staticmethod
     def get_course_by_id(couse_id) -> Optional[Course]:
         """
