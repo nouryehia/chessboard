@@ -19,10 +19,9 @@ def login():
     user object.\n
     @author npcompletenate
     '''
-    email = request.json['email'] if 'email' in request.json else None
-    password = request.json['password'] if 'password' in request.json else ''
-    remember = True if 'remember' in request.json and \
-        request.json['remember'] == 'true' else False
+    email = request.json.get('email', None)
+    password = request.json.get('password', '')
+    remember = True if request.json.get('remember', '') == 'true' else False
 
     if User.check_password(email, password):
         user = User.find_by_pid_email_fallback(None, email)
@@ -48,10 +47,10 @@ def logout():
 @user_api_bp.route('/reset_password', methods=['PUT'])
 #@login_required
 def reset_password():
-    id = request.json['id'] if 'id' in request.json else None
-    passwd = request.json['password'] if 'password' in request.json else None
-    old_pass = request.json['old_password'] if 'old_password' in request.json \
-        else None
+
+    id = request.json.get('id', None)
+    passwd = request.json.get('password', None)
+    old_pass = request.json.get('old password', None)
 
     user = User.get_user_by_id(id)
     if User.check_password(user.email, old_pass):
@@ -74,7 +73,7 @@ def reset_password():
 
 @user_api_bp.route('/forgot_password', methods=['PUT'])
 def forgot_password():
-    user = User.find_by_pid_email_fallback(None, request.json['email'])
+    user = User.find_by_pid_email_fallback(None, request.json.get('email', None))
     if user:
         new_pass = user.create_random_password()
         log_util.forgot_password(user.email)
@@ -104,11 +103,11 @@ def create_user():
     the user.
     @author npcompletenate
     '''
-    email = request.json['email']
-    f_name = request.json['fname']
-    l_name = request.json['lname']
-    pid = request.json['pid'] if 'pid' in request.json else None
-    password = request.json['passwd'] if 'passwd' in request.json else None
+    email = request.json.get('email')
+    f_name = request.json.get('fname')
+    l_name = request.json.get('lname')
+    pid = request.json.get('pid', None)
+    password = request.json.get('passwd', None)
 
     status, pwd, user = User.create_user(email, f_name, l_name, pid, password)
     if not status:
@@ -158,8 +157,8 @@ def get():
     Route used to get a particular user. We try to find by PID first,
     searching by email if we cannot find a user with that particular PID.\n
     '''
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
+    email = request.args.get('email', None)
+    pid = request.args.get('pid', None)
 
     found = User.find_by_pid_email_fallback(pid, email)
 
@@ -176,14 +175,18 @@ def update_user():
     '''
     Update user's information at user's discretion\n
     '''
-    id = request.json['id']
-    f_name = request.json['fname']
+    id = request.json.get('id', None)
+    f_name = request.json.get('fname', '')
 
     user = User.get_user_by_id(id)
-    user.update_user(f_name)
+    if user:
+        user.update_user(f_name)
 
-    ret = {'reason': 'User successfully updated', 'result': user.to_json()}
-    return jsonify(ret), 200
+        ret = {'reason': 'User successfully updated', 'result': user.to_json()}
+        return jsonify(ret), 200
+    else:
+        ret = {'reason': 'User not found', 'result': {}}
+        return jsonify(ret), 400
 
 
 @user_api_bp.route('/check_password', methods=['POST'])
@@ -192,8 +195,8 @@ def check_password():
     '''
     Check if the user's password matches the given in the database\n
     '''
-    email = request.json['email']
-    password = request.json['password']
+    email = request.json.get('email', None)
+    password = request.json.get('password', None)
 
     match = User.check_password(email, password)
 
