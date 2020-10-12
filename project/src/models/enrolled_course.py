@@ -250,7 +250,7 @@ class EnrolledCourse(db.Model):
         course --> The Course object to look for.\n
         role --> (Optional) the role to look for.\n
         """
-        c = Course.get_course_by_id(course_id=course_id)
+        c = Course.get_course_by_id(course_id)
         if not c:
             return False, None
         if not role:

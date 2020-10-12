@@ -165,7 +165,7 @@ class Checkoff(db.Model):
         List of Checkoffs in the course
         @author sravyabalasa
         """
-        return Checkoff.query.filter(course_id=course_id, is_deleted=False).all()
+        return Checkoff.query.filter_by(course_id=course_id, is_deleted=False).all()
 
 
 class CheckoffEvaluation(db.Model):
@@ -181,24 +181,41 @@ class CheckoffEvaluation(db.Model):
     score --> Number of points awarded to student\n
     @author sravyabalasa
     """
+    __tablename__ = 'CheckoffEvaluation'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     checkoff_time = db.Column(db.DateTime, nullable=True,
                               default=TimeUtil.get_current_time())
     checkoff_id = db.Column(db.Integer, db.ForeignKey('Checkoff.id'),
                             nullable=False)
-    grader_id = db.Column(db.Integer, db.ForeignKey('User.id'),
+    grader_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
                           nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('User.id'),
+    student_id = db.Column(db.Integer, db.ForeignKey('Users.id'),
                            nullable=False)
     score = db.Column(db.Integer, nullable=False)
 
-    def save():
+    def save(self):
         '''
         Saves the current object in the DB.\n
         Params: None\n
         Returns: None\n
         '''
         db.session.commit()
+
+    def to_json(self):
+        '''
+        Function that takes a checkoff evaluation object and returns it in a dictionary
+        form. Used on the API layer.\n
+        Params: None\n
+        Returns: Dictionary of the checkoff evaluation object
+        '''
+        ret = {}
+        ret['id'] = self.id
+        ret['checkoff_time'] = self.checkoff_time
+        ret['checkoff_id'] = self.checkoff_id
+        ret['grader_id'] = self.grader_id
+        ret['student_id'] = self.student_id
+        ret['score'] = self.score
+        return ret
 
     @staticmethod
     def create_eval(checkoff_id: int, grader_id: int,
@@ -233,12 +250,13 @@ class CheckoffEvaluation(db.Model):
         Return:\n
         A list of tuples of Users, CheckoffEvaluations
         '''
-        students = EnrolledCourse.find_all_user_in_course(course_id, 4)
+        students = EnrolledCourse.find_all_user_in_course(course_id, 4)[1]
 
         ce_map = []
         for student in students:
             ce = CheckoffEvaluation.find_latest_ce_for_checkoff_for_student(checkoff_id, student.id)
-            ce_map.append(student, ce)
+            user = User.get_user_by_id(student.id)
+            ce_map.append((user, ce))
         return ce_map
 
     @staticmethod
@@ -253,11 +271,12 @@ class CheckoffEvaluation(db.Model):
         """
         checkoffs = Checkoff.find_all_checkoffs_in_course(course_id)
 
-        latest_ce = []
+        ce_map = []
         for checkoff in checkoffs:
-            latest_ce.append(CheckoffEvaluation.find_latest_ce_for_checkoff_for_student(checkoff.id, student_id))
+            ce = CheckoffEvaluation.find_latest_ce_for_checkoff_for_student(checkoff.id, student_id)
+            ce_map.append((checkoff, ce))
 
-        return latest_ce
+        return ce_map
 
     @staticmethod
     def find_latest_ce_for_checkoff_for_student(checkoff_id: int,

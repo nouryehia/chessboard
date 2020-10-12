@@ -58,7 +58,7 @@ def update_checkoff():
     return jsonify({'reason': 'checkoff successfully updated',
                     'checkoff': checkoff.to_json()}), 200
 
-
+# TESTED
 @checkoff_api_bp.route('/delete_checkoff', methods=['PUT'])
 def delete_checkoff():
     '''
@@ -74,7 +74,22 @@ def delete_checkoff():
     return jsonify({'reason': 'checkoff successfully deleted',
                     'checkoff': checkoff.to_json()}), 200
 
+# TESTED
+@checkoff_api_bp.route('/get_all_checkoffs_in_course', methods=['GET'])
+def get_all_checkoffs():
+    '''
+    Route used to get all the non-deleted checkoffs in the course from the
+    database.\n
+    @sravyabalasa
+    '''
+    course_id = request.args.get('course_id', type=int)
 
+    checkoffs = Checkoff.find_all_checkoffs_in_course(course_id)
+    ret = list(map(lambda checkoff: checkoff.to_json(), checkoffs))
+    return jsonify({'reason': 'checkoffs found for course',
+                    'checkoffs': ret})
+
+# TESTED
 @checkoff_api_bp.route('/submit_evaluation', methods=["POST"])
 def submit_evaluation():
     '''
@@ -92,22 +107,23 @@ def submit_evaluation():
     return jsonify({'reason': 'checkoff evaluation successfully created',
                     'eval': ce.to_json()}), 200
 
-
+# TESTED
 @checkoff_api_bp.route('/get_latest_ce_all_students_for_course', methods=["GET"])
 def get_evaluations_course():
     '''
     Returns latest checkoff evaluation for each student in course.\n
     @sravyabalasa
     '''
-    course_id = request.args.get('course_id')
-    checkoff_id = request.args.get('checkoff_id')
+    course_id = request.args.get('course_id', type=int)
+    checkoff_id = request.args.get('checkoff_id', type=int)
 
     evals = CheckoffEvaluation.find_latest_ce_for_checkoff_for_all_students(course_id, checkoff_id)
-    ret = list(map(lambda eval: {'student': eval[0].to_json, 'eval': eval[1].to_json()}, evals))
+    ret = list(map(lambda eval: {'student': eval[0].to_json(),
+                                 'eval': eval[1].to_json() if eval[1] is not None else None}, evals))
     return jsonify({'reason': 'checkoff evaluations queried',
                     'evals': ret}), 200
 
-
+# TESTED
 @checkoff_api_bp.route('/get_latest_ce_all_checkoffs_for_student', methods=["GET"])
 def get_evaluations_student():
     '''
@@ -118,6 +134,7 @@ def get_evaluations_student():
     student_id = request.args.get('student_id')
 
     evals = CheckoffEvaluation.find_latest_ce_for_all_checkoffs_for_student(course_id, student_id)
-    ret = list(map(lambda eval: eval.to_json(), evals))
+    ret = list(map(lambda eval: {'checkoff': eval[0].to_json(),
+                                 'eval': eval[1].to_json() if eval[1] is not None else None}, evals))
     return jsonify({'reason': 'checkoff evaluations queried',
                     'evals': ret}), 200

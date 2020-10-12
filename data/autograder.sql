@@ -208,10 +208,6 @@ ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk0" FOREIGN
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk1" FOREIGN KEY ("grader_id") REFERENCES "Users"("id");
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN KEY ("student_id") REFERENCES "Users"("id");
 
---- ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
---- ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
-
---- ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
