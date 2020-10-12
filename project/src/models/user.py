@@ -73,6 +73,26 @@ class User(db.Model, UserMixin):
         self.password = pwd_context.hash(passwd)
         self.save()
 
+    def update_user(self, f_name: str) -> None:
+        '''
+        Update the user at self-discretion.\n
+        Params:
+        f_name - legal name to preferred name
+        '''
+        self.first_name = f_name
+        self.save()
+
+    def create_random_password(self) -> str:
+        '''
+        Function used to generate a random password for a user.\n
+        Params: None\n
+        Returns: The randomly generated password
+        '''
+        password = gen_password()
+        self.password = pwd_context.hash(password)
+        self.save()
+        return password
+
     def to_json(self) -> Dict[str, str]:
         '''
         Function that takes a user object and returns it in dictionary
@@ -138,18 +158,6 @@ class User(db.Model, UserMixin):
         db.session.add(u)
         u.save()
         return True, ret, u
-
-    @staticmethod
-    def create_random_password(user) -> str:
-        '''
-        Function used to generate a random password for a user.\n
-        Params: user - User\n
-        Returns: The randomly generated password
-        '''
-        password = gen_password()
-        user.password = pwd_context.hash(password)
-        user.save()
-        return password
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:

@@ -1,6 +1,6 @@
 import ssl
 from os import getenv
-import smtplib as slib
+import smtplib as smtp
 
 from .logger import log_util, LogLevels
 
@@ -14,7 +14,7 @@ class MailUtil(object):
         self.email = getenv('AG_EMAIL')
         self.passwd = getenv('AG_PASSWORD')
         self.host = 'smtp.gmail.com'
-        self.port = 465
+        self.port = 587
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
@@ -28,8 +28,10 @@ class MailUtil(object):
         '''
 
         try:
-            context = ssl.create_default_context()
-            with slib.SMTP_SSL(self.host, self.port, context=context) as srvr:
+            # context = ssl.create_default_context()
+            with smtp.SMTP(self.host, self.port) as srvr:
+                srvr.ehlo()
+                srvr.starttls()
                 srvr.login(self.email, self.passwd)
                 msglg = 'Login attempt for donotreply account successful'
                 log_util.custom_msg(msglg)
@@ -41,7 +43,7 @@ class MailUtil(object):
 
             return True
 
-        except slib.SMTPAuthenticationError:
+        except smtp.SMTPAuthenticationError:
             msglg = 'Login attempt for donotreply account unsuccessful'
             log_util.custom_msg(msglg, LogLevels.ERR)
             return False
