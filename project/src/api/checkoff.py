@@ -4,10 +4,10 @@ from flask import Blueprint, request, jsonify
 from ..models.checkoff import CheckoffEvaluation, Checkoff
 
 
-checkoff_api_bp = Blueprint('user_api', __name__)
+checkoff_api_bp = Blueprint('checkoff_api', __name__)
 CORS(checkoff_api_bp, supports_credentials=True)
 
-
+# TESTED
 @checkoff_api_bp.route('/create_checkoff', methods=['POST'])
 def create_checkoff():
     '''
@@ -20,8 +20,9 @@ def create_checkoff():
     course_id = request.json['course_id'] if 'course_id' in request.json else None
     points = request.json['points'] if 'points' in request.json else None
     status = request.json['status'] if 'status' in request.json else None
+    due = request.json['due'] if 'due' in request.json else None
 
-    checkoff = Checkoff.create_checkoff(description, name, course_id, points, status)
+    checkoff = Checkoff.create_checkoff(description, name, course_id, points, due)
 
     actions = {'hidden': checkoff.set_hidden,
                'available': checkoff.set_available,
@@ -31,7 +32,7 @@ def create_checkoff():
     return jsonify({'reason': 'checkoff successfully created',
                     'checkoff': checkoff.to_json()}), 200
 
-
+# TESTED
 @checkoff_api_bp.route('/update_checkoff', methods=['PUT'])
 def update_checkoff():
     '''
@@ -44,9 +45,10 @@ def update_checkoff():
     name = request.json['name'] if 'name' in request.json else None
     points = request.json['points'] if 'points' in request.json else None    
     status = request.json['status'] if 'status' in request.json else None
+    due = request.json['due'] if 'due' in request.json else None
 
     checkoff = Checkoff.get_checkoff_by_id(id)
-    checkoff.update_checkoff(description, name, points)
+    checkoff.update_checkoff(description, name, points, due)
 
     actions = {'hidden': checkoff.set_hidden,
                'available': checkoff.set_available,

@@ -42,7 +42,7 @@ class Checkoff(db.Model):
     status = db.Column(db.Integer, nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False)
 
-    def save():
+    def save(self):
         '''
         Saves the current object in the DB.\n
         Params: None\n
@@ -74,7 +74,7 @@ class Checkoff(db.Model):
         Params: None\n
         Return: None\n
         """
-        self.status = Status.HIDDEN
+        self.status = Status.HIDDEN.value
         self.save()
 
     def set_available(self) -> None:
@@ -83,7 +83,7 @@ class Checkoff(db.Model):
         Params: None\n
         Return: None\n
         """
-        self.status = Status.AVAILABLE
+        self.status = Status.AVAILABLE.value
         self.save()
 
     def set_finalized(self) -> None:
@@ -92,7 +92,7 @@ class Checkoff(db.Model):
         Params: None\n
         Return: None\n
         """
-        self.status = Status.FINALIZED
+        self.status = Status.FINALIZED.value
         self.save()
 
     def soft_delete(self) -> None:
@@ -105,7 +105,7 @@ class Checkoff(db.Model):
         self.save()
         return self
 
-    def update_checkoff(self, description: str, name: str, points: int) -> Checkoff:
+    def update_checkoff(self, description: str, name: str, points: int, due: str) -> Checkoff:
         '''
         Updates a checkoff based on information entered by user\n
         Params:\n
@@ -116,6 +116,7 @@ class Checkoff(db.Model):
         self.description = description
         self.name = name
         self.points = points
+        self.due = TimeUtil.convert_str_to_datetime(due)
 
         #TODO: Update the checkoff evaluations as well?? With updated score if points change??
         self.save()
@@ -148,7 +149,7 @@ class Checkoff(db.Model):
         author @sravyabalasa
         '''
         c = Checkoff(description=description, name=name, course_id=course_id,
-                     points=points, is_deleted=False, due=TimeUtil.convert_str_to_datetime(due))
+                     points=points, is_deleted=False, status=Status.HIDDEN.value, due=TimeUtil.convert_str_to_datetime(due))
         db.session.add(c)
         c.save()
 
