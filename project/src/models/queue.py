@@ -7,7 +7,6 @@ from ..utils.time import TimeUtil
 from ...setup import db
 
 from .user import User
-# from .user import Status as u_status
 from .course import Course
 from .ticket import Ticket, TicketTag, HelpType
 from .ticket import Status as t_status

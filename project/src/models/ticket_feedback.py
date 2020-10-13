@@ -6,7 +6,6 @@ from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
-from ..utils.time import TimeUtil
 # from .user import User  # Pretending
 # from .queue import Queue
 # from .ticket import Ticket, Status
@@ -67,7 +66,7 @@ class TicketFeedback(db.Model):
         Save the object to the database.
         """
         db.session.commit()
-    
+
     def to_json(self):
         """
         Return a json copy of the ticket feedback.
@@ -106,7 +105,8 @@ class TicketFeedback(db.Model):
         return ret
 
     @staticmethod
-    def add_feedback(ticket_id: int, rating: int, feedback: str, anonymous: bool) -> TicketFeedback:
+    def add_feedback(ticket_id: int, rating: int, feedback: str,
+                     anonymous: bool) -> TicketFeedback:
         """
         Add a ticket feedback to the db
         Inputs:\n
@@ -115,7 +115,11 @@ class TicketFeedback(db.Model):
         feedback --> The feedback text.
         anonymous --> True of false.
         """
-        fb = TicketFeedback(ticket_id=ticket_id, rating=rating, feedback=feedback,
-                            anonymous=anonymous, created_at = TimeUtil.get_current_time())
+        fb = TicketFeedback(
+            ticket_id=ticket_id,
+            rating=rating,
+            feedback=feedback,
+            anonymous=anonymous,
+            created_at=TimeUtil.get_current_time())
         TicketFeedback.add_to_db(fb)
         return fb

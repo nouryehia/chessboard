@@ -1,4 +1,3 @@
-import ssl
 from os import getenv
 import smtplib as smtp
 
@@ -8,13 +7,30 @@ from .logger import log_util, LogLevels
 class MailUtil(object):
     '''
     Utility class for sending emails.
+    This class is a true singleton, so you can
+    import the class and instantiate it whilst
+    only getting the same instance of the object.
     '''
+    _instance = None
+    _email = None
+    _passwd = None
+    _host = None
+    _port = None
 
-    def __init__(self):
-        self.email = getenv('AG_EMAIL')
-        self.passwd = getenv('AG_PASSWORD')
-        self.host = 'smtp.gmail.com'
-        self.port = 587
+    @classmethod
+    def __new__(cls):
+        '''
+        Implementing singleton pattern in a stricter way than the old method
+        Author: @npcompletenate
+        '''
+        if cls._instance is None:
+            log_util.custom_msg('Creating the emailer object')
+            cls._instance = super(MailUtil, cls).__new__(cls)
+            cls._email = getenv('AG_EMAIL')
+            cls._passwd = getenv('AG_PASSWORD')
+            cls._host = 'smtp.gmail.com'
+            cls._port = 587
+        return cls._instance
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
@@ -28,16 +44,15 @@ class MailUtil(object):
         '''
 
         try:
-            # context = ssl.create_default_context()
-            with smtp.SMTP(self.host, self.port) as srvr:
+            with smtp.SMTP(MailUtil._host, MailUtil._port) as srvr:
                 srvr.ehlo()
                 srvr.starttls()
-                srvr.login(self.email, self.passwd)
+                srvr.login(MailUtil._email, MailUtil._passwd)
                 msglg = 'Login attempt for donotreply account successful'
                 log_util.custom_msg(msglg)
 
                 message = f'Subject: {subject}\n\n{body}'
-                srvr.sendmail(self.email, to, message)
+                srvr.sendmail(MailUtil._email, to, message)
                 msglg = f'Successfully sent email to {to}'
                 log_util.custom_msg(msglg, LogLevels.INFO)
 
@@ -47,8 +62,3 @@ class MailUtil(object):
             msglg = 'Login attempt for donotreply account unsuccessful'
             log_util.custom_msg(msglg, LogLevels.ERR)
             return False
-
-
-# IMPORT THIS OBJECT
-# This is a singleton!
-mailer = MailUtil()

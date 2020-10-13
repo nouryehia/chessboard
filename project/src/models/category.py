@@ -62,7 +62,8 @@ class Category(db.Model):
         percent - weight of the category in grade
         course - id of the course the assignment is in
         '''
-        cat = Category(name=cat_name, weight=percent, course_id=course, is_deleted=False)
+        cat = Category(name=cat_name, weight=percent, course_id=course,
+                       is_deleted=False)
         db.session.add(cat)
         db.session.commit()
 
