@@ -50,7 +50,7 @@ def reset_password():
 
     id = request.json.get('id', None)
     passwd = request.json.get('password', None)
-    old_pass = request.json.get('old password', None)
+    old_pass = request.json.get('old_password', None)
 
     user = User.get_user_by_id(id)
     if User.check_password(user.email, old_pass):
