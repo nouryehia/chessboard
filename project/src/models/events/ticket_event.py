@@ -4,6 +4,7 @@ from ....setup import db
 from enum import Enum
 from ...utils.time import TimeUtil
 from ..enrolled_course import EnrolledCourse, Role
+from ..course import Course
 
 
 class EventType(Enum):
@@ -36,7 +37,7 @@ class TicketEvent(db.Model):
     ticket_id --> The ticket associated with this event, forien key.\n
     message --> The message associated with this event, nullable.\n
     is_private --> Whether this update is anonymous.\n
-    user_id --> The user that created this event.\n
+    ec_user_id --> EC id of user that created this event.\n
     timestamp --> The timestamp of this event.\n
     @authour: YixuanZ
     """
@@ -48,8 +49,8 @@ class TicketEvent(db.Model):
                           nullable=False)
     message = db.Column(db.String(255), nullable=True)
     is_private = db.Column(db.Boolean, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
-                        nullable=False)
+    ec_user_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
+                           nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
 
@@ -120,7 +121,7 @@ class TicketEvent(db.Model):
         ret['ticket_id'] = self.ticket_id
         ret['message'] = self.message
         ret['is_private'] = self.is_private
-        ret['user_id'] = self.user_id
+        ret['ec_user_id'] = self.ec_user_id
         ret['timestamp'] = self.timestamp
 
     def reveal_user(self, user_id: int, course_id: int) -> bool:
@@ -141,7 +142,7 @@ class TicketEvent(db.Model):
             return True
         elif ec.role > Role.STUDENT.value:
             return True
-        elif origin_event.user_id == user_id:
+        elif origin_event.ec_user_id == ec:
             return True
         else:
             return False
@@ -159,7 +160,7 @@ class TicketEvent(db.Model):
     @staticmethod
     def create_event(event_type: EventType, ticket_id: int,
                      message: str, is_private: bool,
-                     user_id: int) -> TicketEvent:
+                     user_id: int, queue_id: int) -> TicketEvent:
         """
         Create a ticket event
         event_type --> The type of this event
@@ -168,10 +169,13 @@ class TicketEvent(db.Model):
         is_private --> Whether this event is private (should in sync to ticket)
         user_id --> The id of the user to create this event.
         """
+        cid = Course.get_course_by_queue_id(queue_id).id
+        ec = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                course_id=cid).id
+
         evt = TicketEvent(event_type=event_type.value, ticket_id=ticket_id,
                           message=message, is_private=is_private,
-                          user_id=user_id,
-                          timestamp=TimeUtil.get_current_time())
+                          ec_user_id=ec, timestamp=TimeUtil.get_current_time())
         evt.add_to_db()
         return evt
 

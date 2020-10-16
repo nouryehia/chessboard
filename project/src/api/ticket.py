@@ -4,11 +4,9 @@ from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
-from ..models.enrolled_course import EnrolledCourse as EC
-# from ..models.enrolled_course import Role
-from ..models.course import Course
+# from ..models.enrolled_course import EnrolledCourse as EC
+# from ..models.course import Course
 from ..models.user import User
-# from ..utils.time import TimeUtil
 
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
@@ -31,15 +29,14 @@ def add_ticket():
     For the tag_list, pass in semi-colon seperated list of numbers in string.\n
     @author YixuanZhou
     """
-    queue_id = int(request.json['queue_id'])
-    cid = Course.get_course_by_queue_id(queue_id).id
 
     # REMOVE LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    s_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
-                                  course_id=cid).id
+    s_id = int(request.json['student_id'])
 
     # UNCOMMENT LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    # s_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+    # s_id = current_user.id
+
+    queue_id = int(request.json['queue_id'])
 
     title = request.json['title']
     description = request.json['description']
@@ -63,7 +60,7 @@ def add_ticket():
                              ticket_id=ticket.id,
                              message=description,
                              is_private=is_private,
-                             user_id=s_id)
+                             user_id=s_id, queue_id=queue_id)
 
     return (jsonify({'reason': 'ticket added to queue',
                      'result': ticket.to_json(user_id=current_user.id)}), 200)
@@ -129,7 +126,7 @@ def student_update():
 
     TicketEvent.create_event(event_type=EventType.UPDATED, ticket_id=ticket.id,
                              message=desc, is_private=private,
-                             user_id=ticket.student_id)
+                             user_id=current_user.id, queue_id=ticket.queue_id)
 
     if 'tag_list' in request.json:
         raw_tags = request.json['tag_list'].split(';')
@@ -175,7 +172,7 @@ def grader_update():
                              ticket_id=ticket.id,
                              message=status,
                              is_private=ticket.is_private,
-                             user_id=ticket.student_id)
+                             user_id=current_user.id, queue_id=ticket.queue_id)
 
     return jsonify({'status': status,
                     'grader_name': grader.first_name + ' ' + grader.last_name,

@@ -98,9 +98,9 @@ class Ticket(db.Model):
     status --> The status of this ticket.\n
     title --> The title of this ticket.\n
     description --> The discription of the ticket created by student.\n
-    grader_id --> The grader_id who accepted this ticket, Nullable.\n
+    ec_grader_id --> The EC grader_id who accepted this ticket, Nullable.\n
     queue_id --> The queue_id of which this ticket belongs to.\n
-    student_id --> The student_id who created this ticket.\n
+    ec_student_id --> The EC student_id who created this ticket.\n
     is_private --> Whether this ticket is private.\n
     accepted_at --> The time that this ticket was accepted.\n
     help_type --> The type of help student need.\n
@@ -122,12 +122,12 @@ class Ticket(db.Model):
                        default=Status.PENDING.value)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
-                          nullable=True, default=None)
+    ec_grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
+                             nullable=True, default=None)
     queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'),
                          nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
-                           nullable=False)
+    ec_student_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
+                              nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True, default=None)
     help_type = db.Column(db.Integer, nullable=False)
@@ -145,7 +145,7 @@ class Ticket(db.Model):
         title --> The title of this ticket.\n
         description --> The description of this ticket.\n
         queue_id --> The queue it for that queue.\n
-        student_id --> The student_id of the student who created the ticket.\n
+        ec_student_id --> The EC id of the student who created the ticket.\n
         is_private --> Wheather this ticket is private.\n
         helpy_type --> The type of help student demands.\n
         tag_one --> The first tag to the ticket.\n
@@ -180,8 +180,8 @@ class Ticket(db.Model):
             ret['workstation'] = self.workstation
             ret['title'] = self.title
             ret['description'] = self.description
-            ret['grader_id'] = self.grader_id
-            ret['student_id'] = self.student_id
+            ret['ec_grader_id'] = self.ec_grader_id
+            ret['ec_student_id'] = self.ec_student_id
             ret['is_private'] = self.is_private
             ret['accepted_at'] = self.accepted_at
             ret['help_type'] = self.help_type
@@ -384,7 +384,7 @@ class Ticket(db.Model):
         if ec_entry.role != Role.STUDENT.value:
             return True
 
-        return self.student_id == ec_entry.id
+        return self.ec_student_id == ec_entry.id
 
     def can_edit_by(self, user_id: int) -> bool:
         """
@@ -408,7 +408,7 @@ class Ticket(db.Model):
         if ec_entry.role != Role.STUDENT.value:
             return True
 
-        return self.student_id == ec_entry.id
+        return self.ec_student_id == ec_entry.id
 
     def update_ticket_tags(self, tag_list: List[TicketTag]) -> None:
         """
@@ -439,7 +439,7 @@ class Ticket(db.Model):
         Mark the ticket as pending status.\n
         """
         self.status = Status.PENDING.value
-        self.grader_id = None
+        self.ec_grader_id = None
         self.save()
 
     def mark_accepted_by(self, grader: User) -> None:
@@ -451,10 +451,10 @@ class Ticket(db.Model):
 
         self.status = Status.ACCEPTED.value
         self.accepted_at = TimeUtil.get_current_time()
-        self.grader_id = EnrolledCourse.find_user_in_course(
-                         user_id=grader.id,
-                         course_id=Course.get_course_by_queue_id(
-                             self.queue_id).id).id
+        self.ec_grader_id = EnrolledCourse.find_user_in_course(
+                            user_id=grader.id,
+                            course_id=Course.get_course_by_queue_id(
+                                self.queue_id).id).id
 
         self.save()
 
@@ -541,12 +541,17 @@ class Ticket(db.Model):
         tag_one = tag_list[0]
         tag_two = tag_list[1] if len(tag_list) > 1 else None
         tag_three = tag_list[2] if len(tag_list) > 2 else None
+
+        cid = Course.get_course_by_queue_id(queue_id).id
+        ec = EnrolledCourse.find_user_in_course(user_id=student_id,
+                                                course_id=cid).id
+
         new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
                             closed_at=None,
                             room=room, workstation=workstation,
                             title=title, description=description,
-                            grader_id=None, queue_id=queue_id,
-                            student_id=student_id, is_private=is_private,
+                            ec_grader_id=None, queue_id=queue_id,
+                            ec_student_id=ec, is_private=is_private,
                             accepted_at=None, help_type=help_type.value,
                             tag_one=tag_one, tag_two=tag_two,
                             tag_three=tag_three, status=Status.PENDING.value)
@@ -576,7 +581,8 @@ class Ticket(db.Model):
 
     # Ticket stats calultaions
     @staticmethod
-    def find_ticket_accepted_by_grader(grader_id: int) -> Optional[Ticket]:
+    def find_ticket_accepted_by_grader(grader_id: int, queue_id: int) ->\
+            Optional[Ticket]:
         """
         Find the last ticket accepted by the grader.\n
         There should only be one ticket that is accpeted by the grader.\n
@@ -585,8 +591,12 @@ class Ticket(db.Model):
         Return:\n
         The ticket that was accepted by the grader.\n
         """
+        cid = Course.get_course_by_queue_id(queue_id).id
+        ec = EnrolledCourse.find_user_in_course(user_id=int(grader_id),
+                                                course_id=cid).id
+
         return Ticket.query.filter_by(status=Status.ACCEPTED,
-                                      grader_id=grader_id).first()
+                                      ec_grader_id=ec).first()
 
     # Ticket stats calultaions
     @staticmethod
@@ -616,7 +626,7 @@ class Ticket(db.Model):
         ec = EnrolledCourse.find_user_in_course(user_id=grader.id,
                                                 course_id=cid).id
 
-        ticket_list = Ticket.query.filter_by(grader_id=ec).all()
+        ticket_list = Ticket.query.filter_by(ec_grader_id=ec).all()
         counter = 0
 
         for ticket in ticket_list:
@@ -719,7 +729,7 @@ class Ticket(db.Model):
         ec = EnrolledCourse.find_user_in_course(user_id=student_id,
                                                 course_id=cid)
         return Ticket.query.\
-            filter_by(queue_id=queue_id, student_id=ec.id).\
+            filter_by(queue_id=queue_id, ec_student_id=ec.id).\
             filter_by(status.in_(status)).\
             order_by(Ticket.created_at.desc()).all()
 
@@ -735,11 +745,11 @@ class Ticket(db.Model):
         Return:\n
         The list of the ticket of this queue ordered by create time.\n
         """
-        cid = Course.get_course_by_queue_id(queue_id)
+        cid = Course.get_course_by_queue_id(queue_id).id
         ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                course_id=cid)
+                                                course_id=cid).id
         return Ticket.query.\
-            filter_by(queue_id=queue_id, grader_id=ec.id).\
+            filter_by(queue_id=queue_id, ec_grader_id=ec).\
             order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
@@ -763,11 +773,11 @@ class Ticket(db.Model):
             ticket_list = Ticket.query.filter_by(queue=queue_id,
                                                  status=Status.RESOLVED).all()
         else:
-            cid = Course.get_course_by_queue_id(queue_id)
+            cid = Course.get_course_by_queue_id(queue_id).id
             ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                    course_id=cid)
+                                                    course_id=cid).id
             ticket_list = Ticket.query.filter_by(queue_id=queue_id,
-                                                 grader_id=ec.id,
+                                                 ec_grader_id=ec,
                                                  status=Status.RESOLVED).all()
         if not start:
             start = TimeUtil.get_time_before(hours=1)
@@ -830,7 +840,7 @@ class Ticket(db.Model):
             return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
-                filter_by(student_id=sid).\
+                filter_by(ec_student_id=sid).\
                 sort_by(id).offset(offset).limit(limit).all()
         elif grader is not None:
             gid = EnrolledCourse.find_user_in_course(grader_id=grader.id,
@@ -838,7 +848,7 @@ class Ticket(db.Model):
             return Ticket.query.filter_by(queue_id=queue_id).\
                 filter_by(Ticket.status.in_(Status.RESOLVED,
                                             Status.CANCELED)).\
-                filter_by(grader_id=gid).\
+                filter_by(ec_grader_id=gid).\
                 sort_by(id).offset(offset).limit(limit).all()
         else:
             Ticket.query.filter_by(queue_id=queue_id).\

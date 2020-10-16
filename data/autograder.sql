@@ -124,9 +124,9 @@ CREATE TABLE "Ticket" (
 	"status" integer NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" TEXT NOT NULL,
-	"grader_id" bigint,
+	"ec_grader_id" bigint,
 	"queue_id" bigserial NOT NULL,
-	"student_id" bigserial NOT NULL,
+	"ec_student_id" bigserial NOT NULL,
 	"is_private" BOOLEAN NOT NULL DEFAULT 'false',
 	"accepted_at" TIMESTAMP,
 	"help_type" integer NOT NULL,
@@ -185,7 +185,7 @@ CREATE TABLE "TicketEvent" (
 	"ticket_id" bigserial NOT NULL,
 	"message" varchar(255) NOT NULL,
 	"is_private" BOOLEAN NOT NULL,
-	"user_id" bigserial NOT NULL,
+	"ec_user_id" bigserial NOT NULL,
 	"timestamp" TIMESTAMP NOT NULL,
 	CONSTRAINT "TicketEvent_pk" PRIMARY KEY ("id")
 ) WITH (
@@ -253,9 +253,9 @@ ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") R
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
 
-ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk0" FOREIGN KEY ("grader_id") REFERENCES "EnrolledCourse"("id");
+ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk0" FOREIGN KEY ("ec_grader_id") REFERENCES "EnrolledCourse"("id");
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
-ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk2" FOREIGN KEY ("student_id") REFERENCES "EnrolledCourse"("id");
+ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk2" FOREIGN KEY ("ec_student_id") REFERENCES "EnrolledCourse"("id");
 
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk0" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("section_id");
@@ -266,7 +266,7 @@ ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REF
 ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk0" FOREIGN KEY ("tutor_id") REFERENCES "Users"("id");
 
 ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
-ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("user_id") REFERENCES "EnrolledCourse"("id");
+ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("ec_user_id") REFERENCES "EnrolledCourse"("id");
 
 ALTER TABLE "QueueCalendar" ADD CONSTRAINT "QueueCalendar_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
