@@ -460,3 +460,45 @@ Returns tickets accepted by a grader to the queue
     "reason": "# tickets deferred", where # is the number of tickets deferred,
 }
 ```
+
+### **find_all_tickets (GET)**
+
+#### *Description*
+
+Route used to find tickets on the queue (can be catgorized as pending or
+accepted)
+
+#### *Parameters*
+
+- **queue_id: int** id of queue we want tickets from
+- **pending: int** (OPTIONAL) pass in 1 if you only want pending tickets
+- **accepted: int** (OPTIONAL) pass in 1 if you only want accepted tickets
+
+#### *Responses*
+```json
+{
+    {
+        "ticket_events": events attached to this ticket (null if none),
+        "ticket_info": {
+            "accepted_at": when the ticket was accepted (null if pending),
+            "closed_at": when the ticket was closed (null if pending or open),
+            "created_at": when the ticketw as created,
+            "description": description of ticket,
+            "grader_id": id of grader on ticket (null if none),
+            "help_type": help type (see ../models/ticket.py),
+            "is_private": whether the ticket is private,
+            "queue_id": id of queue ticket is on,
+            "room": ticket room,
+            "status": ticket status (see ../models/ticket.py),
+            "student_id": enrolled course id of student who made the ticket,
+            "tag_one": first ticket tag (see ../models/ticket.py),
+            "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+            "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+            "ticket_id": ticket id,
+            "title": title of ticket,
+            "workstation": workstation of ticket
+        }
+    }
+    ...
+}
+```

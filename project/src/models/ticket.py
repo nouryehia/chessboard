@@ -702,13 +702,13 @@ class Ticket(db.Model):
         The list of the ticket of this queue ordered by create time.\n
         """
         if status:
-            return Ticket.query.\
-                filter_by(queue_id=queue_id).\
-                order_by(Ticket.created_at.desc()).all()
-        else:
             return Ticket.\
                 query.filter_by(queue_id=queue_id).\
                 filter(Ticket.status.in_(status)).\
+                order_by(Ticket.created_at.desc()).all()
+        else:
+            return Ticket.query.\
+                filter_by(queue_id=queue_id).\
                 order_by(Ticket.created_at.desc()).all()
 
     @staticmethod
