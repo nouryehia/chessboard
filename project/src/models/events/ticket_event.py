@@ -54,6 +54,9 @@ class TicketEvent(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
 
+    def __init__(self, **kwargs):
+        super(TicketEvent, self).__init__(**kwargs)
+
     # Getter Methods
     def is_create(self) -> bool:
         """
@@ -149,9 +152,9 @@ class TicketEvent(db.Model):
 
     def add_to_db(self):
         """
-        Add the ticket event to the database.\n
+        Add the ticket to the database.\n
         Inputs:\n
-        te --> the ticket event object created.\n
+        ticket --> the ticket object created.\n
         """
         db.session.add(self)
         db.session.commit()

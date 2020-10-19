@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 from ...setup import db
 from enum import Enum
-# from .enrolled_course import EnrolledCourse
+# TODO: In the future, use Mihai's security stuffs.
 # from ..security.roles import CRole
+from .section import Section
 
 
 class Quarter(Enum):
@@ -97,7 +98,7 @@ class Course(db.Model):
         repr
         """
         return 'course ' + str(self.year) + ' ' + self.short_name + ' ' + \
-                str(self.quarter)
+            str(self.quarter)
 
     def switch_queue_status(self):
         """
@@ -127,35 +128,13 @@ class Course(db.Model):
         self.cse = not self.cse
         self.save()
 
-    ''' Dependancies on Section
-    def get_sections(self):
+    def get_sections(self) -> List[Section]:
         """
         Get the sections of a course
         """
         return Section.query.filter_by(course_id=self.id).all()
 
-    def get_students(self):
-        """
-        Get the students enrolled in a course
-        """
-        sections = Section.query.with_entities(Section.id).filter_by(course_id=self.id).all()
-        students = []
-        for section in sections:
-            students = students + EnrolledCourse.query.filter_by(section_id=section, role=CRole.STUDENT.value).all()
-
-        return students
-
-    def get_instructors(self):
-        """
-        Get the instructors from a course
-        """
-        sections = Section.query.with_entities(Section.id).filter_by(course_id=self.id).all()
-        instructors = []
-        for section in sections:
-            instructors = instructors + EnrolledCourse.query.filter_by(section_id=section, role=CRole.INSTRUCTOR.value).all()
-
-        return instructors
-    '''
+    # Get students / get instructors are already in enrolled course
 
     @staticmethod
     def get_course_by_id(course_id) -> Optional[Course]:
@@ -195,15 +174,8 @@ class Course(db.Model):
         elif self.quarter == Quarter.SS2.value:
             return "SS2" + str(self.year)
 
-    '''
-    def add_section(self, section_name):
-        """
-        Adds a section to the course.
-        """
-        Section.insert().values(section_name=section_name, course_id=self.id)
-    '''
-
-    def exists_course(quarter: int, short_name: str, year: int) -> Optional[Course]:
+    def exists_course(quarter: int, short_name: str, year: int)\
+            -> Optional[Course]:
         '''
         Function that tries to find a course by short name, quarter and year.
 

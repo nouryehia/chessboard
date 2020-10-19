@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from ...setup import db
-from .enrolled_course import EnrolledCourse
 
 
 class Section (db.Model):
@@ -57,15 +56,28 @@ class Section (db.Model):
 
         return self.section_name
 
-    def update_section(self):
+    def to_json(self):
         '''
+        Return a json representation of the current section.
+        @author: YixuanZ
+        '''
+        ret = {}
+        ret['id'] = self.id
+        ret['section_id'] = self.section_id
+        ret['course_id'] = self.course_id
+        ret['section_name'] = self.section_name
+
+    # TODO: We dont need this method since section do not store students.
+    '''
+    def update_section(self):
+
         Updates the object's instance field students_in_section so that any
         added or dropped students are filled into the set. Important because
         python does not allow these instance fields to be kept after an object
         goes out of scope.\n
         Params: None.\n
         Returns: Self.\n
-        '''
+
 
         # Find all the students in the section by delegating to EnrolledCourse
         updated_students_in_section =\
@@ -79,9 +91,12 @@ class Section (db.Model):
             self.students_in_section.add(student)
 
         return self
+    '''
 
+    # TODO: Sorting students by alphbetical order is a great, will in EC
+    '''
     def sort_students(self, set_of_students: set):
-        '''
+
         Sorts a set of students alphabetically so that they can be printed out
         whenever we want a list of students.\n
         This list of students does not have to be all the students in the
@@ -91,7 +106,7 @@ class Section (db.Model):
         Params: A set of student names (strings) that needs to be sorted and
         passed back.\n
         Returns: Ordered list of students.\n
-        '''
+
 
         # Create a list out of the set
         to_be_sorted = list(set_of_students)
@@ -100,8 +115,10 @@ class Section (db.Model):
         # return the result
         to_be_sorted.sort()
         return to_be_sorted
+    '''
 
-    def find_by_id(self, section_id: int, course_id: int):
+    @staticmethod
+    def find_by_id(section_id: int, course_id: int):
         '''
         Performs a database query by the course and section id.\n
         Params: None.\n

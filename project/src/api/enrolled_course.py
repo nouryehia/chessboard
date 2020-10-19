@@ -1,5 +1,6 @@
 from flask_cors import CORS
-from flask_login import login_required, current_user
+# from flask_login import login_required, current_user
+from flask_login import current_user
 from flask import Blueprint, request, jsonify
 
 from ..models.user import User
@@ -8,7 +9,7 @@ from ..models.enrolled_course import Role, EnrolledCourse
 enrolled_course_api_bp = Blueprint('enrolled_course_api', __name__)
 CORS(enrolled_course_api_bp)
 
-# We should follow the GET --> args.get and POST --> json, need to test for CORS
+# We should follow the GET -> args.get and POST -> json, need to test for CORS
 
 
 def is_instructor_of_course(course_id: int) -> bool:
@@ -23,7 +24,7 @@ def is_instructor_of_course(course_id: int) -> bool:
 
 
 @enrolled_course_api_bp.route('/enroll_user', methods=['POST'])
-#@login_required
+# @login_required
 def enroll_user():
     """
     Route to enroll a user in to a specific section of a course.
@@ -50,7 +51,7 @@ def enroll_user():
 
 
 @enrolled_course_api_bp.route('/change_role', methods=['POST'])
-#@login_required
+# @login_required
 def change_role():
     """
     Change the role of the enrolled user in a course.
@@ -72,7 +73,7 @@ def change_role():
 
 
 @enrolled_course_api_bp.route('/delete_user_from_course', methods=['POST'])
-#@login_required
+# @login_required
 def delete_user_from_course():
     """
     The route to remote an user from a particular course.
@@ -93,18 +94,17 @@ def delete_user_from_course():
 
 
 @enrolled_course_api_bp.route('/get_user_in_course', methods=['GET'])
-#@login_required
+# @login_required
 def get_user_in_course():
     """
     Route to get a user from a specific course.
     """
-    rags = request.args
     user_id = request.args.get('user_id', type=int)
     course_id = request.args.get('course_id', type=int)
     ec = EnrolledCourse.\
         find_user_in_course(user_id=user_id,
                             course_id=course_id)
-    ec_info = ec.to_json() if ec_info is not None else {}
+    ec_info = ec.to_json() if ec is not None else {}
     user = User.get_user_by_id(user_id)
     user_info = user.to_json()
     ret = {'user_info': user_info, 'enrolled_course_info': ec_info}
@@ -112,14 +112,13 @@ def get_user_in_course():
 
 
 @enrolled_course_api_bp.route('/get_all_user_in_course', methods=['GET'])
-#@login_required
+# @login_required
 def get_all_user_in_course():
     """
     Route to get all the users of that is in a given course.\n
     The roles is optional, when passing in,
     pass in the string representation of ; seperated int values.
     """
-    rags = request.args
     course_id = request.args.get('course_id')
     rs = request.args.get('roles', type=str)
     roles = None
@@ -147,7 +146,7 @@ def get_all_user_in_course():
 
 
 @enrolled_course_api_bp.route('/get_user_in_section', methods=['GET'])
-#@login_required
+# @login_required
 def get_user_in_section():
     """
     The route to remote an user from a particular course.
@@ -170,7 +169,7 @@ def get_user_in_section():
 
 @enrolled_course_api_bp.route('/get_courses_user_in',
                               methods=['GET'])
-#@login_required
+# @login_required
 def get_courses_user_in():
     """
     Route to get all the courses that a user is in.
@@ -203,7 +202,7 @@ def get_courses_user_in():
 
 
 @enrolled_course_api_bp.route('/find_active_tutor_for', methods=['GET'])
-#@login_required
+# @login_required
 def find_active_tutor_for():
     queue_id = int(request.args.get('queue_id', type=int))
     return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))

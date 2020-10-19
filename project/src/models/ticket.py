@@ -377,7 +377,6 @@ class Ticket(db.Model):
         course = Course.get_course_by_queue_id(self.queue_id)
         ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
                                                       course_id=course.id)
-
         if not ec_entry:
             return False
 

@@ -80,7 +80,8 @@ class NewsFeedPost(db.Model):
         Inputs:\n
         queue_id --> list of all feeds retrieved.\n
         """
-        posts = NewsFeedPost.query.filter_by(queue_id=queue_id, is_deleted=False).all()
+        posts = NewsFeedPost.query.filter_by(queue_id=queue_id,
+                                             is_deleted=False).all()
 
         return posts
 
@@ -91,7 +92,8 @@ class NewsFeedPost(db.Model):
         Inputs:\n
         queue_id, post_id --> the NewsFeed post by the given id.\n
         """
-        post = NewsFeedPost.query.filter_by(queue_id=queue_id, id=post_id).first()
+        post = NewsFeedPost.query.filter_by(queue_id=queue_id,
+                                            id=post_id).first()
         return post
 
     # Static add method

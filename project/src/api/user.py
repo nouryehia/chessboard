@@ -19,10 +19,9 @@ def login():
     user object.\n
     @author npcompletenate
     '''
-    email = request.json['email'] if 'email' in request.json else None
-    password = request.json['password'] if 'password' in request.json else ''
-    remember = True if 'remember' in request.json and \
-        request.json['remember'] == 'true' else False
+    email = request.json.get('email', None)
+    password = request.json.get('password', '')
+    remember = True if request.json.get('remember', '') == 'true' else False
 
     if User.check_password(email, password):
         user = User.find_by_pid_email_fallback(None, email)
@@ -48,13 +47,13 @@ def logout():
 @user_api_bp.route('/reset_password', methods=['PUT'])
 #@login_required
 def reset_password():
-    email = request.json['email'] if 'email' in request.json else None
-    passwd = request.json['password'] if 'password' in request.json else None
-    old_pass = request.json['old password'] if 'old password' in request.json \
-        else None
 
-    if User.check_password(email, old_pass):
-        user = User.find_by_pid_email_fallback(None, email)
+    id = request.json.get('id', None)
+    passwd = request.json.get('password', None)
+    old_pass = request.json.get('old_password', None)
+
+    user = User.get_user_by_id(id)
+    if User.check_password(user.email, old_pass):
         user.reset_password(passwd)
         log_util.reset_password(user.email)
         msg = 'Hi there!\nYou\'re getting this email because you' +\
@@ -64,16 +63,17 @@ def reset_password():
             '\n\nCheers,\nThe Autograder Team'
         if mailer.send(user.email, 'Password Reset', msg):
             log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+            return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-        return jsonify({'reason': 'request OK'}), 200
+            return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
 
 
 @user_api_bp.route('/forgot_password', methods=['PUT'])
 def forgot_password():
-    user = User.find_by_pid_email_fallback(None, request.json['email'])
+    user = User.find_by_pid_email_fallback(None, request.json.get('email', None))
     if user:
         new_pass = user.create_random_password()
         log_util.forgot_password(user.email)
@@ -86,9 +86,10 @@ def forgot_password():
 
         if mailer.send(user.email, 'Forgot Password', msg):
             log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+            return jsonify({'reason': 'request OK'}), 200
         else:
             log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
-        return jsonify({'reason': 'request OK'}), 200
+            return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'User not found'}), 400
 
@@ -102,11 +103,11 @@ def create_user():
     the user.
     @author npcompletenate
     '''
-    email = request.json['email']
-    f_name = request.json['fname']
-    l_name = request.json['lname']
-    pid = request.json['pid'] if 'pid' in request.json else None
-    password = request.json['passwd'] if 'passwd' in request.json else None
+    email = request.json.get('email')
+    f_name = request.json.get('fname')
+    l_name = request.json.get('lname')
+    pid = request.json.get('pid', None)
+    password = request.json.get('passwd', None)
 
     status, pwd, user = User.create_user(email, f_name, l_name, pid, password)
     if not status:
@@ -156,8 +157,8 @@ def get():
     Route used to get a particular user. We try to find by PID first,
     searching by email if we cannot find a user with that particular PID.\n
     '''
-    email = request.json['email'] if 'email' in request.json else None
-    pid = request.json['pid'] if 'pid' in request.json else None
+    email = request.args.get('email', None)
+    pid = request.args.get('pid', None)
 
     found = User.find_by_pid_email_fallback(pid, email)
 
@@ -166,3 +167,40 @@ def get():
     else:
         ret = {'reason': 'request OK', 'result': found.to_json()}
         return jsonify(ret), 200
+
+
+@user_api_bp.route('/update_user', methods=['PUT'])
+#@login_required
+def update_user():
+    '''
+    Update user's information at user's discretion\n
+    '''
+    id = request.json.get('id', None)
+    f_name = request.json.get('fname', '')
+
+    user = User.get_user_by_id(id)
+    if user:
+        user.update_user(f_name)
+
+        ret = {'reason': 'User successfully updated', 'result': user.to_json()}
+        return jsonify(ret), 200
+    else:
+        ret = {'reason': 'User not found', 'result': {}}
+        return jsonify(ret), 400
+
+
+@user_api_bp.route('/check_password', methods=['POST'])
+#@login_required
+def check_password():
+    '''
+    Check if the user's password matches the given in the database\n
+    '''
+    email = request.json.get('email', None)
+    password = request.json.get('password', None)
+
+    match = User.check_password(email, password)
+
+    if match:
+        return jsonify({'reason': 'Passwords match'}), 200
+    else:
+        return jsonify({'reason': 'Passwords do not match'}), 400

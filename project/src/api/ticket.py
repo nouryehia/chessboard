@@ -7,6 +7,7 @@ from ..models.events.ticket_event import TicketEvent, EventType
 # from ..models.enrolled_course import EnrolledCourse as EC
 # from ..models.course import Course
 from ..models.user import User
+# from ..utils.time import TimeUtil
 
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
@@ -17,7 +18,8 @@ CORS(ticket_api_bp, supports_credentials=True)
 @ticket_api_bp.route('/show_all_evts', methods=['GET'])
 def get_all_evts():
     evts = TicketEvent.get_all_ticket_events()
-    return jsonify({"evts": evts}), 200
+    evts_info = list(map(lambda x: x.to_json(), evts))
+    return jsonify({"evts": evts_info}), 200
 
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])

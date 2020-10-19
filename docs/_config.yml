@@ -1,0 +1,7 @@
+theme: jekyll-theme-tactile
+title: Chessboard Docs
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true

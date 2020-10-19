@@ -502,3 +502,29 @@ accepted)
     ...
 }
 ```
+
+## Ticket_Feedback
+(Prefix = ticketfeedback)
+### **create_course (POST)**
+#### *Description*
+Route to create a course.
+
+#### *Parameters*
+- **ticket_id: int** --> The id of the ticket.
+- **rating: str** --> The rating to the grader. Candidates: BAD, NEUTRAL, GOOD
+- **feedback: str** --> Written feedback text.
+- **is_anonymous: bool** --> Whether the feedback is anonymous.
+
+#### *Responses*
+- **{'reason': 'success', result: fb}, 200** if the course is successfully created, where **fb** is
+```python
+fb = {
+    'id': 'The ticketfeedback id in db'
+    'ticket_id': 'The id of the ticket this feedback is to.
+    'rating': 'The rating to the grader'
+    'feedback': 'Feedback text'
+    'is_anonymous': 'Whether it is anonymous'
+    'submitted_at': 'When the feedback is submitted'
+}
+```
+- **{'reason': 'course existed'}, 400** if the course has existed already.
