@@ -119,7 +119,6 @@ def get_all_user_in_course():
     The roles is optional, when passing in,
     pass in the string representation of ; seperated int values.
     """
-    rags = request.args
     course_id = request.args.get('course_id')
     rs = request.args.get('roles', type=str)
     roles = None
