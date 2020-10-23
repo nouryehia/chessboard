@@ -266,47 +266,26 @@ def find_all_tickets_for_grader():
 
     return jsonify({'result': ticket_infos}), 200
 
-# NEED TO FIX TIME UTIL BEFORE METHODS BELOW WORK
 
-# @ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-# @login_required
-# def find_tickets_in_range():
-#     '''
-#     Route used to find tickets in a specific range of time. A grader can be\n
-#     passed in to only get tickets for that grader.\n
-#     @author nouryehia
-#     '''
-#     queue_id = request.args.get('queue_id', type=int)
-#     start = request.args.get('start', default=None, type=str)
-#     end = request.args.get('end', default=None, type=str)
-#     grader_id = request.args.get('grader_id', default=None, type=int)
-#     tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
-#     # return tickets
-#     ticket_infos = []
-#     for ticket in tickets:
-#         ticket_infos.append(ticket.to_json(user_id=current_user.id))
+@ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
+@login_required
+def find_tickets_in_range():
+    '''
+    Route used to find tickets in a specific range of time. A grader can be\n
+    passed in to only get tickets for that grader. Tickets can be classified\n
+    as resolved.\n
+    @author nouryehia
+    '''
+    queue_id = request.args.get('queue_id', type=int)
+    start = request.args.get('start', default=None, type=str)
+    end = request.args.get('end', default=None, type=str)
+    grader_id = request.args.get('grader_id', default=None, type=int)
+    resolved = request.args.get('resolved', default=False, type=bool)
 
-#     return jsonify({'result': ticket_infos}), 200
+    tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id,
+                                           resolved)
+    ticket_infos = []
+    for ticket in tickets:
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
-
-# @ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
-# @login_required
-# def find_resolved_tickets_in():
-#     '''
-#     Route used to resolved tickets on a queue.\n
-#     @author nouryehia
-#     '''
-#     queue_id = request.args.get('queue_id', type=int)
-#     recent_hour = request.args.get('recent_hour', default=0, type=int)
-#     day = request.args.get('day', default=0, type=int)
-#     start = request.args.get('start', default=None, type=str)
-#     end = request.args.get('end', default=None, type=str)
-
-#     tickets = Ticket.find_resolved_tickets_in(queue_id, recent_hour, day,
-#                                               start, end)
-
-#     ticket_infos = []
-#     for ticket in tickets:
-#         ticket_infos.append(ticket.to_json(user_id=current_user.id))
-
-#     return jsonify({'result': ticket_infos}), 200
+    return jsonify({'result': ticket_infos}), 200

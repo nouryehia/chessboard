@@ -758,67 +758,54 @@ class Ticket(db.Model):
     def find_tickets_in_range(queue_id: int,
                               start: str,
                               end: str,
-                              grader_id: int = None):
+                              grader_id: int = None,
+                              resolved: bool = False):
         """
-        Find all the ticktes of the queue in range of two datetimes.\n
+        Find all the ticktes of the queue in range of two datetimes. Can be
+        categrized as resolved if wanted and grader_id can be specified\n
         Input:\n
         queue_id --> The id of the queue to look at.\n
         grader --> An optional User object, use it if want to find for a
                    grader.\n
+        reolved --> An optional boolean, indicating whether we only want
+                    resolved tickets or not.
         start --> The begining of the range,
                 it would be 1 hour before by default.\n
         end --> The end of the range, it would be now by default.\n
         Return:\n
         A list of tickets in this range.\n
         """
-        if not grader_id:
-            t_list = Ticket.query.filter_by(queue_id=queue_id).all()
+        if resolved:
+            if not grader_id:
+                tl = Ticket.query.filter_by(queue_id=queue_id,
+                                            status=Status.RESOLVED.value).all()
+            else:
+                cid = Course.get_course_by_queue_id(queue_id).id
+                ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                        course_id=cid).id
+                tl = Ticket.query.filter_by(queue_id=queue_id,
+                                            ec_grader_id=ec,
+                                            status=Status.RESOLVED.value).all()
         else:
-            cid = Course.get_course_by_queue_id(queue_id).id
-            ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                    course_id=cid).id
-            t_list = Ticket.query.filter_by(queue_id=queue_id,
+            if not grader_id:
+                tl = Ticket.query.filter_by(queue_id=queue_id).all()
+            else:
+                cid = Course.get_course_by_queue_id(queue_id).id
+                ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
+                                                        course_id=cid).id
+                tl = Ticket.query.filter_by(queue_id=queue_id,
                                             ec_grader_id=ec).all()
-        if not start:
-            start = TimeUtil.get_time_before(hours=1)
-        if not end:
-            end = TimeUtil.get_current_time()
 
-        return list(filter(lambda x: start <= str(x.created_at) <= str(end),
-                           t_list))
+        start = (TimeUtil.convert_str_to_datetime(
+                 TimeUtil.get_time_before(hours=1)) if not start else
+                 TimeUtil.convert_str_to_datetime(start))
 
-    @staticmethod
-    def find_resolved_tickets_in(queue_id: int, recent_hour: bool = False,
-                                 day: bool = False,
-                                 start: str = None,
-                                 end: str = None) -> List[Ticket]:
-        """
-        Get the tickets for the queue that were resolved.\n
-        Inputs:\n
-        queue --> the id of the queue to look at.\n
-        recent --> If you want for the recent hour (1st priority).\n
-        day --> If you want for only today (2nd priority).\n
-        start --> If you want a specific start time, default is None.\n
-        end --> For a specifice end time, default is None.\n
-        Return:\n
-        A list of tickets resolved for this queue given a certain range.\n
-        """
-        ticket_list = Ticket.query.filter_by(queue_id=queue_id,
-                                             status=Status.RESOLVED).all()
-        if recent_hour:
-            now = TimeUtil.get_current_time()
-            lasthour = TimeUtil.get_time_before(hours=1)
-            return Ticket.find_tickets_in_range(queue=queue_id,
-                                                start=lasthour, end=now)
-        elif day:
-            now = TimeUtil.get_current_time()
-            lasthour = TimeUtil.get_time_before(hours=24)
-            return Ticket.find_tickets_in_range(queue=queue_id,
-                                                start=lasthour, end=now)
-        else:
-            return Ticket.find_tickets_in_range(queue=queue_id,
-                                                start=start, end=end)
-            return ticket_list
+        end = (TimeUtil.convert_str_to_datetime(
+               TimeUtil.get_current_time()) if not end else
+               TimeUtil.convert_str_to_datetime(end))
+
+        return list(filter(lambda x: start <=
+                           TimeUtil.naive_to_aware(x.created_at) <= end, tl))
 
     @staticmethod
     def find_ticket_history_with_offset(queue_id: int, offset: int = 0,
