@@ -724,13 +724,16 @@ class Ticket(db.Model):
         Return:\n
         The list of the ticket of this queue ordered by create time.\n
         """
-        cid = Course.get_course_by_queue_id(queue_id)
+        cid = Course.get_course_by_queue_id(queue_id).id
         ec = EnrolledCourse.find_user_in_course(user_id=student_id,
-                                                course_id=cid)
-        return Ticket.query.\
-            filter_by(queue_id=queue_id, ec_student_id=ec.id).\
-            filter_by(status.in_(status)).\
-            order_by(Ticket.created_at.desc()).all()
+                                                course_id=cid).id
+        return (Ticket.query.
+                filter_by(queue_id=queue_id, ec_student_id=ec).
+                filter(Ticket.status.in_(status)).
+                order_by(Ticket.created_at.desc()).all() if status else
+                Ticket.query.
+                filter_by(queue_id=queue_id, ec_student_id=ec).
+                order_by(Ticket.created_at.desc()).all())
 
     @staticmethod
     def find_all_tickets_for_grader(queue_id: int,
@@ -747,15 +750,15 @@ class Ticket(db.Model):
         cid = Course.get_course_by_queue_id(queue_id).id
         ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                 course_id=cid).id
-        return Ticket.query.\
-            filter_by(queue_id=queue_id, ec_grader_id=ec).\
-            order_by(Ticket.created_at.desc()).all()
+        return (Ticket.query.
+                filter_by(queue_id=queue_id, ec_grader_id=ec).
+                order_by(Ticket.created_at.desc()).all())
 
     @staticmethod
     def find_tickets_in_range(queue_id: int,
                               start: str,
                               end: str,
-                              grader_id: int = None) -> List[Ticket]:
+                              grader_id: int = None):
         """
         Find all the ticktes of the queue in range of two datetimes.\n
         Input:\n
@@ -769,20 +772,20 @@ class Ticket(db.Model):
         A list of tickets in this range.\n
         """
         if not grader_id:
-            ticket_list = Ticket.query.filter_by(queue=queue_id,
-                                                 status=Status.RESOLVED).all()
+            t_list = Ticket.query.filter_by(queue_id=queue_id).all()
         else:
             cid = Course.get_course_by_queue_id(queue_id).id
             ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                     course_id=cid).id
-            ticket_list = Ticket.query.filter_by(queue_id=queue_id,
-                                                 ec_grader_id=ec,
-                                                 status=Status.RESOLVED).all()
+            t_list = Ticket.query.filter_by(queue_id=queue_id,
+                                            ec_grader_id=ec).all()
         if not start:
             start = TimeUtil.get_time_before(hours=1)
         if not end:
             end = TimeUtil.get_current_time()
-        return list(filter(lambda x: start <= x.closed_at <= end, ticket_list))
+
+        return list(filter(lambda x: start <= str(x.created_at) <= str(end),
+                           t_list))
 
     @staticmethod
     def find_resolved_tickets_in(queue_id: int, recent_hour: bool = False,
