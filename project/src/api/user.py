@@ -4,8 +4,8 @@ from flask_login import login_required, login_user, logout_user
 
 
 from ..models.user import User
-from ..utils.mailer import mailer
-from ..utils.logger import log_util, LogLevels
+from ..utils.mailer import MailUtil
+from ..utils.logger import Logger, LogLevels
 
 
 user_api_bp = Blueprint('user_api', __name__)
@@ -26,7 +26,7 @@ def login():
     if User.check_password(email, password):
         user = User.find_by_pid_email_fallback(None, email)
         user.update_login_timestamp()
-        log_util.logged_in(user)
+        Logger.logged_in(user)
         login_user(user, remember=remember)
         return jsonify({'reason': 'logged in', 'result': user.to_json()})
     else:
@@ -55,17 +55,17 @@ def reset_password():
     user = User.get_user_by_id(id)
     if User.check_password(user.email, old_pass):
         user.reset_password(passwd)
-        log_util.reset_password(user.email)
+        Logger.reset_password(user.email)
         msg = 'Hi there!\nYou\'re getting this email because you' +\
             ' reset your password. If this wasn\'t you, contact someone' +\
             ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
             ' this email; replies are not checked.' +\
             '\n\nCheers,\nThe Autograder Team'
-        if mailer.send(user.email, 'Password Reset', msg):
-            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        if MailUtil.send(user.email, 'Password Reset', msg):
+            Logger.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
             return jsonify({'reason': 'request OK'}), 200
         else:
-            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
+            Logger.custom_msg('Emailer failed to send email.', LogLevels.ERR)
             return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
@@ -76,7 +76,7 @@ def forgot_password():
     user = User.find_by_pid_email_fallback(None, request.json.get('email', None))
     if user:
         new_pass = user.create_random_password()
-        log_util.forgot_password(user.email)
+        Logger.forgot_password(user.email)
         msg = 'Hi there!\nYou\'re getting this email because you' +\
             ' forgot your password. If this wasn\'t you, contact someone' +\
             ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
@@ -84,11 +84,11 @@ def forgot_password():
             f' Your temp password is {new_pass}; go change it ASAP!' +\
             '\n\nCheers,\nThe Autograder Team'
 
-        if mailer.send(user.email, 'Forgot Password', msg):
-            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        if MailUtil.send(user.email, 'Forgot Password', msg):
+            Logger.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
             return jsonify({'reason': 'request OK'}), 200
         else:
-            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
+            Logger.custom_msg('Emailer failed to send email.', LogLevels.ERR)
             return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'User not found'}), 400
@@ -111,11 +111,11 @@ def create_user():
 
     status, pwd, user = User.create_user(email, f_name, l_name, pid, password)
     if not status:
-        log_util.create_user_exist(email)
+        Logger.create_user_exist(email)
         return jsonify({'reason': 'user exists'}), 300
     else:
         res = False if password else True
-        log_util.create_user(user)
+        Logger.create_user(user)
 
         msg = 'Hi there!\nYou\'re getting this email because an' +\
             ' Autograder account was created for you.'
@@ -128,10 +128,10 @@ def create_user():
 
         msg += '\n\nCheers,\nThe Autograder Team'
 
-        if mailer.send(user.email, 'Created Autograder Account', msg):
-            log_util.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        if MailUtil.send(user.email, 'Created Autograder Account', msg):
+            Logger.custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
         else:
-            log_util.custom_msg('Emailer failed to send email.', LogLevels.ERR)
+            Logger.custom_msg('Emailer failed to send email.', LogLevels.ERR)
         ret = {'reason': 'user created', 'password generated': res}
         return jsonify(ret), 200
 
@@ -145,7 +145,7 @@ def get_all():
     of records simulataneously.
     @author npcompletenate
     '''
-    log_util.custom_msg('get_all_users route run', LogLevels.WARN)
+    Logger.custom_msg('get_all_users route run', LogLevels.WARN)
     res = list(map(lambda user: user.to_json(), User.get_all_users()))
     return jsonify({'reason': 'request OK', 'result': res}), 200
 

@@ -1,7 +1,7 @@
 from os import getenv
 import smtplib as smtp
 
-from .logger import log_util, LogLevels
+from .logger import Logger, LogLevels
 
 
 class MailUtil(object):
@@ -24,7 +24,7 @@ class MailUtil(object):
         Author: @npcompletenate
         '''
         if cls._instance is None:
-            log_util.custom_msg('Creating the emailer object')
+            Logger.custom_msg('Creating the emailer object')
             cls._instance = super(MailUtil, cls).__new__(cls)
             cls._email = getenv('AG_EMAIL')
             cls._passwd = getenv('AG_PASSWORD')
@@ -49,16 +49,16 @@ class MailUtil(object):
                 srvr.starttls()
                 srvr.login(MailUtil._email, MailUtil._passwd)
                 msglg = 'Login attempt for donotreply account successful'
-                log_util.custom_msg(msglg)
+                Logger.custom_msg(msglg)
 
                 message = f'Subject: {subject}\n\n{body}'
                 srvr.sendmail(MailUtil._email, to, message)
                 msglg = f'Successfully sent email to {to}'
-                log_util.custom_msg(msglg, LogLevels.INFO)
+                Logger.custom_msg(msglg, LogLevels.INFO)
 
             return True
 
         except smtp.SMTPAuthenticationError:
             msglg = 'Login attempt for donotreply account unsuccessful'
-            log_util.custom_msg(msglg, LogLevels.ERR)
+            Logger.custom_msg(msglg, LogLevels.ERR)
             return False

@@ -281,7 +281,7 @@ class EnrolledCourse(db.Model):
                 order_by(EnrolledCourse.id.desc()).all()
 
     @staticmethod
-    def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
+    def find_active_tutor_for(queue_id: int) -> (str, List[User]):
         """
         Find all the active tutor for a given queue object.\n
         Inputs:\n
@@ -291,16 +291,18 @@ class EnrolledCourse(db.Model):
         """
         course = Course.get_course_by_queue_id(queue_id)
         if not course:
-            return (False, 'Course not found', None)
+            return ('Course not found', [])
         grader_enrolled_course = EnrolledCourse.query\
-            .filter_by(roles=Role.GRADER)\
+            .filter_by(role=Role.GRADER.value)\
+            .filter(EnrolledCourse.status != Status.INACTIVE.value)\
             .filter_by(course_id=course.id).all()
         # Since each tutor might be enrolled in multiple sections,
         # we remove the duplicates here.
 
         grader_set = set()
         grader_set.update(grader_enrolled_course)
-        return [User.get_user_by_id(grader.id) for grader in list(grader_set)]
+        return ('Course Found',
+                [User.get_user_by_id(grader.id) for grader in list(grader_set)])
 
     @staticmethod
     def delete_enrolled_user_from_course(user_id: int, course_id: int) -> bool:

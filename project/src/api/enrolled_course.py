@@ -205,4 +205,8 @@ def get_courses_user_in():
 #@login_required
 def find_active_tutor_for():
     queue_id = int(request.args.get('queue_id', type=int))
-    return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))
+    result = EnrolledCourse.find_active_tutor_for(queue_id=queue_id)
+    users = result[1]
+    ret = list(map(lambda user: user.to_json(), users))
+
+    return jsonify({'reason': result[0], 'result': ret}), 200
