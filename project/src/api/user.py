@@ -157,7 +157,7 @@ def get():
     Route used to get a particular user. We try to find by PID first,
     searching by email if we cannot find a user with that particular PID.\n
     '''
-    email = request.args.get('email', None)
+    email = request.args.get('email', None, type=str)
     pid = request.args.get('pid', None)
 
     found = User.find_by_pid_email_fallback(pid, email)

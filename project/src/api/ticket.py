@@ -4,12 +4,11 @@ from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
-from ..models.enrolled_course import EnrolledCourse as EC
-# from ..models.enrolled_course import Role
-from ..models.course import Course
+# from ..models.enrolled_course import EnrolledCourse as EC
+# from ..models.course import Course
 from ..models.user import User
-# from ..utils.time import TimeUtil
 
+# TODO: Change some POST to PUT request
 
 ticket_api_bp = Blueprint('ticket_api', __name__)
 CORS(ticket_api_bp, supports_credentials=True)
@@ -24,7 +23,7 @@ def get_all_evts():
 
 
 @ticket_api_bp.route('/add_ticket', methods=['POST'])
-@login_required
+# @login_required
 def add_ticket():
     """
     Add a ticket to the queue.\n
@@ -32,15 +31,14 @@ def add_ticket():
     For the tag_list, pass in semi-colon seperated list of numbers in string.\n
     @author YixuanZhou
     """
-    queue_id = int(request.json['queue_id'])
-    cid = Course.get_course_by_queue_id(queue_id).id
 
     # REMOVE LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    s_id = EC.find_user_in_course(user_id=int(request.json['student_id']),
-                                  course_id=cid).id
+    s_id = int(request.json['student_id'])
 
     # UNCOMMENT LINE BELOW ONCE LOGIN WORKS ON FRONTEND
-    # s_id = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
+    # s_id = current_user.id
+
+    queue_id = int(request.json['queue_id'])
 
     title = request.json['title']
     description = request.json['description']
@@ -64,14 +62,14 @@ def add_ticket():
                              ticket_id=ticket.id,
                              message=description,
                              is_private=is_private,
-                             user_id=s_id)
+                             user_id=s_id, queue_id=queue_id)
 
     return (jsonify({'reason': 'ticket added to queue',
                      'result': ticket.to_json(user_id=current_user.id)}), 200)
 
 
 @ticket_api_bp.route('/get_info', methods=['GET'])
-@login_required
+# @login_required
 def get_info():
     '''
     Route used to get a ticket's info.\n
@@ -98,7 +96,7 @@ def get_user_permissions():
 
 
 @ticket_api_bp.route('/student_update', methods=['POST'])
-@login_required
+# @login_required
 def student_update():
     '''
     Route used to update a ticket. Only the fields being updated need to be
@@ -130,7 +128,7 @@ def student_update():
 
     TicketEvent.create_event(event_type=EventType.UPDATED, ticket_id=ticket.id,
                              message=desc, is_private=private,
-                             user_id=ticket.student_id)
+                             user_id=current_user.id, queue_id=ticket.queue_id)
 
     if 'tag_list' in request.json:
         raw_tags = request.json['tag_list'].split(';')
@@ -147,7 +145,7 @@ def student_update():
 
 
 @ticket_api_bp.route('/grader_update', methods=['POST'])
-# @login_required
+@login_required
 def grader_update():
     """
     The api function used for graders to perfrom actions to ticket.\n
@@ -164,16 +162,11 @@ def grader_update():
     actions = {'RESOLVED': ticket.mark_resolved,
                'CANCELED': ticket.mark_canceled,
                'DEFERRED': ticket.mark_pending}
-    cid = Course.get_course_by_queue_id(ticket.queue_id)
-    grader = User.get_user_by_id(current_user.id)
-    ec_grader = EC.find_user_in_course(user_id=current_user.id, course_id=cid)
 
-    # TODO: Uncomment this to add a check, keep it commented for testing.
-    # if ec_grader.get_role() == Role.STUDENT:
-    #    return jsonify({'reason': "Student try using grader permission"}), 400
+    grader = User.get_user_by_id(current_user.id)
 
     if status == 'ACCEPTED':
-        ticket.mark_accepted_by(ec_grader)
+        ticket.mark_accepted_by(grader)
     else:
         actions[status]()
 
@@ -181,7 +174,7 @@ def grader_update():
                              ticket_id=ticket.id,
                              message=status,
                              is_private=ticket.is_private,
-                             user_id=ticket.student_id)
+                             user_id=current_user.id, queue_id=ticket.queue_id)
 
     return jsonify({'status': status,
                     'grader_name': grader.first_name + ' ' + grader.last_name,
@@ -214,39 +207,12 @@ def find_all_tickets():
     queue_id = request.args.get('queue_id', default=0, type=int)
     pending = request.args.get('pending', default=0, type=int)
     accepted = request.args.get('accepted', default=0, type=int)
-    resolved = request.args.get('resolved', default=0, type=int)
-    canceled = request.args.get('canceled', default=0, type=int)
     if pending:
         status.append(0)
     if accepted:
         status.append(1)
-    if resolved:
-        status.append(2)
-    if canceled:
-        status.append(3)
 
     tickets = Ticket.find_all_tickets(queue_id=queue_id, status=status)
-
-    ticket_infos = []
-    for ticket in tickets:
-        ticket_infos.append(ticket.to_json(user_id=current_user.id))
-
-    return jsonify({'result': ticket_infos}), 200
-
-
-@ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
-@login_required
-def find_tickets_in_range():
-    '''
-    Route used to find tickets in a specific range of time. A grader can be\n
-    passed in to only get tickets for that grader.\n
-    @author nouryehia
-    '''
-    queue_id = request.args.get('queue_id', type=int)
-    start = request.args.get('start', type=str)
-    end = request.args.get('end', type=str)
-    grader_id = request.args.get('grader_id', type=int)
-    tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id)
 
     ticket_infos = []
     for ticket in tickets:
@@ -271,12 +237,13 @@ def find_all_tickets_by_student():
     if accepted:
         status.append(1)
 
-    tickets = Ticket.find_all_tickets(int(request.json['queue_id']),
-                                      int(request.json['student_id']), status)
+    tickets = Ticket.find_all_tickets_by_student(
+                int(request.args.get('queue_id', type=int)),
+                int(request.args.get('student_id', type=int)), status)
 
     ticket_infos = []
     for ticket in tickets:
-        ticket_infos.append(ticket.to_json())
+        ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200
 
@@ -288,9 +255,9 @@ def find_all_tickets_for_grader():
     Route used to find tickets on a queue handled by a grader.\n
     @author nouryehia
     '''
-    tickets = Ticket.find_all_tickets(
-        queue_id=request.args.get('queue_id', type=int),
-        grader_id=request.args.get('grader_id', type=int))
+    tickets = Ticket.find_all_tickets_for_grader(
+        queue_id=int(request.args.get('queue_id', type=int)),
+        grader_id=int(request.args.get('grader_id', type=int)))
 
     ticket_infos = []
     for ticket in tickets:
@@ -299,22 +266,23 @@ def find_all_tickets_for_grader():
     return jsonify({'result': ticket_infos}), 200
 
 
-@ticket_api_bp.route('/find_resolved_tickets_in', methods=['GET'])
+@ticket_api_bp.route('/find_tickets_in_range', methods=['GET'])
 @login_required
-def find_resolved_tickets_in():
+def find_tickets_in_range():
     '''
-    Route used to resolved tickets on a queue.\n
+    Route used to find tickets in a specific range of time. A grader can be\n
+    passed in to only get tickets for that grader. Tickets can be classified\n
+    as resolved.\n
     @author nouryehia
     '''
     queue_id = request.args.get('queue_id', type=int)
-    recent_hour = request.args.get('recent_hour', default=0, type=int)
-    day = request.args.get('day', default=0, type=int)
     start = request.args.get('start', default=None, type=str)
     end = request.args.get('end', default=None, type=str)
+    grader_id = request.args.get('grader_id', default=None, type=int)
+    resolved = request.args.get('resolved', default=False, type=bool)
 
-    tickets = Ticket.find_resolved_tickets_in(queue_id, recent_hour, day,
-                                              start, end)
-
+    tickets = Ticket.find_tickets_in_range(queue_id, start, end, grader_id,
+                                           resolved)
     ticket_infos = []
     for ticket in tickets:
         ticket_infos.append(ticket.to_json(user_id=current_user.id))

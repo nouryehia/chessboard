@@ -97,7 +97,7 @@ def login_grader():
     Login a certain grader.
     """
     q_id = int(request.json['queue_id'])
-    g_id = int(request.json['grader_id'])
+    g_id = int(request.json['user_id'])  # g_id = current_user.id
     a_c = ActionType[request.json['action_type']].value  # need to change to string (name of the enum)
     result = Queue.grader_login(queue_id=q_id,
                                 grader_id=g_id,
@@ -115,13 +115,13 @@ def logout_grader():
     Logout a certain grader
     """
     q_id = request.json['queue_id']
-    g_id = request.json['grader_id']
-    a_c = request.json['action_type']
+    g_id = request.json['user_id']
+    a_c = ActionType[request.json['action_type']].value
     status, result = Queue.grader_logout(queue_id=q_id,
                                          grader_id=g_id,
                                          action_type=a_c)
     if status:
-        return jsonify({'reason': 'grader login'}), 200
+        return jsonify({'reason': 'grader logout'}), 200
     else:
         return jsonify({'reason': result}), 400
 
@@ -136,12 +136,7 @@ def find_queue_for_user():
     status, mess, q_list = Queue.\
         find_current_queue_for_user(user_id=uid)
     if status:
-        ret = {}
-        i = 0
-        for q in q_list:
-            i += 1
-            ret['queue' + str(i)] = q.to_json()
-        return jsonify({'reason': 'success', 'result': ret}), 200
+        return jsonify({'reason': 'success', 'result': q_list}), 200
     else:
         return jsonify({'reason': mess}), 400
 
@@ -170,7 +165,7 @@ def find_queue_for_course():
     c_id = request.args.get('course_id', type=int)
     sta, q = Queue.find_queue_for_course(course_id=c_id)
     if sta:
-        return jsonify({'reason': 'success', 'result': q}), 200
+        return jsonify({'reason': 'success', 'result': q.to_json()}), 200
     else:
         return jsonify({'reason': 'queue not found'}), 400
 
