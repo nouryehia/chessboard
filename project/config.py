@@ -9,4 +9,3 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY')
     CORS_HEADERS = os.getenv('CORS_HEADERS')
-

@@ -84,4 +84,3 @@ def get_ticket_counts_by_student(queue: Queue):
                     stats[name] = 1
 
     return stats
-
