@@ -141,3 +141,4 @@ class Section (db.Model):
         """
         db.session.add(section)
         db.session.commit()
+

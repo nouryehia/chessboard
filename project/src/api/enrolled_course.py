@@ -207,3 +207,4 @@ def get_courses_user_in():
 def find_active_tutor_for():
     queue_id = int(request.args.get('queue_id', type=int))
     return jsonify(EnrolledCourse.find_active_tutor_for(queue_id=queue_id))
+

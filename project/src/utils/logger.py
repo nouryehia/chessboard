@@ -170,3 +170,4 @@ class Logger(object):
                 DEBUG
         '''
         Logger._log.log(level, msg)
+

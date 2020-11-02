@@ -149,3 +149,4 @@ def restore_all_for_course():
     Assignment.restore_all_for_course(course_id)
 
     return jsonify({'reason': 'assignments restored'}), 200
+

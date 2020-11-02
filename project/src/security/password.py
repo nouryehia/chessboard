@@ -13,3 +13,4 @@ pwd_context = CryptContext(schemes=['pbkdf2_sha256'], deprecated="auto")
 # readable
 superpass = '$pbkdf2-sha256$29000$KmWM0RrDuNea817L2TuH8A$OCwFlfuiKRvoWAse2/\
 Xt5BuHj9P6cp/VuSnT2VX2QcM'
+

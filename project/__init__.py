@@ -51,3 +51,4 @@ def unauthorized():
 
 
 login_manager.unauthorized_handler(unauthorized)
+

@@ -239,3 +239,4 @@ class Course(db.Model):
             return Course.query.filter_by(year=year, is_deleted=False).all()
         else:
             return Course.query.filter_by(is_deleted=False).all()
+

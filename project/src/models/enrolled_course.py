@@ -332,3 +332,4 @@ class EnrolledCourse(db.Model):
     #    Returns: A list of EnrolledCourses (can be empty)
     #    '''
     #    return EnrolledCourse.find_user_in_all_course(self.id)
+

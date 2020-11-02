@@ -898,3 +898,4 @@ class Ticket(db.Model):
         for t in tickets:
             feedbacks.append(TicketFeedback.get_ticket_feedback(t))
         return feedbacks
+

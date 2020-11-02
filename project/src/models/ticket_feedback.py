@@ -123,3 +123,4 @@ class TicketFeedback(db.Model):
             created_at=TimeUtil.get_current_time())
         TicketFeedback.add_to_db(fb)
         return fb
+

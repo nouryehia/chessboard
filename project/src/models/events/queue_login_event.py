@@ -127,3 +127,4 @@ class QueueLoginEvent(db.Model):
         elist = QueueLoginEvent.query().filter_by(grader_id=grader.id).all()
         sorted_elist = elist.sort(key=QueueLoginEvent.get_event_timestamp)
         return sorted_elist
+

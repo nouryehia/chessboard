@@ -209,3 +209,4 @@ class TicketEvent(db.Model):
         For testing use
         """
         return TicketEvent.query.all()
+

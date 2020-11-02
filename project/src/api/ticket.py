@@ -320,3 +320,4 @@ def find_resolved_tickets_in():
         ticket_infos.append(ticket.to_json(user_id=current_user.id))
 
     return jsonify({'result': ticket_infos}), 200
+

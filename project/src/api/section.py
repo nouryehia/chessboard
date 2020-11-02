@@ -23,3 +23,4 @@ def create_section():
     Section.add_to_db(section)
 
     return jsonify({'reason': 'section created'}), 200
+

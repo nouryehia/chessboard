@@ -196,3 +196,4 @@ class User(db.Model, UserMixin):
         Returns: Optional[User]
         '''
         return User.query.filter_by(id=user_id).first()
+

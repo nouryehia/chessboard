@@ -91,3 +91,4 @@ class Category(db.Model):
         for category in category_list:
             category.restore()
         db.session.commit()
+

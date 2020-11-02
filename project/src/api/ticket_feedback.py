@@ -27,3 +27,4 @@ def add_ticket_feedback():
     else:
         fb = TicketFeedback.add_feedback(ticket_id=ticket_id, rating=rating, feedback=feedback, anonymous=is_anonymous)
         return jsonify({'reason': 'feedback added', 'feedback': fb.to_json()}), 200
+

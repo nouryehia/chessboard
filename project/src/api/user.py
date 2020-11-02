@@ -204,3 +204,4 @@ def check_password():
         return jsonify({'reason': 'Passwords match'}), 200
     else:
         return jsonify({'reason': 'Passwords do not match'}), 400
+

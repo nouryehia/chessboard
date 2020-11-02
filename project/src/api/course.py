@@ -79,3 +79,4 @@ def find_all_courses():
     crs = Course.get_all_courses(quarter=q, year=y)
     crs = list(map(lambda x: x.to_json(), crs))
     return jsonify({'reason': 'successed', 'result': crs}), 200
+

@@ -163,3 +163,4 @@ def delete_newsfeed_post():
     post.archive()
 
     return jsonify({'reason': 'news feed post archived'}), 200
+    

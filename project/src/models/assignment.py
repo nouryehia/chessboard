@@ -249,3 +249,4 @@ class Assignment(db.Model):
         for assignment in assignment_list:
             assignment.restore()
         db.session.commit()
+

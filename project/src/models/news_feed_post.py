@@ -106,3 +106,4 @@ class NewsFeedPost(db.Model):
         """
         db.session.add(nfp)
         db.session.commit()
+

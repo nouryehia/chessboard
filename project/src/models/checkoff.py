@@ -288,3 +288,4 @@ class CheckoffEvaluation(db.Model):
         return CheckoffEvaluation.query \
             .filter_by(checkoff_id=checkoff_id, student_id=student_id) \
             .order_by(CheckoffEvaluation.checkoff_time).desc().first()
+

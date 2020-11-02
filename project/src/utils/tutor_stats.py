@@ -202,3 +202,4 @@ def get_tutoring_sessions(qle: QueueLoginEvent, queue: Queue, grader: User,
                                     utilization, accepted, resolved))
 
     return sessions
+

@@ -78,3 +78,4 @@ class QueueCalendar(db.Model):
         """
         calendar_list = QueueCalendar.query().filter_by(queue_id=queue_id)
         return calendar_list
+

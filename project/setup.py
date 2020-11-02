@@ -12,3 +12,4 @@ db.init_app(app)
 cli = FlaskGroup(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+

@@ -15,3 +15,4 @@ with open("/home/wdw/chessboard/project/src/utils/application.log", "w") as f:
     f.write("Last refreshed on :" + str(TimeUtil.get_current_time())+"\n")
     for i in range(len(d)//3, len(d)):
         f.write(d[i])
+

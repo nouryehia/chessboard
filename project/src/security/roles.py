@@ -34,3 +34,4 @@ def role_required(role=URole.NONE.value):
             return fn(*args, **kwargs)
         return decorated_view
     return wrapper
+

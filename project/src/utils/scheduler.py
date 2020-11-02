@@ -14,3 +14,4 @@ cron = CronTab(user='wdw')
 job = cron.new(command='python3 /home/wdw/chessboard/project/src/utils/refresh_logfile.py')
 job.dow.on('SUN')
 cron.write()
+
