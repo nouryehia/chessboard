@@ -2,7 +2,7 @@ import ssl
 from os import getenv
 import smtplib as slib
 
-from .logger import log_util, LogLevels
+from .logger import LogLevels, Logger
 
 
 class MailUtil(object):
@@ -10,11 +10,24 @@ class MailUtil(object):
     Utility class for sending emails.
     '''
 
+    __instance = None
+
+    @staticmethod
+    def get_instance():
+        if MailUtil.__instance is None:
+            MailUtil()
+        return MailUtil.__instance
+
     def __init__(self):
-        self.email = getenv('AG_EMAIL')
-        self.passwd = getenv('AG_PASSWORD')
-        self.host = 'smtp.gmail.com'
-        self.port = 465
+
+        if MailUtil.__instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            self.email = getenv('AG_EMAIL')
+            self.passwd = getenv('AG_PASSWORD')
+            self.host = 'smtp.gmail.com'
+            self.port = 465
+            MailUtil.__instance = self
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
@@ -32,21 +45,16 @@ class MailUtil(object):
             with slib.SMTP_SSL(self.host, self.port, context=context) as srvr:
                 srvr.login(self.email, self.passwd)
                 msglg = 'Login attempt for donotreply account successful'
-                log_util.custom_msg(msglg)
+                Logger.get_instance().custom_msg(msglg)
 
                 message = f'Subject: {subject}\n\n{body}'
                 srvr.sendmail(self.email, to, message)
                 msglg = f'Successfully sent email to {to}'
-                log_util.custom_msg(msglg, LogLevels.INFO)
+                Logger.get_instance().custom_msg(msglg, LogLevels.INFO)
 
             return True
 
         except slib.SMTPAuthenticationError:
             msglg = 'Login attempt for donotreply account unsuccessful'
-            log_util.custom_msg(msglg, LogLevels.ERR)
+            Logger.get_instance().custom_msg(msglg, LogLevels.ERR)
             return False
-
-
-# IMPORT THIS OBJECT
-# This is a singleton!
-mailer = MailUtil()

@@ -75,7 +75,8 @@ Here are some final rules to follow:
 4. Keep your code <a href="https://hub.packtpub.com/write-python-code-or-pythonic-code/" target="_blank">pythonic</a>. This isn't C++ nor is it Java. Open up a python interpreter and type `import this` to get an idea of how to be pythonic.
 5. <a href="https://realpython.com/python-f-strings/" target="_blank">f strings</a> are good, use them.
 6. Use `@staticmethod` and `@classmethod` annotations accordingly. This is relevant for the `models` directory; read <a href="https://stackabuse.com/pythons-classmethod-and-staticmethod-explained/" target="_blank"> here</a> for more information.
-7. Don't be afraid to ask questions!
+7. _**Never**_ import the logger class into _any_ classes in the `models` directory! This can cause circular dependencies. Instead, add logging to the `api` classes.
+8. Don't be afraid to ask questions!
 
 ---
 [go back](/chessboard)

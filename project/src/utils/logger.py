@@ -3,7 +3,7 @@ from typing import List
 
 from ..models.user import User
 from ..models.enrolled_course import Role
-# from ..models.course import Course
+from ..models.course import Course
 
 
 class LogLevels(object):
@@ -27,6 +27,14 @@ class Logger(object):
     @author npcompletenate & mihaivaduva
     '''
 
+    __instance = None
+
+    @staticmethod
+    def get_instance():
+        if Logger.__instance is None:
+            Logger()
+        return Logger.__instance
+
     def __init__(self, level: int = logging.INFO):
         '''
         Initializes a logger object. Should not be run from outside of this
@@ -35,20 +43,24 @@ class Logger(object):
                 level - log level to use. defaults to INFO
         '''
 
-        filename = 'application.log'
-        filemode = 'w'
-        fmat = "%(asctime)s;%(levelname)s;%(message)s"
-        datefmt = "%Y-%m-%d %H:%M:%S"
+        if Logger.__instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            filename = 'application.log'
+            filemode = 'w'
+            fmat = "%(asctime)s;%(levelname)s;%(message)s"
+            datefmt = "%Y-%m-%d %H:%M:%S"
 
-        # initialize the logger
-        logging.basicConfig(
-            level=level,
-            format=fmat,
-            filename=filename,
-            filemode=filemode,
-            datefmt=datefmt
-            )
-        self.log = logging.getLogger()
+            # initialize the logger
+            logging.basicConfig(
+                level=level,
+                format=fmat,
+                filename=filename,
+                filemode=filemode,
+                datefmt=datefmt
+                )
+            self.log = logging.getLogger()
+            Logger.__instance = self
 
     def logged_in(self, u: User) -> None:
         '''
@@ -117,7 +129,6 @@ class Logger(object):
             " but an account exists already."
         self.log.error(message)
 
-    """
     def create_course(self, c: Course) -> None:
         '''
         Log messsage for new course creation.\n
@@ -126,7 +137,6 @@ class Logger(object):
         '''
         message = f"Created course {c}."
         self.log.info(message)
-    """
 
     def added_section(self, sctn_name: str, course_id: int) -> None:
         '''
@@ -171,8 +181,3 @@ class Logger(object):
                 DEBUG
         '''
         self.log.log(level, msg)
-
-
-# READ THIS: import this object instead of instantiating the class!
-# We're doing this because the log object should be a singleton
-log_util = Logger()
