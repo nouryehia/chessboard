@@ -1,9 +1,11 @@
 import logging
 from typing import List
+from threading import Lock
 
 from ..models.user import User
-from ..models.enrolled_course import Role
 from ..models.course import Course
+from ..models.enrolled_course import Role
+from .exceptions import SingletonAccessException
 
 
 class LogLevels(object):
@@ -32,7 +34,9 @@ class Logger(object):
     @staticmethod
     def get_instance():
         if Logger.__instance is None:
-            Logger()
+            with Lock():
+                if Logger.__instance is None:
+                    Logger()
         return Logger.__instance
 
     def __init__(self, level: int = logging.INFO):
@@ -44,7 +48,7 @@ class Logger(object):
         '''
 
         if Logger.__instance is not None:
-            raise Exception("This class is a singleton!")
+            raise SingletonAccessException("This class is a singleton!")
         else:
             filename = 'application.log'
             filemode = 'w'

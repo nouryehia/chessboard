@@ -1,8 +1,10 @@
 import ssl
 from os import getenv
 import smtplib as slib
+from threading import Lock
 
 from .logger import LogLevels, Logger
+from .exceptions import SingletonAccessException
 
 
 class MailUtil(object):
@@ -15,13 +17,15 @@ class MailUtil(object):
     @staticmethod
     def get_instance():
         if MailUtil.__instance is None:
-            MailUtil()
+            with Lock():
+                if MailUtil.__instance is None:
+                    MailUtil()
         return MailUtil.__instance
 
     def __init__(self):
 
         if MailUtil.__instance is not None:
-            raise Exception("This class is a singleton!")
+            raise SingletonAccessException("This class is a singleton!")
         else:
             self.email = getenv('AG_EMAIL')
             self.passwd = getenv('AG_PASSWORD')
