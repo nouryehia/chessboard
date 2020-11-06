@@ -49,7 +49,7 @@ can be easily upgraded to change the hash as well as to deprecate certain passwo
 system used throughout the backend.
 
 
-The `utils` directory contains a hodgepodge of utility files, ranging from the logging system (`logger.py`) to the emailer (`mailer.py`) to our password generation function to the files that interact with `cron`. The most important stuff here would be the logger, emailer, `time.py` (contains time utility functions), `ticket_statistics.py`, and `tutor_stats.py`. The latter two files are used to get extra info for professors.
+The `utils` directory contains a hodgepodge of utility files, ranging from the logging system (`logger.py`) to the emailer (`mailer.py`) to our password generation function to the files that interact with `cron`. The most important stuff here would be the logger, emailer, `time.py` (contains time utility functions), `ticket_statistics.py`, and `tutor_stats.py`. The latter two files are used to get extra info for professors. Lastly, the `exceptions.py` file contains custom exceptions raised throughout the backend. At the moment, that's just one; however, this can be easily extended so that we have a whole suite of custom exceptions to raise/catch everywhere.
 
 Lastly, `tests` contains unit tests. That was pretty self explanatory.
 
