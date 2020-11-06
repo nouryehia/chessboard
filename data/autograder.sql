@@ -258,7 +258,7 @@ ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk1" FOREIGN KEY ("queue_id") REFERE
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk2" FOREIGN KEY ("student_id") REFERENCES "EnrolledCourse"("id");
 
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk0" FOREIGN KEY ("user_id") REFERENCES "Users"("id");
-ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("section_id");
+ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("id");
 ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk2" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
@@ -279,3 +279,11 @@ INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('alm
 INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
 INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
 INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+
+INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false);
+INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
+
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 3, 1, 1, 0);
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 4, 1, 1, 0);
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0);

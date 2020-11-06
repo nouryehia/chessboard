@@ -637,7 +637,7 @@ class Queue(db.Model):
                                                     course_id=course.id)
         if not grader:
             return False, 'Course Not Found'
-        grader.change_status(course, grader.change_status(EStatus.INACTIVE))
+        grader.change_status(EStatus.INACTIVE)
         event = QueueLoginEvent(event_type=EventType.LOGOUT,
                                 action_type=action_type,
                                 grader_id=grader.id,
