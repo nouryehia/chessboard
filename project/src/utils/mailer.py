@@ -3,6 +3,7 @@ from os import getenv
 import smtplib as slib
 from threading import Lock
 
+
 from .logger import LogLevels, Logger
 from .exceptions import SingletonAccessException
 
@@ -11,7 +12,6 @@ class MailUtil(object):
     '''
     Utility class for sending emails.
     '''
-
     __instance = None
 
     @staticmethod
