@@ -9,7 +9,7 @@ from ..user import User
 # from ..queue import Queue
 
 
-class EventType(Enum):
+class EType(Enum):
     """
     The enum of login events with the following
     option --> database value:\n
@@ -49,9 +49,9 @@ class QueueLoginEvent(db.Model):
     action_type = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False,
                           default=TimeUtil.get_current_time())
-    grader_id = db.Column(db.Integer, db.ForeignKey('tutor.id'),
+    grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
                           nullable=False)
-    queue_id = db.Column(db.Integer, db.ForeignKey('queue.id'), nullable=False)
+    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'), nullable=False)
 
     def __init__(self, **kwargs):
         """
@@ -112,14 +112,13 @@ class QueueLoginEvent(db.Model):
     def get_event_timestamp(qle: QueueLoginEvent) -> str:
         return qle.timestamp
 
-    @staticmethod
-    def add_to_db(qle: QueueLoginEvent):
+    def add_to_db(self):
         """
         Add the queue login event to the database.\n
         Inputs:\n
         qle --> the QueueLoginEvent object created.\n
         """
-        db.session.add(qle)
+        db.session.add(self)
         db.session.commit()
 
     @staticmethod
@@ -127,3 +126,12 @@ class QueueLoginEvent(db.Model):
         elist = QueueLoginEvent.query().filter_by(grader_id=grader.id).all()
         sorted_elist = elist.sort(key=QueueLoginEvent.get_event_timestamp)
         return sorted_elist
+
+    @staticmethod
+    def create_login_event(event_type: EType, action_type: ActionType, grader_id: int, queue_id: int,
+                           timestamp = TimeUtil.get_current_time()):
+        qevt = QueueLoginEvent(event_type=event_type.value, action_type=action_type,
+                               grader_id=grader_id, queue_id=queue_id,
+                               timestamp=TimeUtil.convert_str_to_datetime(timestamp))
+        qevt.add_to_db()
+

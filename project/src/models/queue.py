@@ -12,7 +12,7 @@ from .ticket import Ticket, TicketTag, HelpType
 from .ticket import Status as t_status
 from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent, EventType
-from .events.queue_login_event import QueueLoginEvent, ActionType
+from .events.queue_login_event import QueueLoginEvent, ActionType, EType
 
 from .news_feed_post import NewsFeedPost
 from .enrolled_course import EnrolledCourse
@@ -139,7 +139,7 @@ class Queue(db.Model):
         Return:\n
         bool value indicates queue is open or not.\n
         """
-        return self.status == Status.OPEN
+        return self.status == Status.OPEN.value
 
     def is_locked(self) -> bool:
         """
@@ -147,7 +147,7 @@ class Queue(db.Model):
         Return:\n
         bool value indicates queue is locked or not.\n
         """
-        return self.status == Status.LOCKED
+        return self.status == Status.LOCKED.value
 
     def is_closed(self) -> bool:
         """
@@ -155,28 +155,28 @@ class Queue(db.Model):
         Return:\n
         bool value indicates queue is closed or not.\n
         """
-        return self.status == Status.CLOSED
+        return self.status == Status.CLOSED.value
 
     # Status setter methods
     def open(self) -> None:
         """
         Open the queue.
         """
-        self.status = Status.OPEN
+        self.status = Status.OPEN.value
         self.save()
 
     def lock(self) -> None:
         """
         Lock the queue.
         """
-        self.status = Status.LOCKED
+        self.status = Status.LOCKED.value
         self.save()
 
     def close(self) -> None:
         """
         Close the queue.
         """
-        self.status = Status.CLOSED
+        self.status = Status.CLOSED.value
         self.save()
 
     def clear_ticket(self) -> None:
@@ -208,8 +208,8 @@ class Queue(db.Model):
         '''
         ret = {}
         ret['queue_id'] = self.id
-        ret['status'] = self.status
-        ret['highCapacityEnabled'] = self.high_capacity_enable
+        ret['status'] = Status(self.status).name
+        ret['high_capacity_enabled'] = self.high_capacity_enable
         ret['high_capacity_message'] = self.high_capacity_message
         ret['high_capacity_threshold'] = self.high_capacity_threshold
         ret['high_capacity_warning'] = self.high_capacity_warning
@@ -604,19 +604,18 @@ class Queue(db.Model):
                                                     course_id=course.id)
         if not grader:
             return False, 'User Not Found'
-        grader.change_status(course, grader.change_status(EStatus.ACTIVE))
-        event = QueueLoginEvent(event_type=EventType.LOGIN,
-                                action_type=action_type,
-                                grader_id=grader_id,
-                                queue_id=queue_id
-                                )
-        QueueLoginEvent.add_to_db(event)
+        grader.change_status(EStatus.ACTIVE)
+        event = QueueLoginEvent.create_login_event(event_type=EType.LOGIN,
+                                                   action_type=action_type,
+                                                   grader_id=grader_id,
+                                                   queue_id=queue_id
+                                                    )
         queue.open()
         return True, 'Success'
 
     @staticmethod
     def grader_logout(queue_id: int, grader_id: int,
-                      action_type: ActionType) -> [bool, str]:
+                      action_type: ActionType.MANUAL.value) -> [bool, str]:
         """
         Logout a grader when the grader logout from queue.\n
         Inputs:\n
@@ -638,12 +637,11 @@ class Queue(db.Model):
         if not grader:
             return False, 'Course Not Found'
         grader.change_status(EStatus.INACTIVE)
-        event = QueueLoginEvent(event_type=EventType.LOGOUT,
-                                action_type=action_type,
-                                grader_id=grader.id,
-                                queue_id=queue.id
-                                )
-        QueueLoginEvent.add_to_db(event)
+        event = QueueLoginEvent.create_login_event(event_type=EType.LOGOUT,
+                                                   action_type=action_type,
+                                                   grader_id=grader.id,
+                                                   queue_id=queue.id
+                                                   )
         s, r, grader = EnrolledCourse.find_active_tutor_for(queue.id)
         if len(grader) == 0:
             queue.lock()
@@ -708,16 +706,16 @@ class Queue(db.Model):
         str --> the message
         A list of Queue that the user is in this quarter.
         """
-        ec_list = EnrolledCourse.find_user_in_all_course(user_id=user_id)
+        ec_list = EnrolledCourse.find_courses_user_in(user_id=user_id)
         if not ec_list:
             return (False, "User not found in any course", None)
         q_id_list = []
         for ec in ec_list:
-            q = Course.get_course_by_id(ec.course_id)
+            q = Course.get_course_by_id(ec.course_id).id
             q_id_list.append(q)
         q_list = []
         for q_id in q_id_list:
-            q = Queue.query.filter_by(queue_id=q_id).first()
+            q = Queue.query.filter_by(id=q_id).first()
             q_list.append(q)
         return (True, "Success", q_list)
 
@@ -730,8 +728,8 @@ class Queue(db.Model):
         Returns:\n
         The queue for that course, if a queue does not exist, None is return.\n
         """
-        course = Course.get_course_by_id(course_id)
-        q = Queue.query.filter(id=course.queue_id).first()
+        q_id = Course.get_queue_id_by_id(course_id)
+        q = Queue.query.filter_by(id=q_id).first()
         if q:
             return True, q
         else:

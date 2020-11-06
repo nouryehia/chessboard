@@ -5,6 +5,7 @@ from ..models.queue import Queue
 from ..models.user import User
 from ..models.events.queue_login_event import QueueLoginEvent
 from ..models.events.ticket_event import TicketEvent
+from .time import TimeUtil
 
 
 class TutoringSession:
@@ -31,7 +32,7 @@ class TutoringSession:
 
 
 def get_total_time_on_duty(qle: QueueLoginEvent, queue: Queue, grader: User,
-                           start_date: datetime = None):
+                           start_date: TimeUtil = None):
     """
     Gets the total time spent on duty for a grader within a given time frame.
     Inputs:
@@ -45,17 +46,18 @@ def get_total_time_on_duty(qle: QueueLoginEvent, queue: Queue, grader: User,
     not).
     """
     if start_date is None:
-        events = qle.find_event_in_range(queue, datetime.min, datetime.now(),
-                                         grader)
+        events = qle.find_event_in_range(queue, TimeUtil.min_time(),
+                                         TimeUtil.get_current_time(), grader)
     else:
-        end_date = start_date + datetime.timedelta(days=7)
+        end_date = (start_date.convert_str_to_datetime()
+                    + datetime.timedelta(days=7)).isoformat()
         events = qle.find_event_in_range(queue, start_date, end_date, grader)
 
     total_time_on_duty = 0
 
     for i in range(0, len(events), 2):
         start = events[i].timestamp
-        end = (datetime.now() if i == len(events) - 1
+        end = (TimeUtil.get_current_time.now() if i == len(events) - 1
                else events[i + 1].timestamp)
 
         time_on_duty = end - start
@@ -80,7 +82,8 @@ def get_num_tickets_handled(queue: Queue, grader: User,
     if start_date is None:
         tickets = Ticket.find_all_tickets_in_range(queue, grader)
     else:
-        end_date = start_date + datetime.timedelta(days=7)
+        end_date = (start_date.convert_str_to_datetime()
+                    + datetime.timedelta(days=7)).isoformat()
         tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
                                                grader)
 
@@ -104,7 +107,8 @@ def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
     if start_date is None:
         tickets = Ticket.find_all_tickets_in_range(queue, grader)
     else:
-        end_date = start_date + datetime.timedelta(days=7)
+        end_date = (start_date.convert_str_to_datetime()
+                    + datetime.timedelta(days=7)).isoformat()
         tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
                                                grader)
 
@@ -164,7 +168,8 @@ def get_tutoring_sessions(qle: QueueLoginEvent, queue: Queue, grader: User,
         events = qle.find_event_in_range(queue, datetime.min, datetime.now(),
                                          grader)
     else:
-        end_date = start_date + datetime.timedelta(days=7)
+        end_date = (start_date.convert_str_to_datetime()
+                    + datetime.timedelta(days=7)).isoformat()
         events = qle.find_event_in_range(queue, start_date, end_date, grader)
 
     sessions = []

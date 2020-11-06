@@ -274,6 +274,144 @@ Get all the active tutor of a queue.
 #### *Parameters*
 - **queue_id: int** --> The id of the queue to search for.
 
+## ***Queue API***
+(prefix = queue)
+
+### **find_queue (GET)**
+
+#### *Description*
+
+Get a queue from the database.
+
+#### *Parameters*
+
+- **queue_id: int** id of queue to get
+
+#### *Responses*
+- **{'reason': 'queue_id invalid'}, 400** when queue_id not correctly passed in.
+- **{'reason': 'user not enrolled invalid'}, 400** when someone not in the course which this queue is associated to tries to get the queue.
+- **{'reason': 'queue_id invalid'}, 400** when queue failed to be found.
+- **'reason': 'success', 'result': ret, 200** where **ret** is
+```json
+ret = {
+        "queue_id": "int value of the queue id",
+        "status": "queue status indicate OPEN, LOCKED, CLOSED",
+        "high_capacity_enabled": "Whether the high_capacity is enabled or not",
+        "high_capacity_message": "The high capacity message of the queue",
+        "high_capacity_threshold": "What is the number to trigger high capacity",
+        "high_capacity_warning": "The warning message to display.",
+        "ticket_cooldown": "Time for cool down."
+      }
+}
+```
+
+### **create_queue (GET)**
+
+#### *Description*
+
+Create a queue.
+
+#### *Parameters*
+
+- **high_capacity_enabled: bool** indicate if the high_capacity is enabled.
+- **high_capacity_threshold: int** num to trigger high capacity.
+- **high_capacity_message: bool** high capacity message to display.
+- **high_capacity_warning: bool** high capacity warning to display.
+- **ticket_cooldown: bool** number indicate ticket_cooldown (just pass in 1).
+
+#### *Responses*
+- **{'reason': 'queue created'}, 200**
+
+### **login_grader (POST)**
+
+#### *Description*
+
+Create a queue event for a grader logs in (open the queue if locked).
+
+#### *Parameters*
+
+- **queue_id (int)** The id of the queue.
+- **user_id (int)** The user_id of the grader who just logged in. (Future will replace by current_user.id)
+- **action_type (str)** The type of the action. Candidates: MANUAL
+, AUTOMATIC
+#### *Responses*
+- **{'reason': 'grader login'}, 200**
+- **{'reason': 'reason why failed}', 400**
+
+### **logout_grader (POST)**
+
+#### *Description*
+
+Create a queue event for a grader log out (lock the queue if no tutor left).
+
+#### *Parameters*
+
+- **queue_id (int)** The id of the queue.
+- **user_id (int)** The user_id of the grader who just logged in. (Future will replace by current_user.id)
+- **action_type (str)** The type of the action. Candidates: MANUAL
+, AUTOMATIC
+#### *Responses*
+- **{'reason': 'grader login'}, 200**
+- **{'reason': 'reason why failed}', 400**
+
+### **find_all_tickets_for_queue  (POST)**
+#### *Description*
+
+Get all the tickets in the queue.
+#### *Parameters*
+
+- **queue_id (int)** The id of the queue.
+- **status (str)** Comma seperated string of status. Candidates: PENDING, RESOLVED, ACCEPTED, CANCELED.
+#### *Responses*
+- **{'reason': 'grader login'}, 200**
+- **{'reason': 'reason why failed}', 400**
+
+### **find_queue_for_course  (GET)**
+#### *Description*
+
+Get the queue corresponding to a course.
+#### *Parameters*
+
+- **course_id (int)**: The id of the course to search for.
+#### *Responses*
+- **{'reason': 'queue not found'}, 400**
+- **{'reason': 'success', result:ret}, 200** where **ret**=
+```json
+ret = {
+        "queue_id": "int value of the queue id",
+        "status": "queue status indicate OPEN, LOCKED, CLOSED",
+        "high_capacity_enabled": "Whether the high_capacity is enabled or not",
+        "high_capacity_message": "The high capacity message of the queue",
+        "high_capacity_threshold": "What is the number to trigger high capacity",
+        "high_capacity_warning": "The warning message to display.",
+        "ticket_cooldown": "Time for cool down."
+      }
+}
+```
+
+### **find_queue_for_course  (GET)**
+#### *Description*
+
+Get all teh queue that user is in.
+#### *Parameters*
+
+- **user_id (int)**: The id of the user to search for.
+#### *Responses*
+- **{'reason': 'message for why failed'}, 400**
+- **{'reason': 'success', result:ret}, 200** where **ret**=
+```json
+ret = {[
+        "queue_id": "int value of the queue id",
+        "status": "queue status indicate OPEN, LOCKED, CLOSED",
+        "high_capacity_enabled": "Whether the high_capacity is enabled or not",
+        "high_capacity_message": "The high capacity message of the queue",
+        "high_capacity_threshold": "What is the number to trigger high capacity",
+        "high_capacity_warning": "The warning message to display.",
+        "ticket_cooldown": "Time for cool down."
+    ]}
+}
+```
+
 
 ## ***Ticket API***
 
@@ -461,6 +599,174 @@ Returns tickets accepted by a grader to the queue
 }
 ```
 
+### **find_all_tickets (GET)**
+
+#### *Description*
+
+Route used to find tickets on the queue (can be categorized as pending or
+accepted)
+
+#### *Parameters*
+
+- **queue_id: int** id of queue we want tickets from
+- **pending: int** (OPTIONAL) pass in 1 if you only want pending tickets
+- **accepted: int** (OPTIONAL) pass in 1 if you only want accepted tickets
+
+#### *Responses*
+```json
+{
+    {
+        "ticket_events": events attached to this ticket (null if none),
+        "ticket_info": {
+            "accepted_at": when the ticket was accepted (null if pending),
+            "closed_at": when the ticket was closed (null if pending or open),
+            "created_at": when the ticketw as created,
+            "description": description of ticket,
+            "grader_id": id of grader on ticket (null if none),
+            "help_type": help type (see ../models/ticket.py),
+            "is_private": whether the ticket is private,
+            "queue_id": id of queue ticket is on,
+            "room": ticket room,
+            "status": ticket status (see ../models/ticket.py),
+            "student_id": enrolled course id of student who made the ticket,
+            "tag_one": first ticket tag (see ../models/ticket.py),
+            "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+            "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+            "ticket_id": ticket id,
+            "title": title of ticket,
+            "workstation": workstation of ticket
+        }
+    }
+    ...
+}
+```
+
+### **find_all_tickets_by_student (GET)**
+
+#### *Description*
+
+Route used to find tickets on the queue by a single student (can be categorized
+as pending or accepted)
+
+#### *Parameters*
+
+- **queue_id: int** id of queue we want tickets from
+- **student_id: int** id of student
+- **pending: int** (OPTIONAL) pass in 1 if you only want pending tickets
+- **accepted: int** (OPTIONAL) pass in 1 if you only want accepted tickets
+
+#### *Responses*
+```json
+{
+    [
+        "ticket_events": events attached to this ticket (null if none),
+        "ticket_info": {
+            "accepted_at": when the ticket was accepted (null if pending),
+            "closed_at": when the ticket was closed (null if pending or open),
+            "created_at": when the ticketw as created,
+            "description": description of ticket,
+            "grader_id": id of grader on ticket (null if none),
+            "help_type": help type (see ../models/ticket.py),
+            "is_private": whether the ticket is private,
+            "queue_id": id of queue ticket is on,
+            "room": ticket room,
+            "status": ticket status (see ../models/ticket.py),
+            "student_id": enrolled course id of student who made the ticket,
+            "tag_one": first ticket tag (see ../models/ticket.py),
+            "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+            "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+            "ticket_id": ticket id,
+            "title": title of ticket,
+            "workstation": workstation of ticket
+        }
+    ]
+    ...
+}
+```
+
+### **find_all_tickets_for grader (GET)**
+
+#### *Description*
+
+Route used to find tickets on the queue accepted by a grader.
+
+#### *Parameters*
+
+- **queue_id: int** id of queue we want tickets from
+- **grader_id: int** id of of grader
+
+#### *Responses*
+```json
+{
+    {
+        "ticket_events": events attached to this ticket (null if none),
+        "ticket_info": {
+            "accepted_at": when the ticket was accepted (null if pending),
+            "closed_at": when the ticket was closed (null if pending or open),
+            "created_at": when the ticketw as created,
+            "description": description of ticket,
+            "grader_id": id of grader on ticket (null if none),
+            "help_type": help type (see ../models/ticket.py),
+            "is_private": whether the ticket is private,
+            "queue_id": id of queue ticket is on,
+            "room": ticket room,
+            "status": ticket status (see ../models/ticket.py),
+            "student_id": enrolled course id of student who made the ticket,
+            "tag_one": first ticket tag (see ../models/ticket.py),
+            "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+            "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+            "ticket_id": ticket id,
+            "title": title of ticket,
+            "workstation": workstation of ticket
+        }
+    }
+    ...
+}
+```
+
+### **find_tickets_in_range (GET)**
+
+#### *Description*
+
+ Route used to find tickets in a specific range of time. A grader can be passed
+ in to only get tickets for that grader. Tickets can be classified as resolved.
+
+#### *Parameters*
+
+- **queue_id: int** id of queue we want tickets from
+- **grader_id: int** (OPTIONAL) id of of grader
+- **resolved: int** (OPTIONAL) pass in 1 if you only want resolved tickets
+- **start: str** (OPIONAL) start time in str format (default is 1 hour back)
+- **end: str** (OPTIONAL) end time in str format (default is current time)
+
+#### *Responses*
+```json
+{
+    {
+        "ticket_events": events attached to this ticket (null if none),
+        "ticket_info": {
+            "accepted_at": when the ticket was accepted (null if pending),
+            "closed_at": when the ticket was closed (null if pending or open),
+            "created_at": when the ticketw as created,
+            "description": description of ticket,
+            "grader_id": id of grader on ticket (null if none),
+            "help_type": help type (see ../models/ticket.py),
+            "is_private": whether the ticket is private,
+            "queue_id": id of queue ticket is on,
+            "room": ticket room,
+            "status": ticket status (see ../models/ticket.py),
+            "student_id": enrolled course id of student who made the ticket,
+            "tag_one": first ticket tag (see ../models/ticket.py),
+            "tag_two": second ticket tag (see ../models/ticket.py) (null if none),
+            "tag_three": third ticket tag (see ../models/ticket.py) (null if none),
+            "ticket_id": ticket id,
+            "title": title of ticket,
+            "workstation": workstation of ticket
+        }
+    }
+    ...
+}
+```
 
 ## Ticket_Feedback
 (Prefix = ticketfeedback)
