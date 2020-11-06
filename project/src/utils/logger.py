@@ -49,22 +49,22 @@ class Logger(object):
         '''
         if Logger.__instance is not None:
             raise SingletonAccessException("This class is a singleton!")
-        else:
-            filename = 'application.log'
-            filemode = 'w'
-            fmat = "%(asctime)s;%(levelname)s;%(message)s"
-            datefmt = "%Y-%m-%d %H:%M:%S"
 
-            # initialize the logger
-            logging.basicConfig(
-                level=level,
-                format=fmat,
-                filename=filename,
-                filemode=filemode,
-                datefmt=datefmt
-                )
-            self.log = logging.getLogger()
-            Logger.__instance = self
+        filename = 'application.log'
+        filemode = 'w'
+        fmat = "%(asctime)s;%(levelname)s;%(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+
+        # initialize the logger
+        logging.basicConfig(
+            level=level,
+            format=fmat,
+            filename=filename,
+            filemode=filemode,
+            datefmt=datefmt
+            )
+        self.log = logging.getLogger()
+        Logger.__instance = self
 
 
     def logged_in(self, u: User) -> None:
