@@ -55,6 +55,7 @@ def reset_password():
     user = User.get_user_by_id(id)
     if User.check_password(user.email, old_pass):
         user.reset_password(passwd)
+
         Logger.get_instance().reset_password(user.email)
         msg = 'Hi there!\nYou\'re getting this email because you' +\
             ' reset your password. If this wasn\'t you, contact someone' +\
@@ -83,7 +84,6 @@ def forgot_password():
             ' this email; replies are not checked.' +\
             f' Your temp password is {new_pass}; go change it ASAP!' +\
             '\n\nCheers,\nThe Autograder Team'
-
         if MailUtil.get_instance().send(user.email, 'Forgot Password', msg):
             Logger.get_instance().custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
             return jsonify({'reason': 'request OK'}), 200
@@ -132,6 +132,7 @@ def create_user():
             Logger.get_instance().custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
         else:
             Logger.get_instance().custom_msg('Emailer failed to send email.', LogLevels.ERR)
+
         ret = {'reason': 'user created', 'password generated': res}
         return jsonify(ret), 200
 
@@ -145,8 +146,9 @@ def get_all():
     of records simulataneously.
     @author npcompletenate
     '''
+
     Logger.get_instance().custom_msg('get_all_users route run', LogLevels.WARN)
-    res = list(map(lambda user: user.to_json(), User.get_all_users()))
+    res = [user.to_json() for user in User.get_all_users()]
     return jsonify({'reason': 'request OK', 'result': res}), 200
 
 

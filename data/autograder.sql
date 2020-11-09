@@ -16,25 +16,17 @@ CREATE TABLE "Users" (
 
 CREATE TABLE "Checkoff" (
 	"id" serial NOT NULL,
+	"due" TIMESTAMP NOT NULL, 
 	"description" varchar(255) NOT NULL,
 	"name" varchar(255) NOT NULL,
-	"suite_id" bigserial NOT NULL,
+	"course_id" bigserial NOT NULL,
 	"points" integer NOT NULL DEFAULT '1',
+	"status" integer NOT NULL,
+	"is_deleted" BOOLEAN NOT NULL,
 	CONSTRAINT "Checkoff_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
 );
-
-
-
-CREATE TABLE "CheckoffSuite" (
-	"id" serial NOT NULL,
-	"status" integer NOT NULL,
-	CONSTRAINT "CheckoffSuite_pk" PRIMARY KEY ("id")
-) WITH (
-  OIDS=FALSE
-);
-
 
 
 CREATE TABLE "CheckoffEvaluation" (
@@ -43,40 +35,11 @@ CREATE TABLE "CheckoffEvaluation" (
 	"checkoff_id" bigserial NOT NULL,
 	"grader_id" bigserial NOT NULL,
 	"student_id" bigserial NOT NULL,
+	"score" integer NOT NULL,
 	CONSTRAINT "CheckoffEvaluation_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
 );
-
-
-
-CREATE TABLE "Assignment" (
-	"id" serial NOT NULL,
-	"due" TIMESTAMP NOT NULL,
-	"is_deleted" BOOLEAN NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"category_id" bigserial NOT NULL,
-	"course_id" bigserial NOT NULL,
-	"checkoff_suite_id" bigserial NOT NULL,
-	"total_grade_percent" double precision NOT NULL,
-	CONSTRAINT "Assignment_pk" PRIMARY KEY ("id")
-) WITH (
-  OIDS=FALSE
-);
-
-
-
-CREATE TABLE "Category" (
-	"id" serial NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"weight" double precision NOT NULL,
-	"course_id" bigserial NOT NULL,
-	"is_deleted" BOOLEAN NOT NULL DEFAULT false,
-	CONSTRAINT "Category_pk" PRIMARY KEY ("id")
-) WITH (
-  OIDS=FALSE
-);
-
 
 
 CREATE TABLE "Course" (
@@ -239,17 +202,13 @@ CREATE TABLE "TicketFeedback" (
 
 
 
-ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("suite_id") REFERENCES "CheckoffSuite"("id");
+ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk0" FOREIGN KEY ("checkoff_id") REFERENCES "Checkoff"("id");
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk1" FOREIGN KEY ("grader_id") REFERENCES "Users"("id");
 ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN KEY ("student_id") REFERENCES "Users"("id");
 
-ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk0" FOREIGN KEY ("category_id") REFERENCES "Category"("id");
-ALTER TABLE "Assignment" ADD CONSTRAINT "Assignment_fk1" FOREIGN KEY ("checkoff_suite_id") REFERENCES "CheckoffSuite"("id");
-
-ALTER TABLE "Category" ADD CONSTRAINT "Category_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
@@ -277,15 +236,15 @@ ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk1" FOREIGN KEY ("queue
 
 ALTER TABLE "TicketFeedback" ADD CONSTRAINT "TicketFeedback_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
 
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
-
 INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
 INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false);
 INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
 
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 3, 1, 1, 0);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0);
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 4, 1, 1, 0);
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0);
