@@ -128,9 +128,11 @@ class QueueLoginEvent(db.Model):
         return sorted_elist
 
     @staticmethod
-    def create_login_event(event_type: EType, action_type: ActionType, grader_id: int, queue_id: int,
-                           timestamp = TimeUtil.get_current_time()):
-        qevt = QueueLoginEvent(event_type=event_type.value, action_type=action_type,
+    def create_login_event(event_type: EType, action_type: ActionType,
+                           grader_id: int, queue_id: int,
+                           timestamp=TimeUtil.get_current_time()):
+        qevt = QueueLoginEvent(event_type=event_type.value,
+                               action_type=action_type,
                                grader_id=grader_id, queue_id=queue_id,
                                timestamp=TimeUtil.convert_str_to_datetime(timestamp))
         qevt.add_to_db()

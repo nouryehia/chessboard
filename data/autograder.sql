@@ -265,7 +265,7 @@ ALTER TABLE "EnrolledCourse" ADD CONSTRAINT "EnrolledCourse_fk2" FOREIGN KEY ("c
 ALTER TABLE "Section" ADD CONSTRAINT "Section_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk0" FOREIGN KEY ("grader_id") REFERENCES "Users"("id");
-ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
+ALTER TABLE "QueueLoginEvent" ADD CONSTRAINT "QueueLoginEvent_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
 ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
 ALTER TABLE "TicketEvent" ADD CONSTRAINT "TicketEvent_fk1" FOREIGN KEY ("ec_user_id") REFERENCES "EnrolledCourse"("id");

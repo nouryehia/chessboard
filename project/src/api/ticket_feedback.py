@@ -48,4 +48,3 @@ def get_ticket_feedback():
         feedbacks = TicketFeedback.get_ticket_feedback(ticket_id=t_id)
         feedbacks = [feedback.to_json() for feedback in feedbacks]
         return {'reason': 'success', 'feedbacks': feedbacks}, 200
-
