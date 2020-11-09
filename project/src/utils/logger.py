@@ -8,6 +8,7 @@ from ..models.enrolled_course import Role
 from .exceptions import SingletonAccessException
 
 
+
 class LogLevels(object):
     '''
     Small class for making the logging levels visible
@@ -46,25 +47,25 @@ class Logger(object):
         params:
                 level - log level to use. defaults to INFO
         '''
-
         if Logger.__instance is not None:
             raise SingletonAccessException("This class is a singleton!")
-        else:
-            filename = 'application.log'
-            filemode = 'w'
-            fmat = "%(asctime)s;%(levelname)s;%(message)s"
-            datefmt = "%Y-%m-%d %H:%M:%S"
 
-            # initialize the logger
-            logging.basicConfig(
-                level=level,
-                format=fmat,
-                filename=filename,
-                filemode=filemode,
-                datefmt=datefmt
-                )
-            self.log = logging.getLogger()
-            Logger.__instance = self
+        filename = 'application.log'
+        filemode = 'w'
+        fmat = "%(asctime)s;%(levelname)s;%(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+
+        # initialize the logger
+        logging.basicConfig(
+            level=level,
+            format=fmat,
+            filename=filename,
+            filemode=filemode,
+            datefmt=datefmt
+            )
+        self.log = logging.getLogger()
+        Logger.__instance = self
+
 
     def logged_in(self, u: User) -> None:
         '''
@@ -141,6 +142,7 @@ class Logger(object):
         '''
         message = f"Created course {c}."
         self.log.info(message)
+
 
     def added_section(self, sctn_name: str, course_id: int) -> None:
         '''

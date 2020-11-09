@@ -3,6 +3,7 @@ from os import getenv
 import smtplib as slib
 from threading import Lock
 
+
 from .logger import LogLevels, Logger
 from .exceptions import SingletonAccessException
 
@@ -11,7 +12,6 @@ class MailUtil(object):
     '''
     Utility class for sending emails.
     '''
-
     __instance = None
 
     @staticmethod
@@ -26,12 +26,11 @@ class MailUtil(object):
 
         if MailUtil.__instance is not None:
             raise SingletonAccessException("This class is a singleton!")
-        else:
-            self.email = getenv('AG_EMAIL')
-            self.passwd = getenv('AG_PASSWORD')
-            self.host = 'smtp.gmail.com'
-            self.port = 465
-            MailUtil.__instance = self
+        self.email = getenv('AG_EMAIL')
+        self.passwd = getenv('AG_PASSWORD')
+        self.host = 'smtp.gmail.com'
+        self.port = 465
+        MailUtil.__instance = self
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
