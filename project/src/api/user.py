@@ -28,7 +28,7 @@ def login():
         user.update_login_timestamp()
         Logger.get_instance().logged_in(user)
         login_user(user, remember=remember)
-        return jsonify({'reason': 'logged in', 'result': user.to_json()})
+        return jsonify({'reason': 'logged in', 'result': user.to_json()}), 200
     else:
         return jsonify({'reason': 'User/Password doesn\'t match'}), 400
 
