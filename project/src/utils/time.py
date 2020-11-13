@@ -1,4 +1,4 @@
-from pytz import timezone as tzone
+from pytz import UTC as utc, timezone as tzone
 from datetime import datetime, timezone, timedelta
 import dateutil.parser
 
@@ -11,7 +11,7 @@ class TimeUtil(object):
     PST = tzone('US/Pacific')
 
     @staticmethod
-    def get_current_time():
+    def get_current_time() -> str:
         '''
         Util method to get the time. Import this object
         and use it so that we don't have to manually configure time.\n
@@ -32,8 +32,19 @@ class TimeUtil(object):
         datetime object that consist of the current time.\n
         @authoer YixuanZhou
         '''
-        d = dateutil.parser.parse(time)
-        return d
+        return dateutil.parser.parse(time)
+
+    @staticmethod
+    def naive_to_aware(time: datetime):
+        '''
+        Util method to convert a naive datetime to an aware datetime (PST).\n
+        Inputs:\n
+        time --> naive datetime.\n
+        Returns:\n
+        aware datetime of the passed in time.\n
+        @author nouryehia
+        '''
+        return utc.localize(time).astimezone(TimeUtil.PST)
 
     @staticmethod
     def get_time_diff(time_a: str, time_b: str) -> str:
@@ -68,3 +79,10 @@ class TimeUtil(object):
         diff = timedelta(hours=hours, minutes=mins, seconds=secs)
         ret_d = curr_d - diff
         return ret_d.astimezone(TimeUtil.PST).isoformat()
+
+    @staticmethod
+    def min_time() -> str:
+        '''
+        Get the min time of datetime but with timezome being set to PST
+        '''
+        return datetime.min.astimezone(TimeUtil.PST).isoformat()

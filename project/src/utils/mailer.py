@@ -1,36 +1,36 @@
+import ssl
 from os import getenv
-import smtplib as smtp
+import smtplib as slib
+from threading import Lock
 
-from .logger import Logger, LogLevels
+
+from .logger import LogLevels, Logger
+from .exceptions import SingletonAccessException
 
 
 class MailUtil(object):
     '''
     Utility class for sending emails.
-    This class is a true singleton, so you can
-    import the class and instantiate it whilst
-    only getting the same instance of the object.
     '''
-    _instance = None
-    _email = None
-    _passwd = None
-    _host = None
-    _port = None
+    __instance = None
 
-    @classmethod
-    def __new__(cls):
-        '''
-        Implementing singleton pattern in a stricter way than the old method
-        Author: @npcompletenate
-        '''
-        if cls._instance is None:
-            Logger.custom_msg('Creating the emailer object')
-            cls._instance = super(MailUtil, cls).__new__(cls)
-            cls._email = getenv('AG_EMAIL')
-            cls._passwd = getenv('AG_PASSWORD')
-            cls._host = 'smtp.gmail.com'
-            cls._port = 587
-        return cls._instance
+    @staticmethod
+    def get_instance():
+        if MailUtil.__instance is None:
+            with Lock():
+                if MailUtil.__instance is None:
+                    MailUtil()
+        return MailUtil.__instance
+
+    def __init__(self):
+
+        if MailUtil.__instance is not None:
+            raise SingletonAccessException("This class is a singleton!")
+        self.email = getenv('AG_EMAIL')
+        self.passwd = getenv('AG_PASSWORD')
+        self.host = 'smtp.gmail.com'
+        self.port = 465
+        MailUtil.__instance = self
 
     def send(self, to: [str], subject: str, body: str) -> bool:
         '''
@@ -44,21 +44,20 @@ class MailUtil(object):
         '''
 
         try:
-            with smtp.SMTP(MailUtil._host, MailUtil._port) as srvr:
-                srvr.ehlo()
-                srvr.starttls()
-                srvr.login(MailUtil._email, MailUtil._passwd)
+            context = ssl.create_default_context()
+            with slib.SMTP_SSL(self.host, self.port, context=context) as srvr:
+                srvr.login(self.email, self.passwd)
                 msglg = 'Login attempt for donotreply account successful'
-                Logger.custom_msg(msglg)
+                Logger.get_instance().custom_msg(msglg)
 
                 message = f'Subject: {subject}\n\n{body}'
-                srvr.sendmail(MailUtil._email, to, message)
+                srvr.sendmail(self.email, to, message)
                 msglg = f'Successfully sent email to {to}'
-                Logger.custom_msg(msglg, LogLevels.INFO)
+                Logger.get_instance().custom_msg(msglg, LogLevels.INFO)
 
             return True
 
-        except smtp.SMTPAuthenticationError:
+        except slib.SMTPAuthenticationError:
             msglg = 'Login attempt for donotreply account unsuccessful'
-            Logger.custom_msg(msglg, LogLevels.ERR)
+            Logger.get_instance().custom_msg(msglg, LogLevels.ERR)
             return False

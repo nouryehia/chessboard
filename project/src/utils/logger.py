@@ -1,9 +1,12 @@
 import logging
 from typing import List
+from threading import Lock
 
 from ..models.user import User
-from ..models.enrolled_course import Role
 from ..models.course import Course
+from ..models.enrolled_course import Role
+from .exceptions import SingletonAccessException
+
 
 
 class LogLevels(object):
@@ -24,32 +27,45 @@ class LogLevels(object):
 class Logger(object):
     '''
     Class used for logging messages.\n
-    True singleton class used by importing it and instantiating.\n
     @author npcompletenate & mihaivaduva
     '''
-    _log = None
-    _instance = None
 
-    @classmethod
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(Logger, cls).__new__(cls)
-            filename = 'application.log'
-            filemode = 'w'
-            fmat = "%(asctime)s;%(levelname)s;%(message)s"
-            datefmt = "%Y-%m-%d %H:%M:%S"
+    __instance = None
 
-            # initialize the logger
-            logging.basicConfig(
-                level=logging.INFO,
-                format=fmat,
-                filename=filename,
-                filemode=filemode,
-                datefmt=datefmt
-                )
-            cls._log = logging.getLogger()
+    @staticmethod
+    def get_instance():
+        if Logger.__instance is None:
+            with Lock():
+                if Logger.__instance is None:
+                    Logger()
+        return Logger.__instance
 
-        return cls._instance
+    def __init__(self, level: int = logging.INFO):
+        '''
+        Initializes a logger object. Should not be run from outside of this
+        class, as the logger is a singleton.
+        params:
+                level - log level to use. defaults to INFO
+        '''
+        if Logger.__instance is not None:
+            raise SingletonAccessException("This class is a singleton!")
+
+        filename = 'application.log'
+        filemode = 'w'
+        fmat = "%(asctime)s;%(levelname)s;%(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+
+        # initialize the logger
+        logging.basicConfig(
+            level=level,
+            format=fmat,
+            filename=filename,
+            filemode=filemode,
+            datefmt=datefmt
+            )
+        self.log = logging.getLogger()
+        Logger.__instance = self
+
 
     def logged_in(self, u: User) -> None:
         '''
@@ -59,7 +75,7 @@ class Logger(object):
         '''
         message = f"User {u} with user id: {u.id} and email {u.email} " +\
             "logged in."
-        Logger._log.debug(message)
+        self.log.debug(message)
 
     def reset_password(self, email: str) -> None:
         '''
@@ -67,7 +83,7 @@ class Logger(object):
         params: email - the email of the account resetting its password
         '''
         message = f"Account with email {email} reset password."
-        Logger._log.info(message)
+        self.log.info(message)
 
     def forgot_password(self, email: str) -> None:
         '''
@@ -76,7 +92,7 @@ class Logger(object):
         '''
         message = f"Account with email {email} forgot password and received" +\
             " a random password."
-        Logger._log.info(message)
+        self.log.info(message)
 
     def add_students_section(self, names: List[str], section: str, crse: str):
         '''
@@ -99,7 +115,7 @@ class Logger(object):
             if cnt != len(names) - 1:
                 message.append("\n")
 
-        Logger._log.info(''.join(message))
+        self.log.info(''.join(message))
 
     def create_user(self, u: User) -> None:
         '''
@@ -108,7 +124,7 @@ class Logger(object):
                 u - User object added to the DB
         '''
         message = f"Created account {u} + with email {u.email}."
-        Logger._log.info(message)
+        self.log.info(message)
 
     def create_user_exist(self, email: str) -> None:
         '''
@@ -116,7 +132,7 @@ class Logger(object):
         '''
         message = f"Attempted to create account for email {email}" + \
             " but an account exists already."
-        Logger._log.error(message)
+        self.log.error(message)
 
     def create_course(self, c: Course) -> None:
         '''
@@ -125,7 +141,8 @@ class Logger(object):
                 c - Course object added to the DB
         '''
         message = f"Created course {c}."
-        Logger._log.info(message)
+        self.log.info(message)
+
 
     def added_section(self, sctn_name: str, course_id: int) -> None:
         '''
@@ -133,7 +150,7 @@ class Logger(object):
         '''
         message = f"Added section: {sctn_name} to " + \
             f"course with id: {str(course_id)}."
-        Logger._log.info(message)
+        self.log.info(message)
 
     def changed_role(self, user_id: int, course_id: int, prev_role: Role,
                      new_role: Role) -> None:
@@ -148,7 +165,7 @@ class Logger(object):
         message = f"Changed role of user with ID: {str(user_id)}" + \
             f" for course with ID: {str(course_id)} from {prev_role}" + \
             f" to {new_role}."
-        Logger._log.info(message)
+        self.log.info(message)
 
     def created_ticket(self, user_id: int, course_id: int):
         '''
@@ -159,7 +176,7 @@ class Logger(object):
         '''
         message = f"User with ID: {str(user_id)} created ticket for course" +\
             f" with ID: {str(course_id)}."
-        Logger._log.debug(message)
+        self.log.debug(message)
 
     def custom_msg(self, msg: str, level: int = logging.DEBUG) -> None:
         '''
@@ -169,4 +186,4 @@ class Logger(object):
                 level - what logging level to use. If not given, defaults to
                 DEBUG
         '''
-        Logger._log.log(level, msg)
+        self.log.log(level, msg)

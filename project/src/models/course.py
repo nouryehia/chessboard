@@ -55,7 +55,7 @@ class Course(db.Model):
     queue_enabled = db.Column(db.Boolean, nullable=False, default=False)
     cse = db.Column(db.Boolean, nullable=False, default=True)
     lock_button = db.Column(db.Boolean, nullable=False, default=False)
-    queue_id = db.Column(db.Integer, nullable=False)
+    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'), nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, **kwargs):
@@ -128,14 +128,15 @@ class Course(db.Model):
         self.cse = not self.cse
         self.save()
 
+    '''
     def get_sections(self) -> List[Section]:
         """
         Get the sections of a course
         """
         return Section.query.filter_by(course_id=self.id).all()
+    '''
 
     # Get students / get instructors are already in enrolled course
-
     @staticmethod
     def get_course_by_id(course_id) -> Optional[Course]:
         """

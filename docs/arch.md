@@ -49,7 +49,7 @@ can be easily upgraded to change the hash as well as to deprecate certain passwo
 system used throughout the backend.
 
 
-The `utils` directory contains a hodgepodge of utility files, ranging from the logging system (`logger.py`) to the emailer (`mailer.py`) to our password generation function to the files that interact with `cron`. The most important stuff here would be the logger, emailer, `time.py` (contains time utility functions), `ticket_statistics.py`, and `tutor_stats.py`. The latter two files are used to get extra info for professors.
+The `utils` directory contains a hodgepodge of utility files, ranging from the logging system (`logger.py`) to the emailer (`mailer.py`) to our password generation function to the files that interact with `cron`. The most important stuff here would be the logger, emailer, `time.py` (contains time utility functions), `ticket_statistics.py`, and `tutor_stats.py`. The latter two files are used to get extra info for professors. Lastly, the `exceptions.py` file contains custom exceptions raised throughout the backend. At the moment, that's just one; however, this can be easily extended so that we have a whole suite of custom exceptions to raise/catch everywhere.
 
 Lastly, `tests` contains unit tests. That was pretty self explanatory.
 
@@ -75,7 +75,8 @@ Here are some final rules to follow:
 4. Keep your code <a href="https://hub.packtpub.com/write-python-code-or-pythonic-code/" target="_blank">pythonic</a>. This isn't C++ nor is it Java. Open up a python interpreter and type `import this` to get an idea of how to be pythonic.
 5. <a href="https://realpython.com/python-f-strings/" target="_blank">f strings</a> are good, use them.
 6. Use `@staticmethod` and `@classmethod` annotations accordingly. This is relevant for the `models` directory; read <a href="https://stackabuse.com/pythons-classmethod-and-staticmethod-explained/" target="_blank"> here</a> for more information.
-7. Don't be afraid to ask questions!
+7. _**Never**_ import the logger class into _any_ classes in the `models` directory! This can cause circular dependencies. Instead, add logging to the `api` classes.
+8. Don't be afraid to ask questions!
 
 ---
 [go back](/chessboard)
