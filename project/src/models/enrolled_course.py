@@ -181,6 +181,13 @@ class EnrolledCourse(db.Model):
         db.session.commit()
 
     @staticmethod
+    def get_ec_by_id(ec_id: int) -> EnrolledCourse:
+        """
+        Get ec entry by id
+        """
+        return EnrolledCourse.query.filter_by(id=id).first()
+
+    @staticmethod
     def enroll_user(enrolled_user: EnrolledCourse) -> bool:
         """
         Add an enrolled user into the course.\n

@@ -21,6 +21,15 @@ class TimeUtil(object):
         return utc_dt.astimezone(TimeUtil.PST).isoformat()
 
     @staticmethod
+    def get_current_year() -> str:
+        '''
+        Util method to get the current year.\n
+        @author YixuanZhou
+        '''
+        utc_dt = datetime.now(timezone.utc)
+        return utc_dt.astimezone(TimeUtil.PST).isoformat().split('-')[0]
+
+    @staticmethod
     def convert_str_to_datetime(time: str) -> datetime:
         '''
         Util method to read a time and convert it into datetime obejct.\n

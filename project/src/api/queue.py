@@ -8,6 +8,7 @@ from ..models.course import Course
 from ..models.ticket import Status as t_Status
 from ..models.queue_calendar import QueueCalendar
 
+
 queue_api_bp = Blueprint('queue_api', __name__)
 CORS(queue_api_bp, supports_credentials=True)
 
@@ -25,9 +26,9 @@ def user_in_course(queue_id: int, course_id: int) -> bool:
         return False
 
 
-def user_own_queue(queue_id: int, course_id: int) -> bool:
+def user_own_queue(queue_id: int) -> bool:
     """
-    Checkin gwhetehr the user is the instructor of the course
+    Checking whetehr the user is the instructor of the course
     that has this queue.
     """
     course = Course.get_course_by_queue_id(queue_id)
@@ -70,24 +71,45 @@ def create_queue():
     """
     Create a queue for a course.\n
     """
-    hce = bool(request.json['high_capacity_enabled']) if \
-        'high_capacity_enabled' in request.json else None
-    hct = int(request.json['high_capacity_threshold']) if \
-        'high_capacity_threshold' in request.json else None
-    hcm = request.json['high_capacity_message'] if \
-        'high_capacity_message' in request.json else None
-    hcw = request.json['high_capacity_warning'] if \
-        'high_capacity_warning' in request.json else None
-    tc = int(request.json['ticket_cooldown']) if \
-        'ticket_cooldown' in request.json else None
+    req = request.get_json()
+    hce = bool(req.get('high_capacity_enabled', None))
+    hct = int(req.get('high_capacity_threshold', None))
+    hcm = req.get('high_capacity_message', None)
+    tc = int(req.get('ticket_cooldown', None))
+    hcw = req.get('high_capacity_warning', None)
     q = Queue(status=Status.CLOSED.value,
               high_capacity_enable=hce,
               high_capacity_threshold=hct,
               high_capacity_message=hcm,
               high_capacity_warning=hcw,
-              ticket_cool_down=tc)
+              ticket_cool_down=tc,
+              queue_lock=True
+              )
     Queue.add_to_db(q)
     return jsonify({'reason': 'queue created'}), 200
+
+
+@queue_api_bp.route('/update_queue_setting', methods=['POST'])
+# @login_required
+def update_queue_setting():
+    req = request.get_json()
+    q_id = req.get('queue_id', 0)
+    if not user_own_queue(q_id):
+        return jsonify({'reason': 'user not own queue'}), 300
+    hce = bool(req.get('high_capacity_enabled', False))
+    hct = int(req.get('high_capacity_threshold', 25))
+    hcm = req.get('high_capacity_message', None)
+    tc = int(req.get('ticket_cooldown', 10))
+    hcw = req.get('high_capacity_warning', None)
+    q = Queue.update_queue_setting(queue_id=q_id,
+                                   high_capacity_enable=hce,
+                                   high_capacity_threshold=hct,
+                                   high_capacity_message=hcm,
+                                   high_capacity_warning=hcw,
+                                   ticket_cool_down=tc,
+                                   queue_lock=True
+                                   )
+    return jsonify({'reason': 'success', 'result': q.to_json()}), 200
 
 
 @queue_api_bp.route('/login_grader', methods=['POST'])
@@ -185,91 +207,15 @@ def create_queue_calendar():
     return jsonify({'reason': 'success'}), 200
 
 
-@queue_api_bp.route('/find_queue_calendar', methods=['GET'])
+@queue_api_bp.route('/get_feedback_for_grader', methods=['GET'])
 #@login_required
-def find_queue_calendar():
+def get_feedback_for_grader():
     """
-    Find the active queue_clandars
-    """
-    q_id = request.args.get('queue_id', type=int)
-    c_list = QueueCalendar.find_all_calendar_for_queue(queue_id=q_id)
-    if not c_list:
-        return jsonify({'reason': 'queue not found, queue \
-        has no calander'}), 400
-    ret = []
-    for c in c_list:
-        ret.append(c.to_json())
-    return jsonify({'reason': 'Success', 'result': ret}), 200
-
-
-@queue_api_bp.route('/find_all_tickets_for_queue', methods=['GET'])
-#@login_required
-def find_all_ticket_for_queue():
-    """
-    Find all the tickest for queue.
-    """
-    q_id = request.args.get('queue_id', type=int)
-    s_type_list = []
-    if 'status' in request.json:
-        s_list = list(request.json['status'])
-        for s in s_list:
-            t_s = t_Status(s)
-            s_type_list.append(t_s)
-        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id,
-                                                     status=s_type_list)
-    else:
-        status, msg, t_list = Queue.find_all_tickets(queue_id=q_id)
-    if not status:
-        return jsonify({'reason': msg}), 400
-    ret = []
-    for t in t_list:
-        view = t.can_view_by(current_user.id)
-        edit = t.can_edit_by(current_user.id)
-        ret.append({'ticket': t.to_json(),
-                    'can_view': view,
-                    'can_edit': edit})
-    return jsonify({'reason': 'Success', 'result': ret}), 200
-
-
-@queue_api_bp.route('/find_all_tickets_for_student', methods=['GET'])
-#@login_required
-def find_all_ticket_for_student():
-    """
-    Find all the tickest for queue.
-    """
-    q_id = request.args.get('queue_id', type=int)
-    s_id = request.args.get('student_id', type=int)
-    s_type_list = []
-    s_list = list(request.args.get('status'))
-    for s in s_list:
-        t_s = t_Status(s)
-        s_type_list.append(t_s)
-    t_list = Queue.find_all_tickets_by_student(queue_id=q_id,
-                                               student_id=s_id,
-                                               status=s_type_list)
-    ret = {}
-    for t in t_list:
-        ret.append(t.to_json())
-    return jsonify({'reason': 'Success', 'result': ret}), 200
-
-
-@queue_api_bp.route('/find_all_tickets_for_grader', methods=['GET'])
-#@login_required
-def find_all_ticket_for_grader():
-    """
-    Find all the tickest for queue.
+    Get feedback for grader in the queue.
     """
     q_id = request.args.get('queue_id')
     g_id = request.args.get('grader_id')
-    s_type_list = []
-    s_list = list(request.json['status'])
-    for s in s_list:
-        t_s = t_Status(s)
-        s_type_list.append(t_s)
-    t_list = Queue.find_all_tickets_by_student(queue_id=q_id,
-                                               student_id=g_id,
-                                               status=s_type_list)
-    ret = []
-    for t in t_list:
-        ret.append(t.to_json())
-    return jsonify({'reason': 'Success', 'result': ret}), 200
+
+    feedbacks = Queue.get_feedback_for_grader(queue_id=q_id, grader_id=g_id)
+
+    return jsonify({'reason': 'success', 'result': feedbacks}), 200

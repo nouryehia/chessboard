@@ -876,7 +876,13 @@ class Ticket(db.Model):
         tickets = Ticket.find_all_tickets_for_grader(queue_id, grader_id)
         feedbacks = []
         for t in tickets:
-            feedbacks.append(TicketFeedback.get_ticket_feedback(t))
+            fb = TicketFeedback.get_ticket_feedback(ticket_id=t.id)
+            fb['name'] = 'anonymous'
+            if not fb['is_anonymous']:
+                user_id = EnrolledCourse.get_ec_by_id(t.ec_student_id).user_id
+                user = User.get_user_by_id(user_id)
+                fb['name'] = user.first_name + ' ' + user.last_name
+            feedbacks.append(fb)
         return feedbacks
 
     @staticmethod

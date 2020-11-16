@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
+from ..models.queue import Queue
 # from ..models.enrolled_course import EnrolledCourse as EC
 # from ..models.course import Course
 from ..models.user import User
@@ -39,6 +40,9 @@ def add_ticket():
     # s_id = current_user.id
 
     queue_id = int(request.json['queue_id'])
+    q = Queue.get_queue_by_id(queue_id)
+    if q.is_locked():
+        return jsonify({'reason': 'queue is locked'}), 300
 
     title = request.json['title']
     description = request.json['description']
