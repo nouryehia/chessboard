@@ -9,8 +9,8 @@ FROM python:3.8.1-slim-buster as builder
 WORKDIR /usr/src/app
 
 # set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# ENV PYTHONDONTWRITEBYTECODE 1
+# ENV PYTHONUNBUFFERED 1
 
 # Need this for our entrypoint
 RUN apt-get update && apt-get install -y --no-install-recommends gcc

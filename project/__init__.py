@@ -35,7 +35,7 @@ app.register_blueprint(tsapi, url_prefix="/api/tutorstats")
 # DO NOT EDIT BELOW THE LINE
 # ----------------------------------------------------------------
 
-
+@login_manager.user_loader
 def load_user(user_id):
     '''
     Function used to be a default loader for flask login.
@@ -43,7 +43,7 @@ def load_user(user_id):
     return User.get_user_by_id(user_id)
 
 
-login_manager.user_loader(load_user)
+# login_manager.user_loader(load_user)
 
 
 def unauthorized():

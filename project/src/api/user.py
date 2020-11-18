@@ -11,7 +11,6 @@ from ..utils.logger import Logger, LogLevels
 user_api_bp = Blueprint('user_api', __name__)
 CORS(user_api_bp, supports_credentials=True)
 
-
 @user_api_bp.route('/login', methods=['POST'])
 def login():
     '''

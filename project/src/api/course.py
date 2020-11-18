@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import current_user
+from flask_login import current_user, login_required
 from ..security.roles import role_required, URole
 from ..models.course import Course, Quarter
 from ..models.queue import Queue, Status
@@ -19,6 +19,7 @@ def create_course():
     @updates: YixuanZ
     Creates a course, only users with ADMIN role should call this.
     """
+    myu = current_user
     u = User.get_user_by_id(user_id=current_user.id)
     if not u.is_instructor():
         return jsonify({'reason': 'only instructors can create course'}), 400
