@@ -1,11 +1,12 @@
-from datetime import datetime
+from .time import TimeUtil as time
 
 from ..models.ticket import Ticket
 from ..models.queue import Queue
+from ..models.enrolled_course import EnrolledCourse
+from ..models.course import Course
 from ..models.user import User
 from ..models.events.queue_login_event import QueueLoginEvent
 from ..models.events.ticket_event import TicketEvent
-from .time import TimeUtil
 
 
 class TutoringSession:
@@ -20,19 +21,21 @@ class TutoringSession:
     accepted --> number of tickets accepted during session
     resolved --> number of tickets resolved during session
     """
-    def __init__(self, start, end, duration, time_helping, utilization,
-                 accepted, resolved):
+    def __init__(self, ec_grader_id: int, start: str, end: str,
+                 time_helping: int, utilization: float, accepted: int,
+                 resolved: int, canceled: int):
+        self.ec_grader_id = ec_grader_id
         self.start = start
         self.end = end
-        self.duration = duration
         self.time_helping = time_helping
         self.utilization = utilization
         self.accepted = accepted
         self.resolved = resolved
+        self.canceled = canceled
 
 
-def get_total_time_on_duty(qle: QueueLoginEvent, queue: Queue, grader: User,
-                           start_date: TimeUtil = None):
+def get_total_time_on_duty(qle: QueueLoginEvent, queue_id: int, grader: User,
+                           start: str = None, end: str = None):
     """
     Gets the total time spent on duty for a grader within a given time frame.
     Inputs:
@@ -45,29 +48,25 @@ def get_total_time_on_duty(qle: QueueLoginEvent, queue: Queue, grader: User,
     at start_date (if it was passed in) or during the whole quarter (if it was
     not).
     """
-    if start_date is None:
-        events = qle.find_event_in_range(queue, TimeUtil.min_time(),
-                                         TimeUtil.get_current_time(), grader)
-    else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
-        events = qle.find_event_in_range(queue, start_date, end_date, grader)
+    events = qle.find_event_in_range(queue_id,
+                                     (start if start else time.min_time()),
+                                     (end if end else time.get_current_time()),
+                                     grader)
 
     total_time_on_duty = 0
 
     for i in range(0, len(events), 2):
         start = events[i].timestamp
-        end = (TimeUtil.get_current_time.now() if i == len(events) - 1
-               else events[i + 1].timestamp)
+        end = (events[i + 1].timestamp if i < len(events) - 1 else
+               time.convert_str_to_datetime(time.get_current_time()))
 
-        time_on_duty = end - start
-        total_time_on_duty += time_on_duty.seconds
+        total_time_on_duty += (end - start).seconds
 
     return total_time_on_duty
 
 
-def get_num_tickets_handled(queue: Queue, grader: User,
-                            start_date: datetime = None):
+def get_num_tickets_handled(queue_id: int, grader_id: int, start: str,
+                            end: str, resolved: bool = False):
     """
     Gets the number of tickets handled by a grader within a given time frame.
     Inputs:
@@ -79,19 +78,18 @@ def get_num_tickets_handled(queue: Queue, grader: User,
     start_date (if it was passed in) or during the whole quarter (if it was
     not).
     """
-    if start_date is None:
-        tickets = Ticket.find_all_tickets_in_range(queue, grader)
-    else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
-        tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
-                                               grader)
+    tickets = Ticket.find_tickets_in_range(queue_id,
+                                           (start if start else
+                                            time.min_time()),
+                                           (end if end else
+                                            time.get_current_time()),
+                                           grader_id, resolved)
 
     return len(tickets)
 
 
-def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
-                                           start_date: datetime = None):
+def get_total_time_spent_resolving_tickets(queue_id: int, grader_id: int,
+                                           start: str, end: str):
     """
     Gets the amount of time a tutor has spent resolving tickets within a given
     time frame.
@@ -104,36 +102,36 @@ def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
     week that starts at start_date (if it was passed in) or during the whole
     quarter (if it was not).
     """
-    if start_date is None:
-        tickets = Ticket.find_all_tickets_in_range(queue, grader)
-    else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
-        tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
-                                               grader)
+    tickets = Ticket.find_tickets_in_range(queue_id,
+                                           (start if start else
+                                            time.min_time()),
+                                           (end if end else
+                                            time.get_current_time()),
+                                           grader_id, True)
+
+    total_time = 0
 
     for ticket in tickets:
         events = TicketEvent.find_all_events_for_ticket(ticket)
-        events = [event for event in events if event.user_id == grader.id]
+        events = [event for event in events if event.user_id == grader_id]
 
-        total_time = 0
-        time_accepted = datetime.min()
+        time_accepted = None
 
         for e in events:
             if e.is_accepted():
                 time_accepted = e.timestamp
-
-            if (time_accepted != datetime.min and
-               (e.is_resolved() or e.is_deferred() or e.is_canceled)):
-                time_helping = e.timestamp - time_accepted
-                total_time += time_helping.seconds
-                time_accepted = datetime.min()
+            elif e.is_resolved():
+                total_time += (e.timestamp -
+                               (time_accepted if time_accepted else
+                                time.convert_str_to_datetime(start)))
+            else:
+                time_accepted = None
 
     return total_time
 
 
 def get_average_time_spent_resolving_ticket(queue: Queue, grader: User,
-                                            start_date: datetime = None):
+                                            start: str, end: str):
     """
     Gets the average time a grader spent on each ticket within a given time
     frame.
