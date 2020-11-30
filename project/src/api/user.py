@@ -33,7 +33,7 @@ def login():
 
 
 @user_api_bp.route('/logout', methods=['POST'])
-#@login_required
+# @login_required
 def logout():
     '''
     Route used to log out a user. Ends their session.\n

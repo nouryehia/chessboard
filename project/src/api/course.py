@@ -19,7 +19,6 @@ def create_course():
     @updates: YixuanZ
     Creates a course, only users with ADMIN role should call this.
     """
-    myu = current_user
     u = User.get_user_by_id(user_id=current_user.id)
     if not u.is_instructor():
         return jsonify({'reason': 'only instructors can create course'}), 400

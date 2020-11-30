@@ -1,4 +1,5 @@
 Flask
+Flask-WTF
 flask-login
 flask-api
 flask_cors

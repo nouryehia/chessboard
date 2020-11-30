@@ -1,6 +1,7 @@
 from flask import jsonify
 
 from .setup import app, login_manager
+from flask_wtf.csrf import CSRFError
 
 from .src.models.user import User
 
@@ -35,7 +36,7 @@ app.register_blueprint(tsapi, url_prefix="/api/tutorstats")
 # DO NOT EDIT BELOW THE LINE
 # ----------------------------------------------------------------
 
-@login_manager.user_loader
+
 def load_user(user_id):
     '''
     Function used to be a default loader for flask login.
@@ -43,7 +44,7 @@ def load_user(user_id):
     return User.get_user_by_id(user_id)
 
 
-# login_manager.user_loader(load_user)
+login_manager.user_loader(load_user)
 
 
 def unauthorized():
@@ -55,3 +56,12 @@ def unauthorized():
 
 
 login_manager.unauthorized_handler(unauthorized)
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    '''
+    Handles the CSRF error if the validation fails
+    '''
+    return jsonify({'reason': 'CSRF validation failed for'
+                              + e.description}), 400
