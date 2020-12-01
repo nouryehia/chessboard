@@ -8,7 +8,6 @@ from ..models.enrolled_course import Role
 from .exceptions import SingletonAccessException
 
 
-
 class LogLevels(object):
     '''
     Small class for making the logging levels visible
@@ -65,7 +64,6 @@ class Logger(object):
             )
         self.log = logging.getLogger()
         Logger.__instance = self
-
 
     def logged_in(self, u: User) -> None:
         '''
@@ -142,7 +140,6 @@ class Logger(object):
         '''
         message = f"Created course {c}."
         self.log.info(message)
-
 
     def added_section(self, sctn_name: str, course_id: int) -> None:
         '''

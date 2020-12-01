@@ -19,6 +19,7 @@ from .src.api.section import section_api_bp as sapi
 from .src.api.checkoff import checkoff_api_bp as chapi
 from .src.api.ticket_feedback import feedback_api_bp as tfapi
 from .src.api.tutor_stats import tutor_stats_api_bp as tsapi
+from .src.api.parser import parser_api_bp as papi
 
 app.register_blueprint(uapi, url_prefix="/api/users")
 app.register_blueprint(tapi, url_prefix="/api/ticket")
@@ -31,6 +32,7 @@ app.register_blueprint(sapi, url_prefix="/api/section")
 app.register_blueprint(chapi, url_prefix="/api/checkoff")
 app.register_blueprint(tfapi, url_prefix="/api/ticketfeedback")
 app.register_blueprint(tsapi, url_prefix="/api/tutorstats")
+app.register_blueprint(papi, url_prefix="/api/rosterparser")
 
 # DO NOT EDIT BELOW THE LINE
 # ----------------------------------------------------------------
