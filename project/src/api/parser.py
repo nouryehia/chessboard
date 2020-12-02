@@ -26,14 +26,13 @@ def upload_roster():
     # TODO Use the logger
     log_util = Logger.get_instance()
 
-    course_id = None
-    if 'course_id' in request.json:
-        course_id = request.json['course_id']
-    else:
+    course_id = request.json.get('course_id', None)
+    
+    if not course_id:
         return jsonify({'reason': 'no course id provided'}), 400
 
     if 'file' not in request.files:
-        return jsonify({'reason': 'no file provided'}), 400
+        return jsonify({'reason': 'no roster file provided'}), 400
 
     fl = request.files['file']
 
@@ -47,26 +46,21 @@ def upload_roster():
         # construct a new filename with the given pattern
         # pattern is course_roster + <course id> + .csv/.tsv
         fname = 'course_roster-' + str(course_id) + fl.filename.split('.')[1]
-        fl.save(fname)
 
         mthd_was_post = True
     else:
         fname = 'course_roster-' + str(course_id) + 'new' + \
             fl.filename.split('.')[1]
-        fl.save(fname)
+    fl.save(fname)
 
-    cols = {}
-    if 'cols' in request.json:
-
-        # convert keys from strings to ints
-        # the JSON passes them in as strings (not very cash money)
-        cols = request.json['cols']
-    else:
+    # convert keys from strings to ints
+    # the JSON passes them in as strings (not very cash money)
+    cols = request.json.get('cols', {})
+    
+    if not cols:
         return jsonify({'reason': 'no column listing given'}), 400
 
-    status = RosterParser.parse_roster(fname, cols, mthd_was_post)
-
-    if not status:
+    if not RosterParser.parse_roster(fname, cols, mthd_was_post):
         msg = 'error parsing roster; required column is missing'
         return jsonify({'reason': msg}), 400
     return jsonify({'reason': 'roster parsed successfully'}), 200
@@ -79,17 +73,21 @@ def download_roster():
     Function that allows you to download a roster file for a given class.\n
     The course id is required to be able to find the correct roster.
     '''
-    if 'course_id' not in request.json:
+    course_id = request.json.get('course_id', None)
+    
+    if not course_id
         return jsonify({'reason': 'no course ID given'}), 400
 
-    course_id = request.json['course_id']
     fname1 = 'course_roster-' + str(course_id) + '.csv'
     fname2 = 'course_roster-' + str(course_id) + '.tsv'
 
     pth = '/usr/src/app/uploads'
+    
+    # first do a check if it's a csv
     if RosterParser.find_file(fname1):
         return send_from_directory(directory=pth, filename=fname1), 200
 
+    # if that failed, check for tsv
     if RosterParser.find_file(fname2):
         return send_from_directory(directory=pth, filename=fname2), 200
 
