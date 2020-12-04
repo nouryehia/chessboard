@@ -7,7 +7,8 @@ from flask import jsonify
 
 class URole (Enum):
     ADMIN = 0
-    NONE = 1
+    INSTRUCTOR = 1
+    NONE = 2
 
 
 class CRole (Enum):

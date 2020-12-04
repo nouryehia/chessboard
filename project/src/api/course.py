@@ -1,7 +1,11 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
+from flask_login import current_user
 from ..security.roles import role_required, URole
 from ..models.course import Course, Quarter
+from ..models.queue import Queue, Status
+from ..models.user import User
+from ..utils.time import TimeUtil
 
 course_api_bp = Blueprint('course_api', __name__)
 CORS(course_api_bp, supports_credentials=True)
@@ -12,26 +16,49 @@ CORS(course_api_bp, supports_credentials=True)
 def create_course():
     """
     @author : @mihaivaduva21
+    @updates: YixuanZ
     Creates a course, only users with ADMIN role should call this.
     """
+    u = User.get_user_by_id(user_id=current_user.id)
+    if not u.is_instructor():
+        return jsonify({'reason': 'only instructors can create course'}), 400
     req = request.get_json()
-    description = req['description']
-    name = req['name']
-    quarter = Quarter[str(req['quarter'])].value
-    short_name = req['short_name']
-    url = req['url'] if 'url' in req else None
-    year = int(req['year'])
-    active = bool(req['active'])
-    queue_enabled = bool(req['queue_enabled']) if 'queue_enable' in req else False
-    cse = bool(req['cse']) if 'cse' in req else False
-    queue_id = req['queue_id'] if 'queue_id' in req else None
+    description = req.get('description', '')
+    name = req.get('name', '')
+    quarter = Quarter[str(req.get('quarter'))].value
+    short_name = req.get('short_name', '')
+    url = req.get('url', None)
+    year = int(req.get('year', TimeUtil.get_current_year()))
+    active = bool(req.get('active', True))
+    queue_enabled = bool(req.get('queue_enabled', True))
+    cse = bool(req.get('cse', True))
+    queue_lock = bool(req.get('queue_lock', False))
 
-    if Course.create_course(description=description, name=name,
-                            quarter=quarter, short_name=short_name, url=url,
-                            year=year, active=active,
-                            queue_enabled=queue_enabled, cse=cse,
-                            queue_id=queue_id) is not None:
-        return jsonify({'reason': 'course created'}), 200
+    hce = True
+    hct = 25
+    hcm = None
+    hcw = None
+    tc = 10
+
+    queue = Queue.create_queue(status=Status.CLOSED,
+                               high_capacity_enable=hce,
+                               high_capacity_threshold=hct,
+                               high_capacity_message=hcm,
+                               high_capacity_warning=hcw,
+                               ticket_cool_down=tc,
+                               queue_lock=queue_lock)
+
+    queue_id = queue.id
+
+    crs = Course.create_course(description=description, name=name,
+                               quarter=quarter, short_name=short_name, url=url,
+                               year=year, active=active,
+                               queue_enabled=queue_enabled, cse=cse,
+                               queue_id=queue_id,
+                               instructor_id=current_user.id)
+    if crs is not None:
+        return jsonify({'reason': 'course created',
+                        'result': crs.to_json()}), 200
     else:
         return jsonify({'reason': 'course existed'}), 300
 

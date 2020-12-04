@@ -73,6 +73,7 @@ class Queue(db.Model):
                                               You may not be helped before \
                                               tutor hours end.')
     ticket_cool_down = db.Column(db.Integer, nullable=False, default=10)
+    queue_lock = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, **kwargs):
         """
@@ -562,12 +563,48 @@ class Queue(db.Model):
         db.session.commit()
 
     @staticmethod
-    def create_queue():
+    def update_queue_setting(queue_id: int,
+                             high_capacity_enable: bool,
+                             high_capacity_threshold: int,
+                             high_capacity_message: str,
+                             high_capacity_warning: str,
+                             ticket_cool_down: int,
+                             queue_lock: bool = True) -> Queue:
+        q = Queue.get_queue_by_id(queue_id=queue_id)
+        q.high_capacity_enable = high_capacity_enable
+        if high_capacity_threshold:
+            q.high_capacity_threshold = high_capacity_threshold
+        if high_capacity_message:
+            q.high_capacity_message = high_capacity_message
+        if high_capacity_warning:
+            q.high_capacity_warning = high_capacity_warning
+        if ticket_cool_down:
+            q.ticket_cool_down = ticket_cool_down
+        q.queue_lock = queue_lock
+        q.save()
+        return q
+
+    @staticmethod
+    def create_queue(status: Status,
+                     high_capacity_enable: bool,
+                     high_capacity_threshold: int,
+                     high_capacity_message: str,
+                     high_capacity_warning: str,
+                     ticket_cool_down: int,
+                     queue_lock: bool = True):
         """
         Create a new queue to the database.\n
         """
-        queue = Queue()
+        status = status.value
+        queue = Queue(status=status,
+                      high_capacity_enable=high_capacity_enable,
+                      high_capacity_threshold=high_capacity_threshold,
+                      high_capacity_message=high_capacity_message,
+                      high_capacity_warning=high_capacity_warning,
+                      ticket_cool_down=ticket_cool_down,
+                      queue_lock=queue_lock)
         Queue.add_to_db(queue)
+        return queue
 
     @staticmethod
     def get_queue_by_id(queue_id: int) -> Optional(Queue):
@@ -608,8 +645,7 @@ class Queue(db.Model):
         event = QueueLoginEvent.create_login_event(event_type=EType.LOGIN,
                                                    action_type=action_type,
                                                    grader_id=grader_id,
-                                                   queue_id=queue_id
-                                                    )
+                                                   queue_id=queue_id)
         queue.open()
         return True, 'Success'
 

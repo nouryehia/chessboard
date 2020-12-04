@@ -6,7 +6,8 @@ CREATE TABLE "Users" (
 	"password" varchar(255) NOT NULL,
 	"pid" varchar(10) UNIQUE,
 	"last_login" TIMESTAMP,
-	"urole" integer NOT NULL DEFAULT '1',
+	"urole" integer NOT NULL DEFAULT '2',
+	"request" BOOLEAN NOT NULL DEFAULT 'false',
 	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -56,6 +57,7 @@ CREATE TABLE "Course" (
 	"lock_button" BOOLEAN DEFAULT 'true',
 	"queue_id" bigserial NOT NULL,
 	"is_deleted" BOOLEAN NOT NULL DEFAULT 'false',
+	"instructor_id" integer NOT NULL,
 	CONSTRAINT "Course_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -71,6 +73,7 @@ CREATE TABLE "Queue" (
 	"high_capacity_message" varchar(255) NOT NULL,
 	"high_capacity_warning" varchar(255) NOT NULL,
 	"ticket_cool_down" integer NOT NULL DEFAULT '10',
+	"queue_lock" BOOLEAN NOT NULL DEFAULT 'true',
 	CONSTRAINT "Queue_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -211,7 +214,7 @@ ALTER TABLE "CheckoffEvaluation" ADD CONSTRAINT "CheckoffEvaluation_fk2" FOREIGN
 
 
 ALTER TABLE "Course" ADD CONSTRAINT "Course_fk0" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
-
+ALTER TABLE "Course" ADD CONSTRAINT "Course_fk1" FOREIGN KEY ("instructor_id") REFERENCES "Users"("id");
 
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk0" FOREIGN KEY ("ec_grader_id") REFERENCES "EnrolledCourse"("id");
 ALTER TABLE "Ticket" ADD CONSTRAINT "Ticket_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
@@ -236,14 +239,14 @@ ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk1" FOREIGN KEY ("queue
 
 ALTER TABLE "TicketFeedback" ADD CONSTRAINT "TicketFeedback_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
 
-INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
-INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false);
-INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
 
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
-INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1);
+INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false, 1);
+INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
 
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0);
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 4, 1, 1, 0);
