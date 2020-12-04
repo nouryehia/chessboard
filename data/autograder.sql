@@ -248,3 +248,6 @@ INSERT INTO "Users" (email, first_name, last_name, password, urole) VALUES ('fak
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0);
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 4, 1, 1, 0);
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0);
+
+INSERT INTO "Checkoff" (due, description, name, course_id, points, status, is_deleted) VALUES ('2017-08-18 22:30:59','Description of Lab 1', 'Lab 1', 1, 10, 1, FALSE);
+INSERT INTO "CheckoffEvaluation" (checkoff_time, checkoff_id, grader_id, student_id, score) VALUES('2017-08-18 22:30:59', 1, 1, 2, 7);
