@@ -57,6 +57,8 @@ class Course(db.Model):
     lock_button = db.Column(db.Boolean, nullable=False, default=False)
     queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'), nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    instructor_id = db.Column(db.Integer,
+                              db.ForeignKey('Users.id'), nullable=False)
 
     def __init__(self, **kwargs):
         """
@@ -85,6 +87,7 @@ class Course(db.Model):
         ret['lock_button'] = self.lock_button
         ret['queue_id'] = self.queue_id
         ret['is_deleted'] = self.is_deleted
+        ret['instructor_id'] = self.instructor_id
         return ret
 
     def save(self):
@@ -191,7 +194,7 @@ class Course(db.Model):
     def create_course(description: str, name: str, quarter: int,
                       short_name: str, url: str, year: int,
                       active: bool, queue_enabled: bool, cse: bool,
-                      queue_id: int) -> Optional[Course]:
+                      queue_id: int, instructor_id: int) -> Optional[Course]:
 
         """
         Creates a new course and adds it to the databease.
@@ -202,7 +205,8 @@ class Course(db.Model):
         course = Course(description=description, name=name, quarter=quarter,
                         short_name=short_name, url=url, year=year,
                         active=active, queue_enabled=queue_enabled, cse=cse,
-                        lock_button=False, queue_id=queue_id)
+                        lock_button=False, queue_id=queue_id,
+                        instructor_id=instructor_id)
         db.session.add(course)
         course.save()
         return course

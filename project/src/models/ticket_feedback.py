@@ -1,11 +1,12 @@
 from __future__ import annotations
-
 from operator import attrgetter
 from enum import Enum
 from ..utils.time import TimeUtil
 from typing import List
 
 from ...setup import db
+from .course import Course
+from .enrolled_course import EnrolledCourse
 # from .user import User  # Pretending
 # from .queue import Queue
 # from .ticket import Ticket, Status
@@ -39,12 +40,14 @@ class TicketFeedback(db.Model):
     """
     __tablename__ = 'TicketFeedback'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'),
+    ticket_id = db.Column(db.Integer, db.ForeignKey('Ticket.id'),
                           nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     feedback = db.Column(db.String(255), nullable=True)
     submitted_date = db.Column(db.DateTime, nullable=False,
                                default=TimeUtil.get_current_time())
+    ec_grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
+                             nullable=False)
     is_anonymous = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, **kwargs):
@@ -92,7 +95,7 @@ class TicketFeedback(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_feedback(ticket_id: int) -> List[TicketFeedback]:
+    def get_ticket_feedback(ticket_id: int) -> TicketFeedback:
         """
         Given a ticket, return the ticket feedbacks
         Input:\n
@@ -100,13 +103,12 @@ class TicketFeedback(db.Model):
         Returns:\n
         A list of tickect feedback related to that ticket.
         """
-        ret = TicketFeedback.query.filter_by(ticket_id=ticket_id).all()
-        ret = ret.sort(key=attrgetter('submitted_date'))
+        ret = TicketFeedback.query.filter_by(ticket_id=ticket_id).first()
         return ret
 
     @staticmethod
     def add_feedback(ticket_id: int, rating: int, feedback: str,
-                     anonymous: bool) -> TicketFeedback:
+                     anonymous: bool, ec_grader_id: int) -> TicketFeedback:
         """
         Add a ticket feedback to the db
         Inputs:\n
@@ -116,6 +118,7 @@ class TicketFeedback(db.Model):
         anonymous --> True of false.
         """
         fb = TicketFeedback(
+            ec_grader_id=ec_grader_id,
             ticket_id=ticket_id,
             rating=rating,
             feedback=feedback,
@@ -123,3 +126,13 @@ class TicketFeedback(db.Model):
             created_at=TimeUtil.get_current_time())
         TicketFeedback.add_to_db(fb)
         return fb
+
+    @staticmethod
+    def get_feedback_for_grader(queue_id: int,
+                                user_id: int) -> List[TicketFeedback]:
+        c_id = Course.get_course_by_queue_id(q_id=queue_id)
+        ec_grader_id = EnrolledCourse.find_user_in_course(user_id=user_id,
+                                                          course_id=c_id)
+        ret = TicketFeedback.query.filter_by(ec_grader_id=ec_grader_id).\
+            order_by(TicketFeedback.submitted_date.desc()).all()
+        return ret

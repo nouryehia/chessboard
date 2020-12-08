@@ -34,7 +34,8 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     pid = db.Column(db.String(10), nullable=True, unique=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    urole = db.Column(db.Integer, nullable=False, default=1)
+    urole = db.Column(db.Integer, nullable=False, default=2)
+    request = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self) -> str:
         """
@@ -51,6 +52,23 @@ class User(db.Model, UserMixin):
         Returns: None
         '''
         db.session.commit()
+
+    def requesting(self) -> bool:
+        return self.request
+
+    def is_admin(self) -> bool:
+        '''
+        Return whether the user is an admin
+        @author: YixuanZ
+        '''
+        return self.urole == 0
+
+    def is_instructor(self) -> bool:
+        '''
+        Return whether the user is an admin
+        @author: YixuanZ
+        '''
+        return self.urole == 1
 
     def update_login_timestamp(self) -> None:
         '''
@@ -108,6 +126,8 @@ class User(db.Model, UserMixin):
         ret['id'] = self.id
         ret['pid'] = self.pid
         ret['last_login'] = self.last_login
+        ret['urole'] = URole(self.urole).name
+        ret['request'] = self.request
         return ret
 
     @staticmethod
@@ -154,11 +174,62 @@ class User(db.Model, UserMixin):
             ret = passwd
         u = User(email=email, first_name=f_name, last_name=l_name, pid=pid,
                  password=pwd_context.hash(passwd),
-                 urole=URole.NONE.value)
-
+                 urole=URole.NONE.value, request=False)
         db.session.add(u)
         u.save()
         return True, ret, u
+
+    @staticmethod
+    def request_promotion(user_id: int = None,
+                          email: str = None) -> (bool, str, User):
+        '''
+        The user request promotion to be an instructor
+        @author: YixuanZ
+        '''
+        u = None
+        if user_id:
+            u = User.get_user_by_id(user_id=user_id)
+        elif email:
+            u = User.find_by_pid_email_fallback(pid='', email=email)
+        else:
+            return False, 'missing param', None
+
+        if not u:
+            return False, 'user not found', None
+        elif u.requesting():
+            return False, 'already requested', u
+        elif u.is_instructor() == 1:
+            return False, 'already an instructor', u
+        else:
+            u.request = True
+            u.save()
+            return True, 'success', u
+
+    @staticmethod
+    def get_all_requests() -> List[User]:
+        users = User.query.all()
+        requesting_user = []
+        for u in users:
+            if u.request:
+                requesting_user.append(u)
+        return requesting_user
+
+    @staticmethod
+    def promote_user(user_id: int) -> (bool, str, User):
+        '''
+        Admin user approve an reuqest
+        (check for admin user is in api,
+        but admin user need to check the requestor is an instructor mannully)
+        @author: YixuanZ
+        '''
+        u = User.get_user_by_id(user_id=user_id)
+        if not u:
+            return False, 'user_id not found', None
+        u.request = False
+        u.urole = 1
+        u.save()
+        return True, 'success', u
+
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:

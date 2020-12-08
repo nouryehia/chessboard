@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
 
 
 from ..models.user import User
@@ -42,6 +42,43 @@ def logout():
     '''
     logout_user()
     return jsonify({'reason': 'request OK'}), 200
+
+
+@user_api_bp.route('/request_promotion', methods=['POST'])
+# @login_required
+def request_promotion():
+    u_id = request.json.get('id', None)
+    email = request.json.get('email', None)
+    st, msg, usr = User.request_promotion(user_id=u_id, email=email) 
+    if st:
+        return jsonify({'reason': msg, 'result': usr.to_json()}), 200
+    else:
+        return jsonify({'reason': msg}), 300
+
+
+@user_api_bp.route('/promote_user', methods=['POST'])
+@login_required
+def promote_user():
+    u_id = request.json.get('id', None)
+    u = User.get_user_by_id(user_id=current_user.id)
+    if not u.is_admin():
+        return jsonify({'reason': 'only admin user can promot people'}), 400
+    st, msg, usr = User.promote_user(user_id=u_id)
+    if st:
+        return jsonify({'reason': msg, 'result': usr.to_json()}), 200
+    else:
+        return jsonify({'reason': msg}), 300
+
+
+@user_api_bp.route('/get_all_promot_request', methods=['GET'])
+@login_required
+def get_all_promote_requests():
+    u = User.get_user_by_id(user_id=current_user.id)
+    if not u.is_admin():
+        return jsonify({'reason': 'only admin user can promote people'}), 400
+    requests = User.get_all_requests()
+    requests = list(map(lambda x: x.to_json(), requests))
+    return jsonify({'reason': 'success', 'result': requests}), 200
 
 
 @user_api_bp.route('/reset_password', methods=['PUT'])
