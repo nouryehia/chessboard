@@ -36,6 +36,7 @@ class User(db.Model, UserMixin):
     last_login = db.Column(db.DateTime, nullable=True)
     urole = db.Column(db.Integer, nullable=False, default=2)
     request = db.Column(db.Boolean, nullable=False, default=False)
+    token = db.Column(db.String(255), nullable=False, default="")
 
     def __repr__(self) -> str:
         """
@@ -83,6 +84,15 @@ class User(db.Model, UserMixin):
         # push change to the DB
         self.save()
 
+    def generate_token(self) -> None:
+        '''
+        Generates and updates the CSRF token for the user.
+        '''
+
+        # generate a 50 character long token for CSRF
+        self.token = gen_password(50)
+        self.save()
+
     def reset_password(self, passwd: str) -> None:
         '''
         Reset the user's password. Is hashed\n
@@ -128,6 +138,7 @@ class User(db.Model, UserMixin):
         ret['last_login'] = self.last_login
         ret['urole'] = URole(self.urole).name
         ret['request'] = self.request
+        ret['token'] = self.token
         return ret
 
     @staticmethod
@@ -229,7 +240,6 @@ class User(db.Model, UserMixin):
         u.urole = 1
         u.save()
         return True, 'success', u
-
 
     @staticmethod
     def find_by_pid_email_fallback(pid: str, email: str) -> Optional[User]:
