@@ -8,6 +8,7 @@ CREATE TABLE "Users" (
 	"last_login" TIMESTAMP,
 	"urole" integer NOT NULL DEFAULT '2',
 	"request" BOOLEAN NOT NULL DEFAULT 'false',
+	"token" varchar(255) NOT NULL DEFAULT '',
 	CONSTRAINT "Users_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
