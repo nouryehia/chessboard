@@ -244,10 +244,16 @@ INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VAL
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
 
+/* Make 2 test courses */
 INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
 INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false, 1);
 INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
+INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course 2', 'Test2', 0, 'T2', 'wic.ucsd.edu2', 2022, true, false, true, true, 2, false, 1);
+INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section 2', 231, 2);
 
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0);
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 4, 1, 1, 0);
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0);
+/* Enroll first 3 users in course 1 and 2nd user in course 2. 4th user is not enrolled in any courses */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0); /* student */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 1, 1, 1, 0); /* admin */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0); 
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 3, 2, 2, 0); /* grader */
