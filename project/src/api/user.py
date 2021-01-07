@@ -6,6 +6,7 @@ from flask_login import login_required, login_user, logout_user, current_user
 from ..models.user import User
 from ..utils.mailer import MailUtil
 from ..utils.logger import Logger, LogLevels
+from ..security.csrf import validate_request
 
 
 user_api_bp = Blueprint('user_api', __name__)
@@ -28,13 +29,14 @@ def login():
         user.update_login_timestamp()
         Logger.get_instance().logged_in(user)
         login_user(user, remember=remember)
+        user.generate_token()
         return jsonify({'reason': 'logged in', 'result': user.to_json()}), 200
     else:
         return jsonify({'reason': 'User/Password doesn\'t match'}), 400
 
 
 @user_api_bp.route('/logout', methods=['POST'])
-#@login_required
+@login_required
 def logout():
     '''
     Route used to log out a user. Ends their session.\n
@@ -45,11 +47,15 @@ def logout():
 
 
 @user_api_bp.route('/request_promotion', methods=['POST'])
-# @login_required
+@login_required
 def request_promotion():
-    u_id = request.json.get('id', None)
+    # We don't need anything since the user is logged in.
+    if not current_user or not validate_request(request.json,
+                                                current_user.token):
+        return jsonify({'reason': 'invalid user or CSRF violation'}), 400
+
     email = request.json.get('email', None)
-    st, msg, usr = User.request_promotion(user_id=u_id, email=email) 
+    st, msg, usr = User.request_promotion(user_id=current_user.id, email=email)
     if st:
         return jsonify({'reason': msg, 'result': usr.to_json()}), 200
     else:
@@ -59,9 +65,13 @@ def request_promotion():
 @user_api_bp.route('/promote_user', methods=['POST'])
 @login_required
 def promote_user():
-    u_id = request.json.get('id', None)
-    u = User.get_user_by_id(user_id=current_user.id)
-    if not u.is_admin():
+    u_id = request.json.get('id', None)     # id of the user to prompt
+
+    if not current_user or not validate_request(request.json,
+                                                current_user.token):
+        return jsonify({'reason': 'invalid user or CSRF violation'}), 400
+
+    if not current_user.is_admin():
         return jsonify({'reason': 'only admin user can promot people'}), 400
     st, msg, usr = User.promote_user(user_id=u_id)
     if st:
@@ -70,26 +80,29 @@ def promote_user():
         return jsonify({'reason': msg}), 300
 
 
-@user_api_bp.route('/get_all_promot_request', methods=['GET'])
+@user_api_bp.route('/get_all_promote_request', methods=['GET'])
 @login_required
 def get_all_promote_requests():
     u = User.get_user_by_id(user_id=current_user.id)
     if not u.is_admin():
         return jsonify({'reason': 'only admin user can promote people'}), 400
-    requests = User.get_all_requests()
-    requests = list(map(lambda x: x.to_json(), requests))
+    requests = [x.to_json() for x in User.get_all_requests()]
     return jsonify({'reason': 'success', 'result': requests}), 200
 
 
 @user_api_bp.route('/reset_password', methods=['PUT'])
-#@login_required
+@login_required
 def reset_password():
 
-    id = request.json.get('id', None)
+    # I will enable login_required for this so we can get user by current_user
+    user = current_user
+
+    if not user or not validate_request(request.json, user.token):
+        return jsonify({'reason': 'invalid user or CSRF violation'}), 400
+
     passwd = request.json.get('password', None)
     old_pass = request.json.get('old_password', None)
 
-    user = User.get_user_by_id(id)
     if User.check_password(user.email, old_pass):
         user.reset_password(passwd)
 
@@ -100,10 +113,12 @@ def reset_password():
             ' this email; replies are not checked.' +\
             '\n\nCheers,\nThe Autograder Team'
         if MailUtil.get_instance().send(user.email, 'Password Reset', msg):
-            Logger.get_instance().custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+            Logger.get_instance().custom_msg(f'Email sent to {user.email}',
+                                             LogLevels.INFO)
             return jsonify({'reason': 'request OK'}), 200
         else:
-            Logger.get_instance().custom_msg('Emailer failed to send email.', LogLevels.ERR)
+            Logger.get_instance().custom_msg('Emailer failed to send email.',
+                                             LogLevels.ERR)
             return jsonify({'reason': 'Invalid email address'}), 510
     else:
         return jsonify({'reason': 'Old password doesn\'t match'}), 400
@@ -111,24 +126,28 @@ def reset_password():
 
 @user_api_bp.route('/forgot_password', methods=['PUT'])
 def forgot_password():
-    user = User.find_by_pid_email_fallback(None, request.json.get('email', None))
-    if user:
-        new_pass = user.create_random_password()
-        Logger.get_instance().forgot_password(user.email)
-        msg = 'Hi there!\nYou\'re getting this email because you' +\
-            ' forgot your password. If this wasn\'t you, contact someone' +\
-            ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
-            ' this email; replies are not checked.' +\
-            f' Your temp password is {new_pass}; go change it ASAP!' +\
-            '\n\nCheers,\nThe Autograder Team'
-        if MailUtil.get_instance().send(user.email, 'Forgot Password', msg):
-            Logger.get_instance().custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
-            return jsonify({'reason': 'request OK'}), 200
-        else:
-            Logger.get_instance().custom_msg('Emailer failed to send email.', LogLevels.ERR)
-            return jsonify({'reason': 'Invalid email address'}), 510
+    email = request.json.get('email', None)
+    user = User.find_by_pid_email_fallback(None, email)
+
+    if not user or not validate_request(request.json, user.token):
+        return jsonify({'reason': 'invalid user or CSRF violation'}), 400
+
+    new_pass = user.create_random_password()
+    Logger.get_instance().forgot_password(user.email)
+    msg = 'Hi there!\nYou\'re getting this email because you' +\
+        ' forgot your password. If this wasn\'t you, contact someone' +\
+        ' on the Autograder team IMMEDIATELY.\nPlease do not reply to' +\
+        ' this email; replies are not checked.' +\
+        f' Your temp password is {new_pass}; go change it ASAP!' +\
+        '\n\nCheers,\nThe Autograder Team'
+    if MailUtil.get_instance().send(user.email, 'Forgot Password', msg):
+        Logger.get_instance().custom_msg(f'Email sent to {user.email}',
+                                         LogLevels.INFO)
+        return jsonify({'reason': 'request OK'}), 200
     else:
-        return jsonify({'reason': 'User not found'}), 400
+        Logger.get_instance().custom_msg('Emailer failed to send email.',
+                                         LogLevels.ERR)
+        return jsonify({'reason': 'Invalid email address'}), 400
 
 
 @user_api_bp.route('/create_user', methods=['POST'])
@@ -165,17 +184,20 @@ def create_user():
 
         msg += '\n\nCheers,\nThe Autograder Team'
 
-        if MailUtil.get_instance().send(user.email, 'Created Autograder Account', msg):
-            Logger.get_instance().custom_msg(f'Email sent to {user.email}', LogLevels.INFO)
+        subject = 'Created Autograder Account'
+        if MailUtil.get_instance().send(user.email, subject, msg):
+            Logger.get_instance().custom_msg(f'Email sent to {user.email}',
+                                             LogLevels.INFO)
         else:
-            Logger.get_instance().custom_msg('Emailer failed to send email.', LogLevels.ERR)
+            Logger.get_instance().custom_msg('Emailer failed to send email.',
+                                             LogLevels.ERR)
 
         ret = {'reason': 'user created', 'password generated': res}
         return jsonify(ret), 200
 
 
 @user_api_bp.route('/get_all_users', methods=['GET'])
-#@login_required
+# @login_required
 def get_all():
     '''
     Route used to get all users in the DB. Probably won't be used
@@ -190,7 +212,7 @@ def get_all():
 
 
 @user_api_bp.route('/get_user', methods=['GET'])
-#@login_required
+# @login_required
 def get():
     '''
     Route used to get a particular user. We try to find by PID first,
@@ -209,27 +231,29 @@ def get():
 
 
 @user_api_bp.route('/update_user', methods=['PUT'])
-#@login_required
+@login_required
 def update_user():
     '''
     Update user's information at user's discretion\n
     '''
-    id = request.json.get('id', None)
+    # u_id = request.json.get('id', None)
     f_name = request.json.get('fname', '')
 
-    user = User.get_user_by_id(id)
-    if user:
-        user.update_user(f_name)
+    # user = User.get_user_by_id(u_id)
 
-        ret = {'reason': 'User successfully updated', 'result': user.to_json()}
-        return jsonify(ret), 200
-    else:
-        ret = {'reason': 'User not found', 'result': {}}
-        return jsonify(ret), 400
+    if not current_user or not validate_request(request.json,
+                                                current_user.token):
+        return jsonify({'reason': 'invalid user or CSRF violation'}), 400
+
+    current_user.update_user(f_name)
+
+    ret = {'reason': 'User successfully updated',
+           'result': current_user.to_json()}
+    return jsonify(ret), 200
 
 
 @user_api_bp.route('/check_password', methods=['POST'])
-#@login_required
+# @login_required
 def check_password():
     '''
     Check if the user's password matches the given in the database\n
