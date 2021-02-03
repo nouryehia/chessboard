@@ -107,6 +107,31 @@ CREATE TABLE "Ticket" (
 
 
 
+CREATE TABLE "TicketResolved" (
+	"id" serial NOT NULL,
+	"created_at" TIMESTAMP NOT NULL,
+	"closed_at" TIMESTAMP,
+	"room" varchar(255),
+	"workstation" varchar(255),
+	"status" integer NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" TEXT NOT NULL,
+	"ec_grader_id" bigint,
+	"queue_id" bigserial NOT NULL,
+	"ec_student_id" bigserial NOT NULL,
+	"is_private" BOOLEAN NOT NULL DEFAULT 'false',
+	"accepted_at" TIMESTAMP,
+	"help_type" integer NOT NULL,
+	"tag_one" integer NOT NULL,
+	"tag_two" integer,
+	"tag_three" integer,
+	CONSTRAINT "Ticket_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
+
+
 CREATE TABLE "EnrolledCourse" (
 	"id" serial NOT NULL,
 	"user_id" bigserial NOT NULL,

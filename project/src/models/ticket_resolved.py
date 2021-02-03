@@ -85,7 +85,7 @@ class TicketTag (Enum):
     WEIRD_DEBUG = 10
 
 
-class Ticket(db.Model):
+class TicketResolved(db.Model):
     """
     The ticket model of the database.
     Fields:
@@ -111,7 +111,7 @@ class Ticket(db.Model):
     @author YixuanZhou
     @author nouryehia (updates)
     """
-    __tablename__ = 'Ticket'
+    __tablename__ = 'TicketResolved'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     created_at = db.Column(db.DateTime, nullable=True,
                            default=TimeUtil.get_current_time())
@@ -122,12 +122,9 @@ class Ticket(db.Model):
                        default=Status.PENDING.value)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    ec_grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
-                             nullable=True, default=None)
-    queue_id = db.Column(db.Integer, db.ForeignKey('Queue.id'),
-                         nullable=False)
-    ec_student_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),
-                              nullable=False)
+    ec_grader_id = db.Column(db.Integer, nullable=True, default=None)
+    queue_id = db.Column(db.Integer, nullable=False)
+    ec_student_id = db.Column(db.Integer, nullable=False)
     is_private = db.Column(db.Boolean, nullable=False)
     accepted_at = db.Column(db.DateTime, nullable=True, default=None)
     help_type = db.Column(db.Integer, nullable=False)
@@ -152,7 +149,7 @@ class Ticket(db.Model):
         tag_two --> The second tag (default is none) to the ticket.\n
         tag_three --> The third tag (dfault is none) to the ticket.\n
         """
-        super(Ticket, self).__init__(**kwargs)
+        super(TicketResolved, self).__init__(**kwargs)
 
     def save(self):
         """
@@ -198,129 +195,35 @@ class Ticket(db.Model):
 
         return result
 
-    # All the getter methods / status checking methods:
-    def is_question(self) -> bool:
+    # This needs to be fixed... Help time is the time each tutor spent.
+    # Not the time since it was created
+    def get_help_time_in_second(self) -> float:
         """
-        Return if the ticket is a question or not.\n
+        Get the time in second of the time that this ticket spent\
+        to be resolved.\n
         Return:\n
-        A bool value determing if it is a question.\n
+        The difference in time.\n
         """
-        return self.help_type == HelpType.QUESTION.value
+        return (self.closed_at - self.created_at).total_second()
 
-    def is_checkoff(self) -> bool:
+    # Get addition info outside the class
+    def has_feedback(self) -> bool:
         """
-        Return if the ticket is a checkoff or not.\n
+        Check if this ticket has feedback.\n
         Return:\n
-        A bool value determing if it is a checkoff.\n
+        Bool of saying if the ticket has a feedback or not.\n
         """
-        return self.help_type == HelpType.CHECKOFF.value
+        return not self.get_latest_feedback()
 
-    def is_pending(self) -> bool:
+    def get_latest_feedback(self) -> Optional[TicketFeedback]:
         """
-        Return if the ticket is pending or not.\n
+        Get the latest feedback of this ticket.\n
         Return:\n
-        A bool value determing if it is pending.\n
+        The latest TicketFeedback Object.\n
         """
-        return self.status == Status.PENDING.value
-
-    def is_accepted(self) -> bool:
-        """
-        Return if the ticket is accepted or not.\n
-        Return:\n
-        A bool value determing if it is accepted.\n
-        """
-        return self.status == Status.ACCEPTED.value
-
-    def is_resolved(self) -> bool:
-        """
-        Return if the ticket is resolved or not.\n
-        Return:\n
-        A bool value determing if it is resolved.\n
-        """
-        return self.status == Status.RESOLVED.value
-
-    def is_canceled(self) -> bool:
-        """
-        Return if the ticket is canceled or not.\n
-        Return:\n
-        A bool value determing if it is canceled.\n
-        """
-        return self.status == Status.CANCELED.value
-
-    def is_non_cse(self) -> bool:
-        """
-        Return if the ticket is not in CSE building or not.\n
-        Return:\n
-        A bool value determing if it is in CSE.\n
-        """
-        return self.room == NON_CSE.value
-
-    def is_hallway(self) -> bool:
-        """
-        Return if the ticket is located at hallway.\n
-        Return:\n
-        A bool value determing if it is in the hallway.\n
-        """
-        return self.room == HALLWAY.value
-
-    def get_tags_list(self) -> List[TicketTag]:
-        """
-        Return if the list of the tags that is on this ticket.\n
-        Return:\n
-        An array of size 1 to 3 with ticket tags in it.\n
-        """
-        ticket_tag = []
-        ticket_tag.append(self.tag_one)
-        if not self.tag_two:
-            ticket_tag.append(self.tag_two)
-        if self.tag_three is not None:
-            ticket_tag.append(self.tag_three)
-        return ticket_tag
-
-    def get_title(self) -> str:
-        """
-        Return the title of the ticket.\n
-        Return:\n
-        The title in string.\n
-        """
-        return self.title
-
-    def get_description(self) -> str:
-        """
-        Return the description of the ticket.\n
-        Return:\n
-        The description in string.\n
-        """
-        return self.description
-
-    def get_room(self) -> str:
-        """
-        Return the room of the ticket.\n
-        Return:\n
-        The room in string.\n
-        """
-        return self.room
-
-    def get_workstation(self) -> str:
-        """
-        Return the workstation of the ticket.\n
-        Return:\n
-        The workstation in string.\n
-        """
-        return self.room
-
-    def get_position(self) -> int:
-        """
-        Return the position of the ticket in the current queue.\n
-        Return:\n
-        The position of the ticket (start from 1).\n
-        """
-        all_pending_tickets = Ticket.query.filter_by(
-                                queue_id=self.queue_id,
-                                status=Status.PENDING
-                                ).all()
-        all_pending_tickets.sort(key=attrgetter('created_at'))
-        return all_pending_tickets.index(self) + 1
+        return TicketFeedback.query.filter_by(
+                ticket_id=self.ticket_id).order_by(
+                TicketFeedback.submitted_date).first()
 
     def get_ticket_events(self) -> List[TicketEvent]:
         """
@@ -355,139 +258,6 @@ class Ticket(db.Model):
             return True
 
         return self.ec_student_id == ec_entry.id
-
-    def can_edit_by(self, user_id: int) -> bool:
-        """
-        Determine if the ticket can be edited by a given user.\n
-        Inputs:\n
-        user --> The User object of the user who is trying to edit the
-        ticket.\n
-        Return:\n
-        The bool for whether a user can edit.\n
-        """
-        if self.is_resolved():
-            return False
-
-        course = Course.get_course_by_queue_id(self.queue_id)
-        ec_entry = EnrolledCourse.find_user_in_course(user_id=user_id,
-                                                      course_id=course.id)
-
-        if not ec_entry:
-            return False
-
-        if ec_entry.role != Role.STUDENT.value:
-            return True
-
-        return self.ec_student_id == ec_entry.id
-
-    def update_ticket_tags(self, tag_list: List[TicketTag]) -> None:
-        """
-        Update the tags on the ticket.\n
-        Input:\n
-        tag_list --> The list of tags in which everything is of the type\
-                     TicketTag.\n
-        """
-        # Update the tags
-        self_tag_list = []
-        for i in range(0, MAX_TAG_NUM):
-            if i < len(tag_list):
-                self_tag_list.append(tag_list[i])
-            else:
-                self_tag_list.append(None)
-
-        # Assign the instance tags from the list
-        self.tag_one = self_tag_list[0]
-        self.tag_two = self_tag_list[1]
-        self.tag_three = self_tag_list[2]
-
-        # Update the database
-        self.save()
-
-    # Setter functions
-    def mark_pending(self) -> None:
-        """
-        Mark the ticket as pending status.\n
-        """
-        self.status = Status.PENDING.value
-        self.ec_grader_id = None
-        self.save()
-
-    def mark_accepted_by(self, grader: User) -> None:
-        """
-        Mark the ticket as accepted by a tutor.\n
-        """
-        # Prevent a tutor accept multiple tickets
-        Ticket.defer_accepted_ticket_for_grader(grader, self.queue_id)
-
-        self.status = Status.ACCEPTED.value
-        self.accepted_at = TimeUtil.get_current_time()
-        self.ec_grader_id = EnrolledCourse.find_user_in_course(
-                            user_id=grader.id,
-                            course_id=Course.get_course_by_queue_id(
-                                self.queue_id).id).id
-
-        self.save()
-
-    def mark_resolved(self) -> None:
-        """
-        Mark the ticket as resolved.\n
-        """
-        self.status = Status.RESOLVED.value
-        self.closed_at = TimeUtil.get_current_time()
-        self.save()
-
-    def mark_canceled(self) -> None:
-        """
-        Mark the ticket as canceled.\n
-        """
-        self.status = Status.CANCELED.value
-        self.closed_at = TimeUtil.get_current_time()
-        self.save()
-
-    def student_update(self, title: str, description: str, room: str,
-                       workstation: str, is_private: bool, help_type: HelpType,
-                       tag_list: List[TicketTag]) -> None:
-        """
-        This method updates the current ticket. By taking in the updates from
-        front end, this will update the corresponding tickit in the database.
-        Inputs:
-        title --> The title of the ticket.\n
-        description --> The description of the ticket.\n
-        room --> The room that the student is in.\n
-        workstation --> The workstation of the student.\n
-        ipPrivate --> Whether the student want this ticket to be private.\n
-        help_type --> The type of help the student demends.\n
-        """
-        # Perform update for all the basic info
-        self.title = title
-        self.description = description
-        self.room = room
-        self.workstation = workstation
-        self.is_private = is_private
-        self.help_type = help_type.value
-
-        # Commit the updates for basica info
-        self.save()
-
-        # Update ticket tags
-        self.update_ticket_tags(tag_list)
-
-        return True
-
-    # Note:
-    # So far not implementing the methods used by controllers, including
-    # findOldestForQueue
-    # findNewestForQueue
-    # findOldestForQueueForGrader
-    # findNewestForQueueForGrader
-    # findNewestForStudent
-    # For NewsFeedPost including:
-    # findResolvedTicketsForQueueForGraderAfter
-    # findLastResolvedTicketForQueueForGrader
-    # For TicketFeedback:
-    # findNewestFeedback should be in TicketFeedback
-
-    # STOPPED HERE
 
     # Static add method
     @staticmethod
@@ -529,6 +299,8 @@ class Ticket(db.Model):
                             tag_three=tag_three, status=Status.PENDING.value)
         Ticket.add_to_db(new_ticket)
         return new_ticket
+
+    # STOPPED HERE
 
     @staticmethod
     def add_to_db(ticket: Ticket):
