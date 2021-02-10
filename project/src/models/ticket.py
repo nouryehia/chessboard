@@ -10,7 +10,7 @@ from ...setup import db
 from .user import User
 from .enrolled_course import Role
 from .course import Course
-from .ticket_feedback import TicketFeedback
+# from .ticket_feedback import TicketFeedback
 from .events.ticket_event import TicketEvent
 from .enrolled_course import EnrolledCourse
 
@@ -551,41 +551,6 @@ class Ticket(db.Model):
         """
         return Ticket.query.filter_by(id=ticket_id).first()
 
-    # Ticket stats calultaions
-    @staticmethod
-    def find_ticket_accepted_by_grader(grader_id: int, queue_id: int) ->\
-            Optional[Ticket]:
-        """
-        Find the last ticket accepted by the grader.\n
-        There should only be one ticket that is accpeted by the grader.\n
-        Inputs:\n
-        grader --> The User object of the grader to look up.\n
-        Return:\n
-        The ticket that was accepted by the grader.\n
-        """
-        cid = Course.get_course_by_queue_id(queue_id).id
-        ec = EnrolledCourse.find_user_in_course(user_id=int(grader_id),
-                                                course_id=cid).id
-
-        return Ticket.query.filter_by(status=Status.ACCEPTED,
-                                      ec_grader_id=ec).first()
-
-    # Ticket stats calultaions
-    @staticmethod
-    def average_resolved_time(resolved_tickets: List[Ticket]) -> int:
-        """
-        Given a list of tickest, get the average time in second for resolve
-        time.\n
-        Inputs:\n
-        resolved_tickets --> a list of tickests that has been resolved.\n
-        Return:\n
-        The number of the average time in seconds.\n
-        """
-        sum_time = 0
-        for ticket in resolved_tickets:
-            sum_time += ticket.get_help_time_in_second()
-        return sum_time // len(resolved_tickets)
-
     @staticmethod
     def defer_accepted_ticket_for_grader(grader: User, queue_id: int) -> int:
         """
@@ -610,19 +575,6 @@ class Ticket(db.Model):
 
     # Moved from ticket_event
 
-    # static query methods
-    @staticmethod
-    def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
-        """
-        Find all the ticket events associated to a ticket.\n
-        Inputs:\n
-        ticket --> The ticket object to be look for.\n
-        Return:\n
-        A list of event related to this ticket.\n
-        """
-        return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-            .order_by(TicketEvent.timestamp.desc()).all()
-
     @staticmethod
     def find_all_events_for_tickets(tickets:
                                     List[Ticket]) -> List[TicketEvent]:
@@ -637,26 +589,6 @@ class Ticket(db.Model):
             filter_by(Ticket.ticket_id.in_(tickets))
 
     # Moved from ticket_feedback
-
-    # Static query methods for ticket feedbacks
-    @staticmethod
-    def get_ticket_feedback(ticket_list: List[Ticket]) -> List[TicketFeedback]:
-        """
-        Given a list of tickets, get the feedback of each ticket and put
-        them into a list.\n
-        Inputs:\n
-        ticket_list --> The list of tickets to look for.\n
-        Returns:\n
-        A list of TicketFeedback, if a ticket does not have a feedback,
-        it will not show up in the list.\n
-        """
-        feedback_list = []
-        for ticket in ticket_list:
-            feedback = TicketFeedback.query().filter_by(ticket_id=ticket.id)\
-                        .ordered_by(TicketFeedback.submitted_date).first()
-            if feedback is not None:
-                feedback_list.append(feedback)
-        return feedback_list
 
     @staticmethod
     def find_all_tickets(queue_id: int,
@@ -682,196 +614,3 @@ class Ticket(db.Model):
             return Ticket.query.\
                 filter_by(queue_id=queue_id).\
                 order_by(Ticket.created_at.desc()).all()
-
-    @staticmethod
-    def find_all_tickets_by_student(queue_id: int,
-                                    student_id: int,
-                                    status: List[Status]) -> List[Ticket]:
-        """
-        Get a list of all the tickets for a queue created by a student
-        with decending order by the time it was created.\n
-        Input:\n
-        queue --> The queue to search for.\n
-        student --> The student to be looked for.\n
-        status --> The list of status to filter.\n
-        Return:\n
-        The list of the ticket of this queue ordered by create time.\n
-        """
-        cid = Course.get_course_by_queue_id(queue_id).id
-        ec = EnrolledCourse.find_user_in_course(user_id=student_id,
-                                                course_id=cid).id
-        return (Ticket.query.
-                filter_by(queue_id=queue_id, ec_student_id=ec).
-                filter(Ticket.status.in_(status)).
-                order_by(Ticket.created_at.desc()).all() if status else
-                Ticket.query.
-                filter_by(queue_id=queue_id, ec_student_id=ec).
-                order_by(Ticket.created_at.desc()).all())
-
-    @staticmethod
-    def find_all_tickets_for_grader(queue_id: int,
-                                    grader_id: int) -> List[Ticket]:
-        """
-        Get a list of all the tickets for a queue handled by a grader
-        with decending order by the time it was created.\n
-        Input:\n
-        queue --> The queue to search for.\n
-        grader --> The grader to be looked for.\n
-        Return:\n
-        The list of the ticket of this queue ordered by create time.\n
-        """
-        cid = Course.get_course_by_queue_id(queue_id).id
-        ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                course_id=cid).id
-        return Ticket.query.\
-            filter_by(queue_id=queue_id, ec_grader_id=ec).\
-            order_by(Ticket.created_at.desc()).all()
-
-    @staticmethod
-    def find_tickets_in_range(queue_id: int,
-                              start: str,
-                              end: str,
-                              grader_id: int = None,
-                              resolved: bool = False):
-        """
-        Find all the ticktes of the queue in range of two datetimes. Can be
-        categrized as resolved if wanted and grader_id can be specified\n
-        Input:\n
-        queue_id --> The id of the queue to look at.\n
-        grader --> An optional User object, use it if want to find for a
-                   grader.\n
-        reolved --> An optional boolean, indicating whether we only want
-                    resolved tickets or not.
-        start --> The begining of the range,
-                it would be 1 hour before by default.\n
-        end --> The end of the range, it would be now by default.\n
-        Return:\n
-        A list of tickets in this range.\n
-        """
-        if resolved:
-            if not grader_id:
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            status=Status.RESOLVED.value).all()
-            else:
-                cid = Course.get_course_by_queue_id(queue_id).id
-                ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                        course_id=cid).id
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            ec_grader_id=ec,
-                                            status=Status.RESOLVED.value).all()
-        else:
-            if not grader_id:
-                tl = Ticket.query.filter_by(queue_id=queue_id).all()
-            else:
-                cid = Course.get_course_by_queue_id(queue_id).id
-                ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
-                                                        course_id=cid).id
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            ec_grader_id=ec).all()
-
-        start = (TimeUtil.convert_str_to_datetime(
-                 TimeUtil.get_time_before(hours=1)) if not start else
-                 TimeUtil.convert_str_to_datetime(start))
-
-        end = (TimeUtil.convert_str_to_datetime(
-               TimeUtil.get_current_time()) if not end else
-               TimeUtil.convert_str_to_datetime(end))
-
-        return list(filter(lambda x: start <=
-                           TimeUtil.naive_to_aware(x.created_at) <= end, tl))
-
-    @staticmethod
-    def find_ticket_history_with_offset(queue_id: int, offset: int = 0,
-                                        limit: int = 10,
-                                        student: User = None,
-                                        grader: User = None) -> List[Ticket]:
-        """
-        Find a list of tickets with certain offsets and limits with the order
-        of ticket_id.\n
-        Inputs:\n
-        queue --> The queue to look up.\n
-        offset --> The offset to start looking up.\n
-        limit --> The limit of to display.\n
-        Return:\n
-        A list of tickets.
-        """
-        cid = Course.get_course_by_queue_id(queue_id)
-        if student:
-            sid = EnrolledCourse.find_user_in_course(user_id=student.id,
-                                                     course_id=cid).id
-            return Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
-                filter_by(ec_student_id=sid).\
-                sort_by(id).offset(offset).limit(limit).all()
-        elif grader is not None:
-            gid = EnrolledCourse.find_user_in_course(grader_id=grader.id,
-                                                     course_id=cid).id
-            return Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
-                filter_by(ec_grader_id=gid).\
-                sort_by(id).offset(offset).limit(limit).all()
-        else:
-            Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
-                sort_by(id).offset(offset).limit(limit).all()
-
-    @staticmethod
-    def find_all_feedback_for_queue(queue_id: int) -> List[TicketFeedback]:
-        """
-        Find all the feedbacks for a queue given a queue_id
-        Note: This function should only be called from queue.
-        Inputs:\n
-        queue_id --> int
-        Returns:\n
-        A list of ticket feedback
-        """
-        tickets = Ticket.find_all_tickets(queue_id, [Status.RESOLVED])
-        feedbacks = []
-        for t in tickets:
-            feedbacks += (TicketFeedback.get_ticket_feedback(t))
-        return feedbacks
-
-    @staticmethod
-    def find_feedback_for_grader(queue_id: int,
-                                 grader_id: int) -> List[TicketFeedback]:
-        """
-        Find all the feedback to a grader that is in the queue.
-        Note: This function should only be called from queue.
-        Inputs:\n
-        queue --> The Queue object to search for.\n
-        grader --> The User object for the grader to search for.\n
-        Return:\n
-        A list of ticket feedbacks to the grader.\n
-        """
-        tickets = Ticket.find_all_tickets_for_grader(queue_id, grader_id)
-        feedbacks = []
-        for t in tickets:
-            fb = TicketFeedback.get_ticket_feedback(ticket_id=t.id)
-            fb['name'] = 'anonymous'
-            if not fb['is_anonymous']:
-                user_id = EnrolledCourse.get_ec_by_id(t.ec_student_id).user_id
-                user = User.get_user_by_id(user_id)
-                fb['name'] = user.first_name + ' ' + user.last_name
-            feedbacks.append(fb)
-        return feedbacks
-
-    @staticmethod
-    def find_feedback_for_student(queue_id: int,
-                                  student_id: int) -> List[TicketFeedback]:
-        """
-        Find all the feedback from a student that is in the queue.
-        Note: This function should only be called from queue.
-        Inputs:\n
-        queue --> The Queue object to search for.\n
-        student --> The User object for the student to search for.\n
-        Return:\n
-        A list of ticket feedbacks from the student.\n
-        """
-        tickets = Ticket.find_all_tickets_for_student(queue_id, student_id)
-        feedbacks = []
-        for t in tickets:
-            feedbacks.append(TicketFeedback.get_ticket_feedback(t))
-        return feedbacks

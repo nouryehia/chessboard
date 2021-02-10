@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import List, Optional, Dict
-from operator import attrgetter
+# from operator import attrgetter
 
 from ..utils.time import TimeUtil
 
@@ -259,51 +259,10 @@ class TicketResolved(db.Model):
 
         return self.ec_student_id == ec_entry.id
 
-    # Static add method
-    @staticmethod
-    def add_ticket(queue_id: int, student_id: int, title: str,
-                   description: str, room: str,
-                   workstation: str, is_private: bool,
-                   help_type: HelpType,
-                   tag_list: List[TicketTag]) -> Ticket:
-        """
-        Add a ticket.\n
-        Inputs:\n
-        student --> The student who submit the ticket.\n
-        title --> The title of the ticket.\n
-        description --> The description to the ticket.\n
-        room --> The room of this ticket is in.\n
-        workstation --> The workstaton ticket is at.\n
-        help_type --> The type of help needed.\n
-        tag_list --> The list of tags of the tickte.\n
-        Return:\n
-        The created ticket.\n
-        @author: Yixuan
-        """
-        tag_one = tag_list[0]
-        tag_two = tag_list[1] if len(tag_list) > 1 else None
-        tag_three = tag_list[2] if len(tag_list) > 2 else None
-
-        cid = Course.get_course_by_queue_id(queue_id).id
-        ec = EnrolledCourse.find_user_in_course(user_id=student_id,
-                                                course_id=cid).id
-
-        new_ticket = Ticket(created_at=TimeUtil.get_current_time(),
-                            closed_at=None,
-                            room=room, workstation=workstation,
-                            title=title, description=description,
-                            ec_grader_id=None, queue_id=queue_id,
-                            ec_student_id=ec, is_private=is_private,
-                            accepted_at=None, help_type=help_type.value,
-                            tag_one=tag_one, tag_two=tag_two,
-                            tag_three=tag_three, status=Status.PENDING.value)
-        Ticket.add_to_db(new_ticket)
-        return new_ticket
-
     # STOPPED HERE
 
     @staticmethod
-    def add_to_db(ticket: Ticket):
+    def add_to_db(ticket: TicketResolved):
         """
         Add the ticket to the database.\n
         Inputs:\n
@@ -313,7 +272,7 @@ class TicketResolved(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_ticket_by_id(ticket_id: int) -> Optional[Ticket]:
+    def get_ticket_by_id(ticket_id: int) -> Optional[TicketResolved]:
         """
         Get the ticket by ticket_id.\n
         Inputs:\n
@@ -321,12 +280,12 @@ class TicketResolved(db.Model):
         Return:\n
         The ticket object, None if the ticket_id is not found.\n
         """
-        return Ticket.query.filter_by(id=ticket_id).first()
+        return TicketResolved.query.filter_by(id=ticket_id).first()
 
     # Ticket stats calultaions
     @staticmethod
     def find_ticket_accepted_by_grader(grader_id: int, queue_id: int) ->\
-            Optional[Ticket]:
+            Optional[TicketResolved]:
         """
         Find the last ticket accepted by the grader.\n
         There should only be one ticket that is accpeted by the grader.\n
@@ -339,12 +298,12 @@ class TicketResolved(db.Model):
         ec = EnrolledCourse.find_user_in_course(user_id=int(grader_id),
                                                 course_id=cid).id
 
-        return Ticket.query.filter_by(status=Status.ACCEPTED,
-                                      ec_grader_id=ec).first()
+        return TicketResolved.query.filter_by(status=Status.ACCEPTED,
+                                              ec_grader_id=ec).first()
 
     # Ticket stats calultaions
     @staticmethod
-    def average_resolved_time(resolved_tickets: List[Ticket]) -> int:
+    def average_resolved_time(resolved_tickets: List[TicketResolved]) -> int:
         """
         Given a list of tickest, get the average time in second for resolve
         time.\n
@@ -358,46 +317,11 @@ class TicketResolved(db.Model):
             sum_time += ticket.get_help_time_in_second()
         return sum_time // len(resolved_tickets)
 
-    @staticmethod
-    def defer_accepted_ticket_for_grader(grader: User, queue_id: int) -> int:
-        """
-        Set all the accepted ticket for a grader to pending incase multiple
-        tickets is accepted by one grader.\n
-        Inputs:\n
-        grader --> The grader to be multified.\n
-        """
-        cid = Course.get_course_by_queue_id(queue_id).id
-        ec = EnrolledCourse.find_user_in_course(user_id=grader.id,
-                                                course_id=cid).id
-
-        ticket_list = Ticket.query.filter_by(ec_grader_id=ec).all()
-        counter = 0
-
-        for ticket in ticket_list:
-            if (ticket.status == Status.ACCEPTED.value):
-                counter += 1
-                ticket.mark_pending()
-
-        return counter
-
     # Moved from ticket_event
-
-    # static query methods
-    @staticmethod
-    def find_all_events_for_ticket(ticket: Ticket) -> List[TicketEvent]:
-        """
-        Find all the ticket events associated to a ticket.\n
-        Inputs:\n
-        ticket --> The ticket object to be look for.\n
-        Return:\n
-        A list of event related to this ticket.\n
-        """
-        return TicketEvent.query().filter_by(ticket_id=ticket.id)\
-            .order_by(TicketEvent.timestamp.desc()).all()
 
     @staticmethod
     def find_all_events_for_tickets(tickets:
-                                    List[Ticket]) -> List[TicketEvent]:
+                                    List[TicketResolved]) -> List[TicketEvent]:
         """
         Find all the ticket events of multiple tickets.\n
         Inputs:\n
@@ -406,13 +330,14 @@ class TicketResolved(db.Model):
         A list of event related to the tickets passed in.\n
         """
         return TicketEvent.query().\
-            filter_by(Ticket.ticket_id.in_(tickets))
+            filter_by(TicketResolved.ticket_id.in_(tickets))
 
     # Moved from ticket_feedback
 
     # Static query methods for ticket feedbacks
     @staticmethod
-    def get_ticket_feedback(ticket_list: List[Ticket]) -> List[TicketFeedback]:
+    def get_ticket_feedback(ticket_list:
+                            List[TicketResolved]) -> List[TicketFeedback]:
         """
         Given a list of tickets, get the feedback of each ticket and put
         them into a list.\n
@@ -434,7 +359,7 @@ class TicketResolved(db.Model):
     def find_all_tickets(queue_id: int,
                          status: List[Status] = [Status.PENDING,
                                                  Status.ACCEPTED])\
-            -> List[Ticket]:
+            -> List[TicketResolved]:
         """
         Get a list of all the tickets for a queue with decending order
         by the time it was created.\n
@@ -446,19 +371,20 @@ class TicketResolved(db.Model):
         The list of the ticket of this queue ordered by create time.\n
         """
         if status:
-            return Ticket.\
+            return TicketResolved.\
                 query.filter_by(queue_id=queue_id).\
-                filter(Ticket.status.in_(status)).\
-                order_by(Ticket.created_at.desc()).all()
+                filter(TicketResolved.status.in_(status)).\
+                order_by(TicketResolved.created_at.desc()).all()
         else:
-            return Ticket.query.\
+            return TicketResolved.query.\
                 filter_by(queue_id=queue_id).\
-                order_by(Ticket.created_at.desc()).all()
+                order_by(TicketResolved.created_at.desc()).all()
 
     @staticmethod
     def find_all_tickets_by_student(queue_id: int,
                                     student_id: int,
-                                    status: List[Status]) -> List[Ticket]:
+                                    status: List[Status])\
+            -> List[TicketResolved]:
         """
         Get a list of all the tickets for a queue created by a student
         with decending order by the time it was created.\n
@@ -472,17 +398,17 @@ class TicketResolved(db.Model):
         cid = Course.get_course_by_queue_id(queue_id).id
         ec = EnrolledCourse.find_user_in_course(user_id=student_id,
                                                 course_id=cid).id
-        return (Ticket.query.
+        return (TicketResolved.query.
                 filter_by(queue_id=queue_id, ec_student_id=ec).
-                filter(Ticket.status.in_(status)).
-                order_by(Ticket.created_at.desc()).all() if status else
-                Ticket.query.
+                filter(TicketResolved.status.in_(status)).
+                order_by(TicketResolved.created_at.desc()).all() if status else
+                TicketResolved.query.
                 filter_by(queue_id=queue_id, ec_student_id=ec).
-                order_by(Ticket.created_at.desc()).all())
+                order_by(TicketResolved.created_at.desc()).all())
 
     @staticmethod
     def find_all_tickets_for_grader(queue_id: int,
-                                    grader_id: int) -> List[Ticket]:
+                                    grader_id: int) -> List[TicketResolved]:
         """
         Get a list of all the tickets for a queue handled by a grader
         with decending order by the time it was created.\n
@@ -495,9 +421,9 @@ class TicketResolved(db.Model):
         cid = Course.get_course_by_queue_id(queue_id).id
         ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                 course_id=cid).id
-        return Ticket.query.\
+        return TicketResolved.query.\
             filter_by(queue_id=queue_id, ec_grader_id=ec).\
-            order_by(Ticket.created_at.desc()).all()
+            order_by(TicketResolved.created_at.desc()).all()
 
     @staticmethod
     def find_tickets_in_range(queue_id: int,
@@ -522,24 +448,26 @@ class TicketResolved(db.Model):
         """
         if resolved:
             if not grader_id:
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            status=Status.RESOLVED.value).all()
+                tl = TicketResolved.query.filter_by(queue_id=queue_id,
+                                                    status=Status.RESOLVED.
+                                                    value).all()
             else:
                 cid = Course.get_course_by_queue_id(queue_id).id
                 ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                         course_id=cid).id
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            ec_grader_id=ec,
-                                            status=Status.RESOLVED.value).all()
+                tl = TicketResolved.query.filter_by(queue_id=queue_id,
+                                                    ec_grader_id=ec,
+                                                    status=Status.RESOLVED.
+                                                    value).all()
         else:
             if not grader_id:
-                tl = Ticket.query.filter_by(queue_id=queue_id).all()
+                tl = TicketResolved.query.filter_by(queue_id=queue_id).all()
             else:
                 cid = Course.get_course_by_queue_id(queue_id).id
                 ec = EnrolledCourse.find_user_in_course(user_id=grader_id,
                                                         course_id=cid).id
-                tl = Ticket.query.filter_by(queue_id=queue_id,
-                                            ec_grader_id=ec).all()
+                tl = TicketResolved.query.filter_by(queue_id=queue_id,
+                                                    ec_grader_id=ec).all()
 
         start = (TimeUtil.convert_str_to_datetime(
                  TimeUtil.get_time_before(hours=1)) if not start else
@@ -556,7 +484,8 @@ class TicketResolved(db.Model):
     def find_ticket_history_with_offset(queue_id: int, offset: int = 0,
                                         limit: int = 10,
                                         student: User = None,
-                                        grader: User = None) -> List[Ticket]:
+                                        grader: User = None)\
+            -> List[TicketResolved]:
         """
         Find a list of tickets with certain offsets and limits with the order
         of ticket_id.\n
@@ -571,23 +500,23 @@ class TicketResolved(db.Model):
         if student:
             sid = EnrolledCourse.find_user_in_course(user_id=student.id,
                                                      course_id=cid).id
-            return Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
+            return TicketResolved.query.filter_by(queue_id=queue_id).\
+                filter_by(TicketResolved.status.in_(Status.RESOLVED,
+                                                    Status.CANCELED)).\
                 filter_by(ec_student_id=sid).\
                 sort_by(id).offset(offset).limit(limit).all()
         elif grader is not None:
             gid = EnrolledCourse.find_user_in_course(grader_id=grader.id,
                                                      course_id=cid).id
-            return Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
+            return TicketResolved.query.filter_by(queue_id=queue_id).\
+                filter_by(TicketResolved.status.in_(Status.RESOLVED,
+                                                    Status.CANCELED)).\
                 filter_by(ec_grader_id=gid).\
                 sort_by(id).offset(offset).limit(limit).all()
         else:
-            Ticket.query.filter_by(queue_id=queue_id).\
-                filter_by(Ticket.status.in_(Status.RESOLVED,
-                                            Status.CANCELED)).\
+            TicketResolved.query.filter_by(queue_id=queue_id).\
+                filter_by(TicketResolved.status.in_(Status.RESOLVED,
+                                                    Status.CANCELED)).\
                 sort_by(id).offset(offset).limit(limit).all()
 
     @staticmethod
@@ -600,7 +529,7 @@ class TicketResolved(db.Model):
         Returns:\n
         A list of ticket feedback
         """
-        tickets = Ticket.find_all_tickets(queue_id, [Status.RESOLVED])
+        tickets = TicketResolved.find_all_tickets(queue_id, [Status.RESOLVED])
         feedbacks = []
         for t in tickets:
             feedbacks += (TicketFeedback.get_ticket_feedback(t))
@@ -618,7 +547,8 @@ class TicketResolved(db.Model):
         Return:\n
         A list of ticket feedbacks to the grader.\n
         """
-        tickets = Ticket.find_all_tickets_for_grader(queue_id, grader_id)
+        tickets = TicketResolved.find_all_tickets_for_grader(queue_id,
+                                                             grader_id)
         feedbacks = []
         for t in tickets:
             fb = TicketFeedback.get_ticket_feedback(ticket_id=t.id)
@@ -642,7 +572,8 @@ class TicketResolved(db.Model):
         Return:\n
         A list of ticket feedbacks from the student.\n
         """
-        tickets = Ticket.find_all_tickets_for_student(queue_id, student_id)
+        tickets = TicketResolved.find_all_tickets_for_student(queue_id,
+                                                              student_id)
         feedbacks = []
         for t in tickets:
             feedbacks.append(TicketFeedback.get_ticket_feedback(t))
