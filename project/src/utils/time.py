@@ -95,3 +95,30 @@ class TimeUtil(object):
         Get the min time of datetime but with timezome being set to PST
         '''
         return datetime.min.astimezone(TimeUtil.PST).isoformat()
+
+    @staticmethod
+    def get_time_after(start_date: datetime,
+                       days:    int = 0, 
+                       seconds: int = 0,
+                       minutes: int = 0,
+                       hours:   int = 0,
+                       weeks:   int = 0 )  -> str:
+
+        '''
+        Util method to get the time given a period of time after.\n
+        Inputs:\n
+        days --> Number of days to go after. \n
+        hours --> Number of hours to go after.\n
+        mins --> Number of mins to go after.\n
+        secons --> Number of secs to go after.\n
+        weeks --> Number of weeks to go after.\n
+        Returns\n
+        Isoformated string time.
+        @author mihaivaduva21
+
+        '''
+        diff = timedelta(days=days, seconds=seconds, minutes=mins, hours=hours, weeks=weeks)
+        ret_d = start_date + diff
+        return ret_d.astimezone(TimeUtil.PST).isoformat()
+
+         

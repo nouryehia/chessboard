@@ -49,8 +49,7 @@ def get_total_time_on_duty(qle: QueueLoginEvent, queue: Queue, grader: User,
         events = qle.find_event_in_range(queue, TimeUtil.min_time(),
                                          TimeUtil.get_current_time(), grader)
     else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
+        end_date = get_time_after(start_date.convert_str_to_datetime(), days=7)
         events = qle.find_event_in_range(queue, start_date, end_date, grader)
 
     total_time_on_duty = 0
@@ -82,8 +81,7 @@ def get_num_tickets_handled(queue: Queue, grader: User,
     if start_date is None:
         tickets = Ticket.find_all_tickets_in_range(queue, grader)
     else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
+        end_date = get_time_after(start_date.convert_str_to_datetime(), days=7)
         tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
                                                grader)
 
@@ -107,8 +105,7 @@ def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
     if start_date is None:
         tickets = Ticket.find_all_tickets_in_range(queue, grader)
     else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
+        end_date = get_time_after(start_date.convert_str_to_datetime(), days=7)
         tickets = Ticket.find_tickets_in_range(queue, start_date, end_date,
                                                grader)
 
@@ -117,7 +114,7 @@ def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
         events = [event for event in events if event.user_id == grader.id]
 
         total_time = 0
-        time_accepted = datetime.min()
+        time_accepted = datetime.min
 
         for e in events:
             if e.is_accepted():
@@ -127,7 +124,7 @@ def get_total_time_spent_resolving_tickets(queue: Queue, grader: User,
                (e.is_resolved() or e.is_deferred() or e.is_canceled)):
                 time_helping = e.timestamp - time_accepted
                 total_time += time_helping.seconds
-                time_accepted = datetime.min()
+                time_accepted = datetime.min
 
     return total_time
 
@@ -165,23 +162,22 @@ def get_tutoring_sessions(qle: QueueLoginEvent, queue: Queue, grader: User,
     List of sessions
     """
     if start_date is None:
-        events = qle.find_event_in_range(queue, datetime.min, datetime.now(),
+        events = qle.find_event_in_range(queue, datetime.min, TimeUtil.get_current_time().convert_str_to_datetime(),
                                          grader)
     else:
-        end_date = (start_date.convert_str_to_datetime()
-                    + datetime.timedelta(days=7)).isoformat()
+        end_date = get_time_after(start_date.convert_str_to_datetime(), days=7)
         events = qle.find_event_in_range(queue, start_date, end_date, grader)
 
     sessions = []
     for i in range(0, len(events), 2):
         start = events[i].timestamp
-        end = (datetime.now() if i == len(events) - 1
+        end = (TimeUtil.get_current_time().convert_str_to_datetime() if i == len(events) - 1
                else events[i + 1].timestamp)
         duration = end - start
 
         tickets = Ticket.find_tickets_in_range(queue, start, end, grader)
 
-        time_accepted = datetime.min()
+        time_accepted = datetime.min
         total_time_helping = 0
         accepted = 0
         resolved = 0
@@ -199,7 +195,7 @@ def get_tutoring_sessions(qle: QueueLoginEvent, queue: Queue, grader: User,
                    (e.is_resolved() or e.is_deferred() or e.is_canceled)):
                     time_helping = e.timestamp - time_accepted
                     total_time_helping += time_helping.seconds
-                    time_accepted = datetime.min()
+                    time_accepted = datetime.min
 
         utilization = time_helping / duration
 
