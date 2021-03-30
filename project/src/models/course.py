@@ -4,7 +4,7 @@ from ...setup import db
 from enum import Enum
 # TODO: In the future, use Mihai's security stuffs.
 # from ..security.roles import CRole
-from .section import Section
+# from .section import Section
 
 
 class Quarter(Enum):

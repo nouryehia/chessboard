@@ -114,6 +114,7 @@ CREATE TABLE "EnrolledCourse" (
 	"section_id" bigserial NOT NULL,
 	"status" integer NOT NULL,
 	"course_id" bigserial NOT NULL,
+	"course_short_name" varchar(255) NOT NULL,
 	CONSTRAINT "EnrolledCourse_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
@@ -254,7 +255,7 @@ INSERT INTO "Course" (description, name, quarter, short_name, url, year, active,
 INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section 2', 231, 2);
 
 /* Enroll first 3 users in course 1 and 2nd user in course 2. 4th user is not enrolled in any courses */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (1, 4, 1, 1, 0); /* student */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 1, 1, 1, 0); /* admin */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (3, 3, 1, 1, 0); 
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status) VALUES (2, 3, 2, 2, 0); /* grader */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (1, 4, 1, 1, 0, 'T1'); /* student */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 1, 1, 1, 0, 'T1'); /* admin */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (3, 3, 1, 1, 0, 'T1'); 
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 3, 2, 2, 0, 'T2'); /* grader */

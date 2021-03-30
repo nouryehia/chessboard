@@ -218,10 +218,14 @@ def get():
     Route used to get a particular user. We try to find by PID first,
     searching by email if we cannot find a user with that particular PID.\n
     '''
+    user_id = request.args.get('user_id', None, type=int)
     email = request.args.get('email', None, type=str)
-    pid = request.args.get('pid', None)
+    pid = request.args.get('pid', None, type=str)
 
     found = User.find_by_pid_email_fallback(pid, email)
+
+    if not found:
+        found = User.get_user_by_id(user_id=user_id)
 
     if not found:
         return jsonify({'reason': 'User not found'}), 400

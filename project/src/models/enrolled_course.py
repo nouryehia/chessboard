@@ -67,6 +67,7 @@ class EnrolledCourse(db.Model):
     course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
     status = db.Column(db.Integer, nullable=False, default=Status.INACTIVE)
+    course_short_name = db.Column(db.String(255), nullable=False)
 
     def __repr__(self) -> str:
         """
@@ -79,7 +80,8 @@ class EnrolledCourse(db.Model):
         """
         return "user_id: " + str(self.user_id) + " role: " + str(self.role) +\
                " section_id " + str(self.section_id) + " course_id " +\
-               str(self.course_id) + " status: " + str(self.status)
+               str(self.course_id) + " status: " + str(self.status) +\
+               " course_short_name: " + str(self.course_short_name)
 
     def __eq__(self, other):
         """
@@ -118,6 +120,7 @@ class EnrolledCourse(db.Model):
         ret['id'] = self.id
         ret['status'] = Status(self.status).name
         ret['role'] = Role(self.role).name
+        ret['course_short_name'] = self.course_short_name
         return ret
 
     def get_role(self) -> Role:
@@ -218,11 +221,15 @@ class EnrolledCourse(db.Model):
                                                 course_id=course_id)
         if ec:
             return False
+
+        course_short_name = Course.get_course_by_id(course_id).short_name
+
         enroll_student = EnrolledCourse(user_id=user_id,
                                         role=role,
                                         section_id=section_id,
                                         status=Status.ACTIVE.value,
-                                        course_id=course_id)
+                                        course_id=course_id,
+                                        course_short_name=course_short_name)
         return EnrolledCourse.enroll_user(enroll_student)
 
     @staticmethod
