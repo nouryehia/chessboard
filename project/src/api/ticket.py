@@ -5,8 +5,7 @@ from flask import Blueprint, request, jsonify
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.queue import Queue
-# from ..models.enrolled_course import EnrolledCourse as EC
-# from ..models.course import Course
+from ..models.ticket_active import TicketActive
 from ..models.user import User
 
 # TODO: Change some POST to PUT request
@@ -62,14 +61,25 @@ def add_ticket():
                                help_type=help_type, tag_list=tag_list)
 
     # submit a ticket event
-    TicketEvent.create_event(event_type=EventType.CREATED,
+    evt = TicketEvent.create_event(
+                             event_type=EventType.CREATED,
                              ticket_id=ticket.id,
                              message=description,
                              is_private=is_private,
                              user_id=s_id, queue_id=queue_id)
 
+    ticket_active = TicketActive.add_ticket(queue_id=queue_id, student_id=s_id,
+                                            title=title,
+                                            description=description, room=room,
+                                            workstation=workstation,
+                                            is_private=is_private,
+                                            help_type=help_type,
+                                            tag_list=tag_list,
+                                            evt=evt.to_json())
+
     return (jsonify({'reason': 'ticket added to queue',
-                     'result': ticket.to_json(user_id=current_user.id)}), 200)
+                     'result':
+                     ticket_active.to_json(user_id=current_user.id)}), 200)
 
 
 @ticket_api_bp.route('/get_info', methods=['GET'])
@@ -80,7 +90,8 @@ def get_info():
     @author nouryehia
     '''
     user_id = request.args.get('user_id', type=int)
-    ticket = Ticket.get_ticket_by_id(request.args.get('ticket_id', type=int))
+    ticket = TicketActive.get_ticket_by_id(request.args.get('ticket_id',
+                                                            type=int))
 
     return jsonify(ticket.to_json(user_id=user_id)), 200
 

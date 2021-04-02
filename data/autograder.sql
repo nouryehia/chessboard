@@ -107,7 +107,7 @@ CREATE TABLE "Ticket" (
 
 
 
-CREATE TABLE "TicketResolved" (
+CREATE TABLE "TicketActive" (
 	"id" serial NOT NULL,
 	"created_at" TIMESTAMP NOT NULL,
 	"closed_at" TIMESTAMP,
@@ -125,6 +125,7 @@ CREATE TABLE "TicketResolved" (
 	"tag_one" integer NOT NULL,
 	"tag_two" integer,
 	"tag_three" integer,
+	"events" text,
 	CONSTRAINT "Ticket_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
