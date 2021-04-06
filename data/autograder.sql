@@ -106,33 +106,6 @@ CREATE TABLE "Ticket" (
 );
 
 
-
-CREATE TABLE "TicketActive" (
-	"id" serial NOT NULL,
-	"created_at" TIMESTAMP NOT NULL,
-	"closed_at" TIMESTAMP,
-	"room" varchar(255),
-	"workstation" varchar(255),
-	"status" integer NOT NULL,
-	"title" varchar(255) NOT NULL,
-	"description" TEXT NOT NULL,
-	"ec_grader_id" bigint,
-	"queue_id" bigserial NOT NULL,
-	"ec_student_id" bigserial NOT NULL,
-	"is_private" BOOLEAN NOT NULL DEFAULT 'false',
-	"accepted_at" TIMESTAMP,
-	"help_type" integer NOT NULL,
-	"tag_one" integer NOT NULL,
-	"tag_two" integer,
-	"tag_three" integer,
-	"events" text,
-	CONSTRAINT "Ticket_pk" PRIMARY KEY ("id")
-) WITH (
-  OIDS=FALSE
-);
-
-
-
 CREATE TABLE "EnrolledCourse" (
 	"id" serial NOT NULL,
 	"user_id" bigserial NOT NULL,
@@ -285,3 +258,6 @@ INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, cour
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 1, 1, 1, 0, 'T1'); /* admin */
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (3, 3, 1, 1, 0, 'T1'); 
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 3, 2, 2, 0, 'T2'); /* grader */
+
+/* Create an indexing for the ticket to speed up the query to active tickets */
+CREATE INDEX "idx_ticket_isactive" ON "Ticket" USING btree ("status");

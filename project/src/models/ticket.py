@@ -119,7 +119,7 @@ class Ticket(db.Model):
     room = db.Column(db.String(255), nullable=False)
     workstation = db.Column(db.String(255), nullable=False)
     status = db.Column(db.Integer, nullable=False,
-                       default=Status.PENDING.value)
+                       default=Status.PENDING.value, index=True)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
     ec_grader_id = db.Column(db.Integer, db.ForeignKey('EnrolledCourse.id'),

@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.queue import Queue
-from ..models.ticket_active import TicketActive
+
 from ..models.user import User
 
 # TODO: Change some POST to PUT request
