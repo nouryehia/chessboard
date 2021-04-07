@@ -245,17 +245,39 @@ INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VAL
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.gov', 'Bobby', 'Shmurda', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.co.uk', 'Shelly', 'BluGatorade', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('student@gmail.com', 'A', 'A', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 2, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('tutor@gmail.com', 'B', 'B', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 2, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('lead@gmail.com', 'C', 'C', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('prof@gmail.com', 'D', 'D', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('tutorandstudent@gmail.com', 'E', 'E', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 2, 'false');
+INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('leadandstudent@gmail.com', 'F', 'F', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 1, 'false');
 
 /* Make 2 test courses */
 INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
-INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course', 'Test', 0, 'T1', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false, 1);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course', 'Test', 0, 'CSE 12', 'wic.ucsd.edu', 2022, true, false, true, true, 1, false, 1);
 INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section', 230, 1);
 INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
-INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course 2', 'Test2', 0, 'T2', 'wic.ucsd.edu2', 2022, true, false, true, true, 2, false, 1);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course 2', 'Test2', 0, 'CSE 30', 'wic.ucsd.edu2', 2022, true, false, true, true, 2, false, 1);
 INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section 2', 231, 2);
+INSERT INTO "Queue" (status, high_capacity_enable, high_capacity_threshold, high_capacity_message, high_capacity_warning, ticket_cool_down) VALUES (0, true, 10, 'high capacity', 'high capacity', 10);
+INSERT INTO "Course" (description, name, quarter, short_name, url, year, active, queue_enabled, cse, lock_button, queue_id, is_deleted, instructor_id) VALUES ('Test Course 3', 'Test3', 0, 'CSE 100', 'wic.ucsd.edu3', 2022, true, false, true, true, 3, false, 1);
+INSERT INTO "Section" (section_name, section_id, course_id) VALUES ('Test Section 3', 232, 3);
 
 /* Enroll first 3 users in course 1 and 2nd user in course 2. 4th user is not enrolled in any courses */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (1, 4, 1, 1, 0, 'T1'); /* student */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 1, 1, 1, 0, 'T1'); /* admin */
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (3, 3, 1, 1, 0, 'T1'); 
-INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 3, 2, 2, 0, 'T2'); /* grader */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (1, 4, 1, 1, 0, 'CSE 12'); /* student */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 1, 1, 1, 0, 'CSE 12'); /* admin */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (3, 3, 1, 1, 0, 'CSE 12'); 
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (2, 3, 2, 2, 0, 'CSE 30'); /* grader */
+
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (5, 4, 1, 1, 0, 'CSE 12'); /* student */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (5, 4, 2, 2, 0, 'CSE 30'); /* student */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (6, 3, 1, 1, 0, 'CSE 12'); /* tutor */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (7, 2, 1, 1, 0, 'CSE 12'); /* lead */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (8, 1, 1, 1, 0, 'CSE 12'); /* prof */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (8, 1, 2, 2, 0, 'CSE 30'); /* prof */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (9, 4, 1, 1, 0, 'CSE 12'); /* tutorandstudent */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (9, 4, 2, 2, 0, 'CSE 30'); /* tutorandstudent */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (9, 3, 3, 3, 0, 'CSE 100'); /* tutorandstudent */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (10, 4, 1, 1, 0, 'CSE 12'); /* leadandstudent */
+INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (10, 2, 3, 3, 0, 'CSE 100'); /* leadandstudent */
+

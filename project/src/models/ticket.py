@@ -160,7 +160,7 @@ class Ticket(db.Model):
         """
         db.session.commit()
 
-    def to_json(self, user_id=int) -> Dict[str, str]:
+    def to_json(self, user_id: int) -> Dict[str, str]:
         '''
         Function that takes a ticket object and returns it in dictionary.
         We will hid the informations for those who do not have permission.\n
@@ -804,8 +804,10 @@ class Ticket(db.Model):
                TimeUtil.get_current_time()) if not end else
                TimeUtil.convert_str_to_datetime(end))
 
-        return list(filter(lambda x: start <=
-                           TimeUtil.naive_to_aware(x.created_at) <= end, tl))
+        return [TimeUtil.naive_to_aware(start) <=
+                TimeUtil.naive_to_aware(x.created_at) <=
+                TimeUtil.naive_to_aware(end)
+                for x in tl]
 
     @staticmethod
     def find_ticket_history_with_offset(queue_id: int, offset: int = 0,
