@@ -5,8 +5,8 @@ from flask import Blueprint, request, jsonify
 from ..models.ticket import Ticket, HelpType, TicketTag
 from ..models.events.ticket_event import TicketEvent, EventType
 from ..models.queue import Queue
-# from ..models.enrolled_course import EnrolledCourse as EC
-# from ..models.course import Course
+from ..models.enrolled_course import EnrolledCourse
+from ..models.course import Course
 from ..models.user import User
 
 # TODO: Change some POST to PUT request
@@ -199,6 +199,81 @@ def defer_accepted_tickets_for_grader():
     return jsonify({'reason': str(tickets) + ' tickets deferred'}), 400
 
 
+# BIG FIND TICKET ROUTE
+@ticket_api_bp.route('/find_tickets', methods=['GET'])
+@login_required
+def find_tickets():
+    '''
+    Route used to find tickets in a queue (id must be provided). Optional
+    Optional parameters (student_id, grader_id, list with desired statuses,
+    start/end date) can be passed in to add filters to the search.
+    @author nouryehia
+    '''
+    # Only required argument
+    queue_id = request.args.get('queue_id', type=int)
+
+    # Optional arguments
+    # Status list must be a string with ;-separated status ints (see model)
+    # Dates must have MM.DD.YYYY format
+    student_id = request.args.get('student_id', default=None, type=int)
+    grader_id = request.args.get('grader_id', default=None, type=int)
+    status_list = request.args.get('status', default=None, type=int)
+    start = request.args.get('start', default=None, type=str)
+    end = request.args.get('end', default=None, type=str)
+
+    course_id = Course.get_course_by_queue_id(queue_id).id
+
+    if student_id:
+        s_id = EnrolledCourse.find_all_user_in_course(user_id=student_id,
+                                                      course_id=course_id).id
+    if grader_id:
+        g_id = EnrolledCourse.find_all_user_in_course(user_id=grader_id,
+                                                      course_id=course_id).id
+
+    if status_list:
+        status_list = set(status_list.split(';'))
+
+    if not start:
+        start = '01.01.2000'
+
+    if not end:
+        end = '12.31.2100'
+
+    tickets = Ticket.find_tickets_in_range(queue_id, start, end)
+    to_return = []
+
+    for t in tickets:
+        if (
+           # all three optinals params passed in and all of them match
+           student_id and grader_id and status_list and
+           s_id == t.ec_student_id and g_id == t.ec_grader_id and
+           str(t.status) in status_list or
+           # student id and grader id passed in and both of them match
+           student_id and grader_id and s_id == t.ec_student_id and
+           g_id == t.ec_grader_id or
+           # student id and status list passed in and both of them match
+           student_id and status_list and s_id == t.ec_student_id and
+           str(t.status) in status_list or
+           # grader id and status list passed in and both of them match
+           grader_id and status_list and g_id == t.ec_grader_id and
+           str(t.status) in status_list or
+           # only student id passed in and matches
+           student_id and s_id == t.ec_student_id or
+           # only grader id passed in and matches
+           grader_id and g_id == t.ec_grader_id or
+           # only status list passed in and matches
+           status_list and str(t.status) in status_list or
+           # no optinal params passed in (return all the tickets in timeframe)
+           not student_id and not grader_id and not status_list):
+
+            to_return.append(t.to_json(current_user.id))
+
+    return jsonify({'result': to_return}), 200
+
+
+##################################################
+# OLD FIND ROUTES - SHOULD USE ROUTE ABOVE INSTEAD
+##################################################
 @ticket_api_bp.route('/find_all_tickets', methods=['GET'])
 @login_required
 def find_all_tickets():

@@ -65,7 +65,7 @@ def find_queue():
 
 
 @queue_api_bp.route('/create_queue', methods=['POST'])
-#@login_required
+# @login_required
 # @role_required(role=URole.ADMIN.value)
 def create_queue():
     """
