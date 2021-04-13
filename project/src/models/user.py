@@ -69,7 +69,7 @@ class User(db.Model, UserMixin):
         Return whether the user is an admin
         @author: YixuanZ
         '''
-        return self.urole == 1
+        return self.urole <= 1
 
     def update_login_timestamp(self) -> None:
         '''
