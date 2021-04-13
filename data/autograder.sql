@@ -281,3 +281,5 @@ INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, cour
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (10, 4, 1, 1, 0, 'CSE 12'); /* leadandstudent */
 INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, course_short_name) VALUES (10, 2, 3, 3, 0, 'CSE 100'); /* leadandstudent */
 
+/* Create an indexing for the ticket to speed up the query to active tickets */
+CREATE INDEX "idx_ticket_isactive" ON "Ticket" USING btree ("status");
