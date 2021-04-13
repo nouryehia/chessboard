@@ -303,12 +303,17 @@ class EnrolledCourse(db.Model):
         Returns:\n
         A list of active tutors User objects. Could have null entries\n
         """
+        roles = [Role.ADMIN.value, Role.INSTRUCTOR.value, Role.GRADER.value]
+
         course = Course.get_course_by_queue_id(queue_id)
+
         if not course:
             return (False, 'Course not found', None)
-        grader_enrolled_course = EnrolledCourse.query\
-            .filter_by(role=Role.GRADER.value, course_id=course.id,
-                       status=Status.ACTIVE.value).all()
+
+        grader_enrolled_course = EnrolledCourse.query.\
+            filter_by(course_id=course.id, status=Status.ACTIVE.value).\
+            filter(EnrolledCourse.role.in_(roles)).all()
+
         # Since each tutor might be enrolled in multiple sections,
         # we remove the duplicates here.
 
