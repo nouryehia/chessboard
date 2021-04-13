@@ -11,16 +11,16 @@ class Quarter(Enum):
     """
     Enum for quarters.
     Fields --> Database Value:\n
-    FALL --> 0\n
-    WINTER --> 1\n
-    SPRING --> 2\n
+    FA --> 0\n
+    WI --> 1\n
+    SP --> 2\n
     SS1 --> 3\n
     SS2 --> 4\n
     @author: mihaivaduva21
     """
-    FALL = 0
-    WINTER = 1
-    SPRING = 2
+    FA = 0
+    WI = 1
+    SP = 2
     SS1 = 3
     SS2 = 4
 
@@ -167,11 +167,11 @@ class Course(db.Model):
         """
         Returns the quarter and the year.
         """
-        if self.quarter == Quarter.FALL.value:
+        if self.quarter == Quarter.FA.value:
             return "FA" + str(self.year)
-        elif self.quarter == Quarter.WINTER.value:
+        elif self.quarter == Quarter.WI.value:
             return "WI" + str(self.year)
-        elif self.quarter == Quarter.SPRING.value:
+        elif self.quarter == Quarter.SP.value:
             return "SP" + str(self.year)
         elif self.quarter == Quarter.SS1.value:
             return "SS1" + str(self.year)
