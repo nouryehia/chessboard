@@ -23,6 +23,7 @@ def create_course():
     if not u.is_instructor():
         return jsonify({'reason': 'only instructors can create course'}), 400
     req = request.get_json()
+    
     description = req.get('description', '')
     name = req.get('name', '')
     quarter = Quarter[str(req.get('quarter'))].value

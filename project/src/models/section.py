@@ -66,6 +66,8 @@ class Section (db.Model):
         ret['section_id'] = self.section_id
         ret['course_id'] = self.course_id
         ret['section_name'] = self.section_name
+        
+        return ret
 
     # TODO: We dont need this method since section do not store students.
     '''
