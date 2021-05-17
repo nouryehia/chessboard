@@ -1,4 +1,4 @@
-Flask
+Flask==1.1.4
 flask-login
 flask-api
 flask_cors
