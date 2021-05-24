@@ -50,5 +50,20 @@ def find_section():
     section_id = request.args.get('section_id', type=int)
     section = Section.find_by_db_id(section_id)
 
+    ret = [s.to_json() for s in section]
+
     return jsonify({'reason': 'sections returned',
-                    'result': section.to_json()}), 200
+                    'result': ret}), 200
+
+@section_api_bp.route('/get_all_sections', methods=['GET'])
+def get_all_sections():
+    """
+    Route used to find a sections by id.\n
+    @author james-c-lars
+    """
+    sections = Section.find_all_sections()
+
+    ret = [s.to_json() for s in sections]
+
+    return jsonify({'reason': 'sections returned',
+                    'result': ret}), 200
