@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 from ...setup import db
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from .course import Course
 from .user import User
 
@@ -62,7 +62,7 @@ class EnrolledCourse(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('Users.id'), nullable=False)
     role = db.Column(db.Integer, nullable=False, default=True)
-    section_id = db.Column(db.Integer, db.ForeignKey('Section.section_id'),
+    section_id = db.Column(db.Integer, db.ForeignKey('Section.id'),
                            nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('Course.id'),
                           nullable=False)
@@ -255,7 +255,7 @@ class EnrolledCourse(db.Model):
     @staticmethod
     def find_all_user_in_course(course_id: int,
                                 role: List[Role] = None) \
-            -> (bool, List[EnrolledCourse]):
+            -> Tuple[bool, List[EnrolledCourse]]:
         """
         Get a list of all the entries corresponding a course.\n
         There can be extra parameter provided which is role.\n
@@ -295,7 +295,7 @@ class EnrolledCourse(db.Model):
                 order_by(EnrolledCourse.id.desc()).all()
 
     @staticmethod
-    def find_active_tutor_for(queue_id: int) -> (bool, str, List[User]):
+    def find_active_tutor_for(queue_id: int) -> Tuple[bool, str, List[User]]:
         """
         Find all the active tutor for a given queue object.\n
         Inputs:\n

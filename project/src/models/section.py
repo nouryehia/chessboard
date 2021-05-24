@@ -133,6 +133,19 @@ class Section (db.Model):
         return section
 
     @staticmethod
+    def find_by_db_id(section_id: int):
+        '''
+        Performs a database query by the Section.id.\n
+        Params: Section.id\n
+        Returns: The section if it is found, none otherwise.\n
+        @author james-c-lars
+        '''
+
+        section = Section.query.filter_by(id=section_id).first()
+
+        return section
+
+    @staticmethod
     def add_to_db(section: Section):
         """
         Adds a ticket to the database.\n
@@ -141,3 +154,13 @@ class Section (db.Model):
         """
         db.session.add(section)
         db.session.commit()
+
+    @staticmethod
+    def find_all_in_course(course_id: int):
+        '''
+        Performs a database query by the course id.\n
+        Params: course_id\n
+        Returns: The list of sections under that course\n
+        @author: james-c-lars
+        '''
+        return Section.query.filter_by(course_id=course_id).all()

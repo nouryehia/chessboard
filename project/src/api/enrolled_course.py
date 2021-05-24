@@ -161,21 +161,20 @@ def get_user_in_section():
     if roles:
         roles = set(roles.split(';'))
 
-    unfiltered_ret = []
+    ret = []
 
     for ec in ecs:
+        if roles and Role(ec.role).name not in roles:
+            continue
+
         user = User.get_user_by_id(ec.user_id)
 
         scr = {}
         scr['user_info'] = user.to_json()
         scr['enrolled_user_info'] = ec.to_json()
-        unfiltered_ret.append(scr)
+        ret.append(scr)
 
-    filtered_ret = [scr for scr in unfiltered_ret if
-                    str(scr['enrolled_user_info'].role) in roles]\
-        if roles else unfiltered_ret
-
-    return jsonify({'reason': 'success', 'result': filtered_ret}), 200
+    return jsonify({'reason': 'success', 'result': ret}), 200
 
 
 @enrolled_course_api_bp.route('/get_courses_user_in',
