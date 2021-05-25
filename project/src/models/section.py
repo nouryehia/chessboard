@@ -67,6 +67,8 @@ class Section (db.Model):
         ret['course_id'] = self.course_id
         ret['section_name'] = self.section_name
 
+        return ret
+
     # TODO: We dont need this method since section do not store students.
     '''
     def update_section(self):
@@ -141,3 +143,13 @@ class Section (db.Model):
         """
         db.session.add(section)
         db.session.commit()
+
+    @staticmethod
+    def find_all_sections():
+        '''
+        Performs a database query for all sections [Test Purpose Only].\n
+        Params: course_id\n
+        Returns: The list of sections in the db\n
+        @author: YixuanZhou
+        '''
+        return Section.query.all()
