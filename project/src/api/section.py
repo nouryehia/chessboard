@@ -53,7 +53,6 @@ def find_section():
     return jsonify({'reason': 'section returned',
                     'result': section.to_json()}), 200
 
-
 @section_api_bp.route('/get_all_sections', methods=['GET'])
 def get_all_sections():
     """
@@ -63,6 +62,6 @@ def get_all_sections():
     sections = Section.find_all_sections()
 
     ret = [s.to_json() for s in sections]
-
+    
     return jsonify({'reason': 'sections returned',
                     'result': ret}), 200

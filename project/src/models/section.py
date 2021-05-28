@@ -68,6 +68,8 @@ class Section (db.Model):
         ret['section_name'] = self.section_name
         return ret
 
+        return ret
+
     # TODO: We dont need this method since section do not store students.
     '''
     def update_section(self):
