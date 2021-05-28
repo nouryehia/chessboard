@@ -1,7 +1,9 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-
-
+from json import loads
+from ...utils.mailer import MailUtil
+from ...utils.logger import Logger
+from ...models.user import User
 from ...models.autograder.assigned_seats import AssignedSeats
 
 
@@ -123,3 +125,44 @@ def get_all_in_section():
                    AssignedSeats.get_assignments_by_section_id(section_id)]
 
     return jsonify({'reason': 'request OK', 'result': assignments}), 200
+
+
+@assigned_seats_api_bp.route('/email_all_in_assignment', methods=[])
+def email_all_in_assignment():
+    '''
+    TODO: This route can be called by anyone at the moment, no security
+    Route used to send emails to all the students assigned a seat
+    @author james-c-lars
+    '''
+    assignment_name = request.args.get('assignment_name', type=str)
+
+    assignment = AssignedSeats.find_by_name(assignment_name)
+
+    # If a seat assignment with that name was not found
+    if not assignment:
+        return jsonify({'reason': "assignment doesn't exist"}), 300
+
+    # Otherwise collect the emails of the students
+    assign_dict = loads(assignment.seat_assignments)
+    assign_dict = {seat: User.find_by_pid_email_fallback(student.pid)
+                   for seat, student in assign_dict.items()}
+
+    for seat, student in assign_dict.items():
+        Logger.get_instance()\
+            .seat_assignment_email(f'{student.first_name} {student.last_name}',
+                                   seat, assignment.assignment_name,
+                                   student.email)
+
+        email_body = "Hi there!\n"
+        email_body += f"For the upcoming {assignment.assignment_name} you've "
+        email_body += f"been assigned seat {seat}.\n"
+        email_body += 'Make sure to get there early so that you can find your '
+        email_body += 'seat.\n'
+        email_body += '\nCheers,\nThe Autograder Team'
+
+        subject = f"Your seat for the upcoming {assignment.assignment_name}"
+
+        MailUtil.get_instance().send(student.email, subject, email_body)
+
+    return jsonify({'reason': 'emails sent'}),\
+        200

@@ -8,7 +8,6 @@ from ..models.enrolled_course import Role
 from .exceptions import SingletonAccessException
 
 
-
 class LogLevels(object):
     '''
     Small class for making the logging levels visible
@@ -65,7 +64,6 @@ class Logger(object):
             )
         self.log = logging.getLogger()
         Logger.__instance = self
-
 
     def logged_in(self, u: User) -> None:
         '''
@@ -143,7 +141,6 @@ class Logger(object):
         message = f"Created course {c}."
         self.log.info(message)
 
-
     def added_section(self, sctn_name: str, course_id: int) -> None:
         '''
         Message for when a course is added to a section
@@ -177,6 +174,19 @@ class Logger(object):
         message = f"User with ID: {str(user_id)} created ticket for course" +\
             f" with ID: {str(course_id)}."
         self.log.debug(message)
+
+    def seat_assignment_email(self, user_name: str, seat_assigned: str,
+                              assignment_name: str, user_email: str):
+        '''
+        Message for when an email is sent to a user about a seat assignment
+        params:
+                user_name - name of the user
+                user_email - email of the user
+        '''
+        message = f'User: {user_name} was sent an email at {user_email} ' +\
+                  f'about being assigned to seat {seat_assigned} for the ' +\
+                  f'{assignment_name}.'
+        self.log.info(message)
 
     def custom_msg(self, msg: str, level: int = logging.DEBUG) -> None:
         '''
