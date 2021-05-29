@@ -1,6 +1,6 @@
 from flask_cors import CORS
 from flask import Blueprint, request, jsonify
-from flask_login import login_required
+# from flask_login import login_required
 
 from ..models.section import Section
 
@@ -9,7 +9,7 @@ CORS(section_api_bp, supports_credentials=True)
 
 
 @section_api_bp.route('/create_section', methods=['POST'])
-#@login_required
+# @login_required
 def create_section():
     """
     Route used to create a section for a course.\n
@@ -25,6 +25,34 @@ def create_section():
     return jsonify({'reason': 'section created'}), 200
 
 
+@section_api_bp.route('/find_all_in_course', methods=['GET'])
+def find_all_in_course():
+    """
+    Route used to find all sections in a particular course by id.\n
+    @author james-c-lars
+    """
+
+    course_id = request.args.get('course_id', type=int)
+    s = [section.to_json() for section in
+         Section.find_all_in_course(course_id)]
+
+    return jsonify({'reason': 'sections returned',
+                    'result': list(s)}), 200
+
+
+@section_api_bp.route('/find_section', methods=['GET'])
+def find_section():
+    """
+    Route used to find a section by id.\n
+    @author james-c-lars
+    """
+
+    section_id = request.args.get('section_id', type=int)
+    section = Section.find_by_db_id(section_id)
+
+    return jsonify({'reason': 'section returned',
+                    'result': section.to_json()}), 200
+
 @section_api_bp.route('/get_all_sections', methods=['GET'])
 def get_all_sections():
     """
@@ -34,8 +62,6 @@ def get_all_sections():
     sections = Section.find_all_sections()
 
     ret = [s.to_json() for s in sections]
-
-    print(ret, flush=True)
-
+    
     return jsonify({'reason': 'sections returned',
                     'result': ret}), 200

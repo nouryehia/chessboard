@@ -206,6 +206,33 @@ CREATE TABLE "TicketFeedback" (
 
 
 
+/*******************************************************************
+Autograder stuff
+*******************************************************************/
+
+CREATE TABLE "SeatingLayouts" (
+	"id" serial NOT NULL,
+	"location" varchar(255) NOT NULL,
+	"seats" TEXT,
+	"count" integer,
+	CONSTRAINT "SeatingLayouts_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
+CREATE TABLE "AssignedSeats" (
+	"id" serial NOT NULL,
+	"assignment_name" varchar(255) NOT NULL UNIQUE,
+	"layout_id" bigserial NOT NULL,
+	"section_id" bigserial NOT NULL,
+	"course_id" bigserial NOT NULL,
+	"seat_assignments" TEXT,
+	CONSTRAINT "AssignedSeats_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
+
 
 ALTER TABLE "Checkoff" ADD CONSTRAINT "Checkoff_fk0" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
@@ -240,6 +267,10 @@ ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk0" FOREIGN KEY ("owner
 ALTER TABLE "NewsFeedPost" ADD CONSTRAINT "NewsFeedPost_fk1" FOREIGN KEY ("queue_id") REFERENCES "Queue"("id");
 
 ALTER TABLE "TicketFeedback" ADD CONSTRAINT "TicketFeedback_fk0" FOREIGN KEY ("ticket_id") REFERENCES "Ticket"("id");
+
+ALTER TABLE "AssignedSeats" ADD CONSTRAINT "AssignedSeats_fk0" FOREIGN KEY ("layout_id") REFERENCES "SeatingLayouts"("id");
+ALTER TABLE "AssignedSeats" ADD CONSTRAINT "AssignedSeats_fk1" FOREIGN KEY ("section_id") REFERENCES "Section"("id");
+ALTER TABLE "AssignedSeats" ADD CONSTRAINT "AssignedSeats_fk2" FOREIGN KEY ("course_id") REFERENCES "Course"("id");
 
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('almondaficionados@gmail.com', 'Srayva', 'Balasa', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
 INSERT INTO "Users" (email, first_name, last_name, password, urole, request) VALUES ('fake@fake.net', 'Yixuan', 'Zhou', '$pbkdf2-sha256$29000$tLYWAgBAiLGWsvbeuxdijA$mbwptJE6FEUx2MoZM489.F/aYZ9Kn/99hC5DM.jSWG4', 0, 'false');
@@ -283,3 +314,7 @@ INSERT INTO "EnrolledCourse" (user_id, role, section_id, course_id, status, cour
 
 /* Create an indexing for the ticket to speed up the query to active tickets */
 CREATE INDEX "idx_ticket_isactive" ON "Ticket" USING btree ("status");
+
+INSERT INTO "SeatingLayouts" (location, seats, count) VALUES ('DemoLayout', '[[{"label":"","error":false},{"label":"","error":false},{"label":"F6","left":false,"broken":false,"error":false},{"label":"F5","left":false,"broken":false,"error":false},{"label":"F4","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"F3","left":false,"broken":false,"error":false},{"label":"F2","left":false,"broken":false,"error":false},{"label":"F1","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"","error":false}],[{"label":"","error":false},{"label":"E8","left":false,"broken":false,"error":false},{"label":"E7","left":false,"broken":false,"error":false},{"label":"E6","left":false,"broken":true,"error":false},{"label":"E5","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"E4","left":false,"broken":false,"error":false},{"label":"E3","left":false,"broken":false,"error":false},{"label":"E2","left":false,"broken":false,"error":false},{"label":"E1","left":true,"broken":false,"error":false},{"label":"","error":false}],[{"label":"","error":false},{"label":"D8","left":false,"broken":false,"error":false},{"label":"D7","left":false,"broken":false,"error":false},{"label":"D6","left":false,"broken":false,"error":false},{"label":"D5","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"D4","left":false,"broken":false,"error":false},{"label":"D3","left":false,"broken":false,"error":false},{"label":"D2","left":false,"broken":false,"error":false},{"label":"D1","left":true,"broken":false,"error":false},{"label":"","error":false}],[{"label":"C10","left":false,"broken":false,"error":false},{"label":"C9","left":false,"broken":false,"error":false},{"label":"C8","left":false,"broken":false,"error":false},{"label":"C7","left":false,"broken":false,"error":false},{"label":"C6","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"C5","left":false,"broken":false,"error":false},{"label":"C4","left":false,"broken":false,"error":false},{"label":"C3","left":false,"broken":false,"error":false},{"label":"C2","left":false,"broken":false,"error":false},{"label":"C1","left":true,"broken":false,"error":false}],[{"label":"B10","left":false,"broken":false,"error":false},{"label":"B9","left":false,"broken":true,"error":false},{"label":"B8","left":false,"broken":false,"error":false},{"label":"B7","left":false,"broken":false,"error":false},{"label":"B6","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"B5","left":false,"broken":false,"error":false},{"label":"B4","left":false,"broken":false,"error":false},{"label":"B3","left":false,"broken":false,"error":false},{"label":"B2","left":false,"broken":false,"error":false},{"label":"B1","left":true,"broken":true,"error":false}],[{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false},{"label":"","error":false}],[{"label":"","error":false},{"label":"","error":false},{"label":"A6","left":false,"broken":false,"error":false},{"label":"A5","left":false,"broken":false,"error":false},{"label":"A4","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"A3","left":false,"broken":false,"error":false},{"label":"A2","left":false,"broken":false,"error":false},{"label":"A1","left":true,"broken":false,"error":false},{"label":"","error":false},{"label":"","error":false}]]', 48);
+/* Just a dummy entry for now until the way we save seat assignments is settled */
+INSERT INTO "AssignedSeats" (assignment_name, layout_id, section_id, course_id, seat_assignments) VALUES ('Test2 Final', 1, 2, 2, '{"F3":{"name":"24, Student","pid":"A15637"},"F2":{"name":"21, Student","pid":"A15634"},"F1":{"name":"5, Student","pid":"A15618"},"F6":{"name":"0, Student","pid":"A15613"},"F5":{"name":"27, Student","pid":"A15640"},"F4":{"name":"3, Student","pid":"A15616"},"E4":{"name":"6, Student","pid":"A15619"},"E3":{"name":"19, Student","pid":"A15632"},"E2":{"name":"25, Student","pid":"A15638"},"E1":{"name":"8, Student","pid":"A15621"},"E8":{"name":"20, Student","pid":"A15633"},"E7":{"name":"11, Student","pid":"A15624"},"E5":{"name":"1, Student","pid":"A15614"},"D4":{"name":"9, Student","pid":"A15622"},"D3":{"name":"30, Student","pid":"A15643"},"D2":{"name":"26, Student","pid":"A15639"},"D1":{"name":"29, Student","pid":"A15642"},"D8":{"name":"16, Student","pid":"A15629"},"D7":{"name":"31, Student","pid":"A15644"},"D6":{"name":"17, Student","pid":"A15630"},"D5":{"name":"10, Student","pid":"A15623"},"C5":{"name":"14, Student","pid":"A15627"},"C3":{"name":"23, Student","pid":"A15636"},"C1":{"name":"32, Student","pid":"A15645"},"C10":{"name":"2, Student","pid":"A15615"},"C8":{"name":"22, Student","pid":"A15635"},"C6":{"name":"33, Student","pid":"A15646"},"B5":{"name":"7, Student","pid":"A15620"},"B3":{"name":"4, Student","pid":"A15617"},"B10":{"name":"18, Student","pid":"A15631"},"B8":{"name":"15, Student","pid":"A15628"},"B6":{"name":"12, Student","pid":"A15625"},"A3":{"name":"34, Student","pid":"A15647"},"A1":{"name":"13, Student","pid":"A15626"},"A6":{"name":"28, Student","pid":"A15641"}}');
