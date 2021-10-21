@@ -6,6 +6,7 @@ flask_sqlalchemy
 psycopg2-binary
 gunicorn
 passlib
+pytest
 pytz
 python-crontab
 python-dateutil

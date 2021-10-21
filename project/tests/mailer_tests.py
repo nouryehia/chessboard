@@ -1,23 +1,27 @@
+# DEPRECATED: Uses unittest
 import unittest
-from src.utils.mailer import mailer
+from project.src.utils.mailer import MailUtil as Mailer
 
 
-class TestStringMethods(unittest.TestCase):
+class TestMailMethods(unittest.TestCase):
 
-    # Returns True if the string contains 4 a.
+    # Returns True if the string contains 4 a. <- What 'string' + How do you check this?
     def send_to_one(self):
         msg = 'Love looks not with the eyes but with the mind'
-        mailer.send('edyau@ucsd.edu', 'hello my darling', msg)
+        success = Mailer.send('edyau@ucsd.edu', 'hello my darling', msg)
+        self.assertTrue(success)
 
     def send_to_many(self):
-        emailList = ['edyau@ucsd.edu', 's3yao@ucsd.edu', 'sbalasa@ucsd.edu',
+        email_list = ['edyau@ucsd.edu', 's3yao@ucsd.edu', 'sbalasa@ucsd.edu',
                      'rnemmani@ucsd.edu']
         msg = 'To be, or not to be: that is the question'
-        mailer.send(emailList, 'hello my darlings', msg)
+        success = Mailer.send(email_list, 'hello my darlings', msg)
+        self.assertTrue(success)
 
     def send_to_invalid_email(self):
         msg = 'Love looks not with the eyes but with the mind'
-        mailer.send('aiuwefklnsdc@ucsd.edu', 'hello my darling', msg)
+        success = Mailer.send('aiuwefklnsdc@ucsd.edu', 'hello my darling', msg)
+        self.assertTrue(success)
 
 
 if __name__ == '__main__':

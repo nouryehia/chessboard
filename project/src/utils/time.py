@@ -32,14 +32,14 @@ class TimeUtil(object):
     @staticmethod
     def convert_str_to_datetime(time: str) -> datetime:
         '''
-        Util method to read a time and convert it into datetime obejct.\n
+        Util method to read a time and convert it into datetime object.\n
         This function should give us back a datetime object so that we can
         work with for time calculations.\n
         Inputs:\n
         time --> the str representation of the time.\n
         Returns:\n
         datetime object that consist of the current time.\n
-        @authoer YixuanZhou
+        @author YixuanZhou
         '''
         return dateutil.parser.parse(time)
 
@@ -64,7 +64,7 @@ class TimeUtil(object):
         time_b --> the str representation of the time.\n
         Returns:\n
         str representation of the timedelta (a-b), but not in isoformat.\n
-        @authoer YixuanZhou
+        @author YixuanZhou
         '''
         d_a = TimeUtil.convert_str_to_datetime(time_a)
         d_b = TimeUtil.convert_str_to_datetime(time_b)
@@ -80,7 +80,7 @@ class TimeUtil(object):
         mins --> Number of mins to go before.\n
         secs --> Number of secs to go before.\n
         Returns\n
-        Isoformated string time.
+        Isoformatted string time.
         @author YixuanZhou
         '''
         curr = TimeUtil.get_current_time()
@@ -92,6 +92,6 @@ class TimeUtil(object):
     @staticmethod
     def min_time() -> str:
         '''
-        Get the min time of datetime but with timezome being set to PST
+        Get the min time of datetime but with timezone being set to PST
         '''
         return datetime.min.astimezone(TimeUtil.PST).isoformat()
