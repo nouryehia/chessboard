@@ -66,7 +66,7 @@ class User(db.Model, UserMixin):
 
     def is_instructor(self) -> bool:
         '''
-        Return whether the user is an admin
+        Return whether the user is an instructor
         @author: YixuanZ
         '''
         return self.urole <= 1

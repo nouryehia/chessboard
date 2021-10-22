@@ -1,5 +1,5 @@
 from datetime import date
-from src.utils.time import TimeUtil
+from project.src.utils.time import TimeUtil
 
 
 def test_current_time():
