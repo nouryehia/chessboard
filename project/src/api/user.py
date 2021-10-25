@@ -72,7 +72,7 @@ def promote_user():
         return jsonify({'reason': 'invalid user or CSRF violation'}), 400
 
     if not current_user.is_admin():
-        return jsonify({'reason': 'only admin user can promot people'}), 400
+        return jsonify({'reason': 'only admin users can promote people'}), 400
     st, msg, usr = User.promote_user(user_id=u_id)
     if st:
         return jsonify({'reason': msg, 'result': usr.to_json()}), 200
@@ -85,7 +85,7 @@ def promote_user():
 def get_all_promote_requests():
     u = User.get_user_by_id(user_id=current_user.id)
     if not u.is_admin():
-        return jsonify({'reason': 'only admin user can promote people'}), 400
+        return jsonify({'reason': 'only admin users can promote people'}), 400
     requests = [x.to_json() for x in User.get_all_requests()]
     return jsonify({'reason': 'success', 'result': requests}), 200
 
@@ -202,7 +202,7 @@ def get_all():
     '''
     Route used to get all users in the DB. Probably won't be used
     much since it wouldn't be too useful to get potentially thousands
-    of records simulataneously.
+    of records simultaneously.
     @author npcompletenate
     '''
 
