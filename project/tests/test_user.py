@@ -15,6 +15,7 @@ tutor_user = User.find_by_pid_email_fallback('', 'tutor@gmail.com')
 lead_user = User.find_by_pid_email_fallback('', 'lead@gmail.com')
 prof_user = User.find_by_pid_email_fallback('', 'prof@gmail.com')
 
+
 # Tests
 ## Methods used in the controller
 def test_update_user():
@@ -95,3 +96,61 @@ def test_reset_password():
     # Revert to old password
     student_user.reset_password('password')
 
+
+def test_is_admin():
+    assert student_user.is_admin() == False
+    assert tutor_user.is_admin() == False
+    assert lead_user.is_admin() == False
+    assert prof_user.is_admin() == True
+
+
+def test_promote_user():
+    assert User.promote_user(-1) == (False, 'user_id not found', None)
+
+    assert User.promote_user(tutor_user.id) == (True, 'success', tutor_user)
+    assert tutor_user.is_instructor()
+
+    # Revert to old urole
+    tutor_user.urole = 2
+    tutor_user.save()
+
+
+# Not sure how else to test this
+def test_to_json():
+    assert bool(tutor_user.to_json()) == True
+
+
+def test_get_all_requests():
+    User.request_promotion(tutor_user.id)
+    requests = User.get_all_requests()
+
+    assert tutor_user in requests
+
+    # Revert to old urole
+    tutor_user.urole = 2
+    tutor_user.save()
+
+
+def test_create_random_password():
+    old_password = tutor_user.password
+    tutor_user.create_random_password()
+    assert old_password != tutor_user.password
+
+    # Revert to old password
+    student_user.reset_password('password')
+
+
+def test_create_user():
+    assert User.create_user(student_user.email, '', '', '', '') == (False, None, None)
+
+    result = User.create_user('new_student@gmail.com', 'New', 'Student', '7331', 'password')
+    assert result == (True, None, result[2])
+
+    result = User.create_user('new_student2@gmail.com', 'New', 'Student', '1337', '')
+    assert result[0] == True
+    assert User.check_password('new_student2@gmail.com', result[1])
+
+
+def test_get_user_by_id():
+    assert User.get_user_by_id(tutor_user.id) == tutor_user
+    assert not User.get_user_by_id(-1)
