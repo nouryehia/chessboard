@@ -10,3 +10,4 @@ pytest
 pytz
 python-crontab
 python-dateutil
+flask-socketio
